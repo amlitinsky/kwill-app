@@ -6,61 +6,53 @@ interface TranscriptSegment {
 }
 
 interface TranscriptComponentProps {
-  botId: string
+  botId: string;
 }
 
 export default function TranscriptComponent({ botId }: TranscriptComponentProps) {
   const [transcript, setTranscript] = useState<TranscriptSegment[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [status, setStatus] = useState<string>('waiting')
 
   useEffect(() => {
-    const fetchTranscript = async () => {
-      try {
-        const response = await fetch(`/api/get-transcript?botId=${botId}`)
-        const data = await response.json()
-        console.log('Received data from API:', data)
-        if (data.success) {
-          setTranscript(prevTranscript => {
-            if (JSON.stringify(data.transcript) !== JSON.stringify(prevTranscript)) {
-              console.log('New transcript:', data.transcript)
-              return data.transcript
-            }
-            return prevTranscript
-          })
-        } else {
-          console.error('Failed to fetch transcript:', data.message)
-        }
-      } catch (error) {
-        console.error('Error:', error)
-      } finally {
-        setIsLoading(false)
+    const eventSource = new EventSource(`/api/transcript-stream?botId=${botId}`)
+
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      if (data.status) {
+        setStatus(data.status)
+      }
+      if (data.transcript) {
+        setTranscript(data.transcript)
       }
     }
 
-    fetchTranscript()
-    const intervalId = setInterval(fetchTranscript, 5000)
-    return () => clearInterval(intervalId)
+    eventSource.onerror = (error) => {
+      console.error('EventSource failed:', error)
+      eventSource.close()
+    }
+
+    return () => {
+      eventSource.close()
+    }
   }, [botId])
-
-  console.log('Current transcript state:', transcript)
-
-  if (isLoading) {
-    return <div>Loading transcript...</div>
-  }
 
   return (
     <div className="mt-8">
-      <h2 className="text-xl font-bold mb-4">Meeting Transcript</h2>
-      {transcript.length > 0 ? (
-        <div>
-          {transcript.map((segment, index) => (
-            <div key={index} className="mb-2">
-              <strong>{segment.speaker}:</strong> {segment.text}
-            </div>
-          ))}
-        </div>
+      <h2 className="text-xl font-bold mb-4">Meeting Status: {status}</h2>
+      {status === 'analysis_done' ? (
+        transcript.length > 0 ? (
+          <div>
+            {transcript.map((segment, index) => (
+              <div key={index} className="mb-2">
+                <strong>{segment.speaker}:</strong> {segment.text}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p>Transcript is being processed. Please wait.</p>
+        )
       ) : (
-        <p>No transcript available yet. It may take a few moments to appear.</p>
+        <p>Meeting is still in progress or being analyzed. Transcript will be available when the analysis is complete.</p>
       )}
     </div>
   )

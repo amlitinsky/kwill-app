@@ -36,3 +36,31 @@ export async function getTranscript(botId: string) {
     throw error
   }
 }
+
+export async function getBotStatus(botId: string) {
+  try {
+    const response = await axios.get(`${RECALL_API_URL}/${botId}`, {
+      headers: {
+        'Authorization': `Token ${RECALL_API_KEY}`,
+      },
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching bot status:', error)
+    throw error
+  }
+}
+
+export async function analyzeMedia(botId: string) {
+  try {
+    const response = await axios.get(`${RECALL_API_URL}/${botId}/analyze`, {
+      headers: {
+        'Authorization': `Token ${RECALL_API_KEY}`,
+      },
+    })
+    return response.data
+  } catch (error) {
+    console.error('Error fetching bot analysis:', error)
+    throw error
+  }
+}
