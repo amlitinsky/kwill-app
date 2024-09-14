@@ -28,6 +28,14 @@ export async function updateClient(botId: string, data: Record<string, unknown>)
   const writer = clients.get(botId)
   if (writer) {
     const encoder = new TextEncoder()
-    await writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+    console.log(`Updating client for bot ${botId} with data:`, JSON.stringify(data, null, 2))
+    try {
+      await writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+      console.log(`Client updated successfully for bot ${botId}`)
+    } catch (error) {
+      console.error(`Error updating client for bot ${botId}:`, error)
+    }
+  } else {
+    console.warn(`No client found for bot ${botId}`)
   }
 }

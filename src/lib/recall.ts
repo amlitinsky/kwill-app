@@ -2,6 +2,7 @@ import axios from 'axios'
 
 const RECALL_API_KEY = process.env.RECALL_API_KEY
 const RECALL_API_URL = 'https://us-west-2.recall.ai/api/v1/bot'
+const RECALL_API_URL_ANALYZE = 'https://us-west-2.recall.ai/api/v2beta/bot'
 
 export async function createBot(meetingUrl: string) {
   try {
@@ -52,15 +53,19 @@ export async function getBotStatus(botId: string) {
 }
 
 export async function analyzeMedia(botId: string) {
+  console.log(`Initiating analysis for bot ${botId}`)
   try {
-    const response = await axios.get(`${RECALL_API_URL}/${botId}/analyze`, {
+    const response = await axios.post(`${RECALL_API_URL_ANALYZE}/${botId}/analyze`, {gladia_async_transcription: {}}, {
       headers: {
         'Authorization': `Token ${RECALL_API_KEY}`,
+        'accept': 'application/json',
+        'content-type': 'application/json'
       },
     })
+    console.log(`Analysis initiated successfully for bot ${botId}:`, response.data)
     return response.data
   } catch (error) {
-    console.error('Error fetching bot analysis:', error)
+    console.error('Error fetching bot analysis')
     throw error
   }
 }
