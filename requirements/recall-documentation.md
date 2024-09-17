@@ -243,3 +243,181 @@ This example sets up a basic webhook handler that checks for the bot.status_chan
 
 Remember to set up proper error handling and verification for your webhook endpoint. Also, ensure that your webhook URL is correctly configured in the Recall.ai dashboard 3.
 
+
+ENABLING ZOOM OAUTH WITH RECALL:
+To integrate Zoom OAuth into your current system using Next.js 14, TypeScript, and Supabase, you'll need to make some additions to your database schema and create some new components and API routes. Let's go through this step-by-step:
+
+1. Update the Database Schema:
+First, we need to add a table to store Zoom OAuth credentials:
+
+
+
+```sql
+-- Create Zoom OAuth Credentials table
+CREATE TABLE zoom_oauth_credentials (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES users(id),
+  recall_credential_id UUID NOT NULL,
+  zoom_account_id TEXT,
+  status TEXT DEFAULT 'active',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Enable RLS
+ALTER TABLE zoom_oauth_credentials ENABLE ROW LEVEL SECURITY;
+
+-- Create policy
+CREATE POLICY "Users can manage their own Zoom OAuth credentials" ON zoom_oauth_credentials
+  FOR ALL USING (auth.uid() = (SELECT auth_id FROM users WHERE id = zoom_oauth_credentials.user_id));
+
+```
+
+2. Create Zoom OAuth Flow Components:
+Next, let's create React components to handle the Zoom OAuth flow:
+
+
+
+```tsx
+import React from 'react'
+import { useRouter } from 'next/router'
+import { supabase } from '@/lib/supabaseClient'
+
+export function ZoomConnectButton() {
+  const router = useRouter()
+
+  const handleConnect = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      alert('Please sign in first')
+      return
+    }
+
+    const redirectUri = `${window.location.origin}/api/zoom-oauth-callback`
+    const zoomAppClientId = process.env.NEXT_PUBLIC_ZOOM_CLIENT_ID
+    const authUrl = generateAuthUrl(redirectUri, zoomAppClientId)
+    
+    router.push(authUrl)
+  }
+
+  return (
+    <button onClick={handleConnect}>Connect Zoom</button>
+  )
+}
+
+function generateAuthUrl(redirectUri: string, zoomAppClientId: string): string {
+  const baseUrl = "https://zoom.us/oauth/authorize"
+  const queryParams = {
+    "response_type": "code",
+    "redirect_uri": redirectUri,
+    "client_id": zoomAppClientId,
+  }
+  const queryString = new URLSearchParams(queryParams).toString()
+  return `${baseUrl}?${queryString}`
+}
+
+```
+
+3. Create API Routes:
+Now, let's create API routes to handle the OAuth callback and create Zoom OAuth credentials:
+
+
+
+```typescript
+// pages/api/zoom-oauth-callback.ts
+import type { NextApiRequest, NextApiResponse } from 'next'
+import { supabase } from '@/lib/supabaseClient'
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const { code } = req.query
+
+  if (!code || typeof code !== 'string') {
+    return res.status(400).json({ error: 'Invalid OAuth code' })
+  }
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      return res.status(401).json({ error: 'Unauthorized' })
+    }
+
+    // Call Recall API to create Zoom OAuth Credential
+    const recallResponse = await fetch('https://us-east-1.recall.ai/api/v2/zoom-oauth-credentials/', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RECALL_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        oauth_app: process.env.RECALL_ZOOM_OAUTH_APP_ID,
+        authorization_code: {
+          code: code,
+          redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/zoom-oauth-callback`,
+        },
+      }),
+    })
+
+    if (!recallResponse.ok) {
+      const errorData = await recallResponse.json()
+      if (errorData.conflicting_zoom_account_id) {
+        // Handle re-authorization
+        // Delete existing credentials and try again
+        // This is a simplified example and should be expanded in a real application
+        return res.status(400).json({ error: 'Zoom account already connected. Please disconnect and try again.' })
+      }
+      throw new Error('Failed to create Zoom OAuth Credential')
+    }
+
+    const recallData = await recallResponse.json()
+
+    // Store the credential in your database
+    const { data, error } = await supabase
+      .from('zoom_oauth_credentials')
+      .insert({
+        user_id: session.user.id,
+        recall_credential_id: recallData.id,
+        zoom_account_id: recallData.account_id,
+      })
+
+    if (error) throw error
+
+    res.redirect('/dashboard?zoom_connected=true')
+  } catch (error) {
+    console.error('Error in Zoom OAuth callback:', error)
+    res.status(500).json({ error: 'Internal Server Error' })
+  }
+}
+
+```
+
+4. Update your environment variables:
+Make sure to add the following environment variables:
+
+```
+NEXT_PUBLIC_ZOOM_CLIENT_ID=your_zoom_client_id
+RECALL_API_KEY=your_recall_api_key
+RECALL_ZOOM_OAUTH_APP_ID=your_recall_zoom_oauth_app_id
+NEXT_PUBLIC_BASE_URL=your_app_base_url
+```
+
+5. Integrate into your application:
+You can now use the `ZoomConnectButton` component in your application where you want users to connect their Zoom account. For example, in a settings or integration page:
+
+```tsx
+import { ZoomConnectButton } from '@/components/ZoomOAuth'
+
+export default function IntegrationsPage() {
+  return (
+    <div>
+      <h1>Integrations</h1>
+      <ZoomConnectButton />
+    </div>
+  )
+}
+```
+
+This setup allows your users to connect their Zoom account, which will enable the Recall-managed bot to join and record meetings automatically. The Zoom OAuth credentials are stored securely in your Supabase database, linked to the user's account.
+
+Remember to handle error cases, such as when a user revokes access or when the OAuth token needs to be refreshed. You may need to implement additional endpoints and logic to handle these scenarios.
+
+Also, ensure that your application complies with Zoom's terms of service and any applicable data protection regulations when implementing automatic recording features.
