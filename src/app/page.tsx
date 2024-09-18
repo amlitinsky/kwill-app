@@ -1,10 +1,15 @@
-import { ZoomLinkForm } from '@/components/ZoomLinkForm'
+import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
+import { cookies } from "next/headers";
+import LandingPage from "./public/landing/page";
+import AuthDashboard from "./private/dashboard/page";
 
-export default function Home() {
+export default async function Home() {
+  const supabase = createServerComponentClient({ cookies });
+  const { data: { session } } = await supabase.auth.getSession();
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Zoom Meeting Transcription</h1>
-      <ZoomLinkForm />
-    </div>
-  )
+    <>
+      {session ? <AuthDashboard /> : <LandingPage />}
+    </>
+  );
 }

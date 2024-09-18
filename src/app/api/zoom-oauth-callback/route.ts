@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Call Recall API to create Zoom OAuth Credential
-    const recallResponse = await fetch('https://us-east-1.recall.ai/api/v2/zoom-oauth-credentials/', {
+    const recallResponse = await fetch('https://us-west-2.recall.ai/api/v2/zoom-oauth-credentials/', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.RECALL_API_KEY}`,

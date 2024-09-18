@@ -142,9 +142,11 @@ export async function updatePaymentPlan(userId: string, plan: string, stripeCust
 }
 
 export async function signInWithGoogle() {
+  console.log("window origin test: ", window.location.origin)
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
+      redirectTo: `${window.location.origin}/auth/callback`,
       queryParams: {
         access_type: 'offline',
         prompt: 'consent',
@@ -152,14 +154,7 @@ export async function signInWithGoogle() {
     },
   });
 
+
   if (error) throw error;
-
-  // If the sign-in was successful, data.url will contain the URL to redirect the user to
-  if (data?.url) {
-    // In a browser environment, you would redirect to this URL
-    // window.location.href = data.url;
-    console.log('Redirect URL:', data.url);
-  }
-
   return data;
 }

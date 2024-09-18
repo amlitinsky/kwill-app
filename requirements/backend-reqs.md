@@ -1,23 +1,37 @@
 SUMMARY OF BACKEND PRODUCT EXPERIENCE:
 - User creates a new query
 - User is asked to upload a valid shareable google spreadsheets link, we validate on our end if it's shareable (we collect all the column headers on our end)
-- User is then asked whether they want to upload a prexisting transcript (for demo) or a zoom link
+  - if it hasn't been validated we return an error before we proceed to the next step
+- Then, a new form pops up below, and the User is then asked (dropdown) whether they want to upload a prexisting transcript (for demo) or a zoom link
 - User is then asked for custom instructions, people they want to omit (like themselves) or specific fields
-- We finally hit submit, where our bot (using Recall.ai) is created and joins the zoom call (fallback, what should we do if the zoom call is back)
-- Zoom calls occurs, bot creates data, as soon as we have a webhook (also from recall.ai) saying that the meeting is over, we analyze bot media, once the bot has analyed media we store the transcript
+- We finally hit submit, where we hit our POST Recall API and our bot (using Recall.ai) is created and joins the zoom call (fallback, what should we do if the zoom call is back)
+- Zoom calls occurs, bot creates data, as soon as we have a webhook API (also from recall.ai) saying that the meeting is over, we analyze bot media via its API, once the bot has analyed media we store the transcript (as a JSON or JSONB)
 - Using an LLM API and the custom instructions, and column headers, we inject it all into an LLM prompt, then, the LLM prompt processes the information
-- The LLM produces a dictionary or JSON file that maps columns headers to the new values
+- The LLM API produces a dictionary or JSON file that maps columns headers to the new values
 - As soon as we acquire this JSONB file of the appropiate column headers to values, we append those values to the next avalable row in that google spreadsheets link
 - all of the above is good enough for our MVP
 
-OTHER USEFUL PRODUCT EXPERIENCE:
-- User should see all of the meetings they have conducted
+BACKEND APIS via SUPABASE:
+- Users (this is under the assumption that they are authenticated)
+  - CREATE: users should be able to create their own user
+  - READ: Users should be able to view their data
+  - DELETE: Users should be able to delete their account if they choose to (also useful for testing purpose)
+  - UPDATE: Users should be able to update their profile info and data in general
+- Meetings (also under the assumption that the user is authenticated)
+  - CREATE: Users should be able to create their own meetings under the assumption that they pass in a valid spreadsheet link and zoom link
+  - READ: Users should be able to view all of the previous meetings they conducted and access their data
+  - UPDATE: For now, users shouldn't be able to update their meeting info, only access
+  - DELETE: Users shouldn't be able to delete previous meetings
+- Zoom Oauth
+  - TBD
+
 
 
 STRIPE PAYMENT EXPERIENCE:
 - The Stripe API should handle the billing and subscription management for each month
 - The user should also be able to select a payment plan (free, pro, enterprise) via the Stripe API and have the ability to change their plan
 - The user should be able to select a payment plan (free, pro, enterprise) via the Stripe API and have the ability to change their plan
+- we will be using a free trial for 7 days, and then 1 request every 3 days unless they want to upgrade, need to figure out how to track this
 
 FUTURES:
 - Templates? Instead of reusing same spreadsheet link and and instructions, we just reuse one of the templates
@@ -74,7 +88,7 @@ CREATE TABLE meetings (
   column_headers text[],
   custom_instructions TEXT,
   status TEXT DEFAULT 'pending',
-  transcript TEXT,
+  transcript JSONB,
   processed_data JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -111,6 +125,7 @@ ALTER TABLE zoom_oauth_credentials ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view and update their own data" ON users
   FOR ALL USING (auth_id = auth.uid());
 
+// we need to modify this policy
 CREATE POLICY "Users can manage their own meetings" ON meetings
   FOR ALL USING (user_id = auth.uid());
 
