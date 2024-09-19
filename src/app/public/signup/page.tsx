@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { signUp, signInWithGoogle } from '@/lib/supabase'
+import { signUp, signInWithGoogle } from '@/lib/supabase-client'
 
 export default function SignUp() {
   const [firstName, setFirstName] = useState('');

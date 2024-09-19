@@ -1,4 +1,5 @@
-import { signUp, signIn, supabase, getCurrentUser, updateProfile, signOut, deleteAccount } from '../lib/supabase';
+import { signUp, signIn, supabase, getCurrentUser, updateProfile, signOut, } from '../lib/supabase-client';
+import { deleteAccount } from '@/lib/supabase-server';
 import { confirmTestUserEmail } from '../lib/testUtils';
 
 describe('Auth Tests', () => {

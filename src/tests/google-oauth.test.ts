@@ -1,4 +1,4 @@
-import { signInWithGoogle, getCurrentUser, signOut, deleteAccount } from '../lib/supabase';
+import { signInWithGoogle, getCurrentUser, signOut, deleteAccount } from '../lib/supabase-client';
 
 describe('Google OAuth Tests', () => {
   const testEmail = 'amlitinsky@gmail.com';

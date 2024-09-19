@@ -1,7 +1,7 @@
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import { cookies } from "next/headers";
 import LandingPage from "./public/landing/page";
-import AuthDashboard from "./private/dashboard/page";
+import PrivateDashboard from "./private/dashboard/page";
 
 export default async function Home() {
   const supabase = createServerComponentClient({ cookies });
@@ -9,7 +9,7 @@ export default async function Home() {
 
   return (
     <>
-      {session ? <AuthDashboard /> : <LandingPage />}
+      {session ? <PrivateDashboard /> : <LandingPage />}
     </>
   );
 }

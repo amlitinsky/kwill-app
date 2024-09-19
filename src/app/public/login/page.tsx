@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { signIn, signInWithGoogle } from '@/lib/supabase'
+import { signIn, signInWithGoogle } from '@/lib/supabase-client'
 
 export const description =
   "A login page with two columns. The first column has the login form with email and password. There's a Forgot your passwork link and a link to sign up if you do not have an account. The second column has a cover image."
@@ -32,7 +32,9 @@ export default function Login() {
     console.log('Starting Google Sign-In process');
     try {
       console.log('Calling signInWithGoogle function');
-      await signInWithGoogle();
+      const data = await signInWithGoogle();
+      router.push(data.url)
+      console.log("url: ", data.url)
       console.log('Google Sign-In initiated');
       // Don't redirect here, the callback will handle the redirect
     } catch (error) {

@@ -3,34 +3,56 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  console.log("request", request)
+  console.log("request received: ", request)
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
-  console.log('Callback - Full request URL:', request.url);
-  console.log('Callback - Search params:', requestUrl.searchParams.toString());
-  console.log('Callback - Received code:', code);
 
   const supabase = createRouteHandlerClient({ cookies });
 
   if (code) {
-    console.log('Callback - Attempting to exchange code for session');
-    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      console.error('Callback - Auth error:', error);
       return NextResponse.redirect(`${requestUrl.origin}/auth-error?reason=${encodeURIComponent(error.message)}`);
     }
-    console.log('Callback - Successfully exchanged code for session', data);
   } else {
-    console.log('Callback - No code received, checking existing session');
     const { data: { session } } = await supabase.auth.getSession();
-    console.log('Callback - Existing session:', session ? 'Found' : 'Not found');
     if (!session) {
-      console.log('Callback - No existing session found, redirecting to auth error');
       return NextResponse.redirect(`${requestUrl.origin}/auth-error?reason=no_session`);
     }
   }
 
-  console.log('Callback - Redirecting to dashboard');
   return NextResponse.redirect(`${requestUrl.origin}/private/dashboard`);
 }
+
+
+// import { NextResponse } from 'next/server'
+// // The client you created from the Server-Side Auth instructions
+// import { createClient } from '@supabase/supabase-js'
+
+// export async function GET(request: Request) {
+//   const { searchParams, origin } = new URL(request.url)
+//   const code = searchParams.get('code')
+//   // if "next" is in param, use it as the redirect URL
+//   const next = searchParams.get('next') ?? '/'
+
+//   if (code) {
+//     const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+//     const { error } = await supabase.auth.exchangeCodeForSession(code)
+//     if (!error) {
+//       const forwardedHost = request.headers.get('x-forwarded-host') // original origin before load balancer
+//       const isLocalEnv = process.env.NODE_ENV === 'development'
+//       if (isLocalEnv) {
+//         // we can be sure that there is no load balancer in between, so no need to watch for X-Forwarded-Host
+//         return NextResponse.redirect(`${origin}${next}`)
+//       } else if (forwardedHost) {
+//         return NextResponse.redirect(`https://${forwardedHost}${next}`)
+//       } else {
+//         return NextResponse.redirect(`${origin}${next}`)
+//       }
+//     }
+//   }
+
+//   // return the user to an error page with instructions
+//   return NextResponse.redirect(`${origin}/auth/auth-code-error`)
+// }
