@@ -109,8 +109,9 @@ CREATE TABLE templates (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id),
     name TEXT NOT NULL,
+    spreadsheet_link TEXT NOT NULL,
     spreadsheet_id TEXT NOT NULL,
-    column_headers TEXT[],
+    column_headers TEXT[]
     custom_instructions TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

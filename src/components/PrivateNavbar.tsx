@@ -11,19 +11,30 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { useRouter } from 'next/navigation'
-import { Input } from "@/components/ui/input"
-import { Search, CircleUser } from "lucide-react"
+import { usePathname, useRouter } from 'next/navigation'
+// import { Input } from "@/components/ui/input"
+// import { Search, CircleUser } from "lucide-react"
+import { CircleUser } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import Image from 'next/image'
 
 export function PrivateNavbar({ children }: { children: React.ReactNode }) {
   const supabase = createClientComponentClient()
   const router = useRouter()
+  const pathname = usePathname()
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut()
-    router.refresh()
+    try {
+      await supabase.auth.signOut()
+      router.push('/') // Redirect to the public landing page
+      router.refresh() // Force a refresh of the current route
+    } catch (error) {
+      console.error('Error signing out:', error)
+    }
+  }
+
+  const isLinkActive = (href: string) => {
+    return pathname === href
   }
 
   return (
@@ -33,30 +44,54 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
           href="/private/dashboard"
           className="flex items-center gap-2 text-lg font-semibold md:text-base"
         >
-          <Image 
-           src="/images/logos/kwill.png" 
-           alt="Kwill Logo" 
-           width={24} 
-           height={24} 
-          /> 
+          <div className="relative w-12 h-12">
+            <Image 
+              src="/images/logos/kwill.png" 
+              alt="Kwill Logo" 
+              fill
+              style={{ objectFit: 'contain' }}
+            /> 
+          </div>
         </Link>
         <Link
           href="/private/dashboard"
-          className="text-foreground transition-colors hover:text-foreground"
+          className={`transition-colors hover:text-foreground ${
+            isLinkActive('/private/dashboard') ? 'text-foreground font-bold' : 'text-muted-foreground'
+          }`}
         >
           Dashboard
         </Link>
         <Link
           href="/private/analytics"
-          className="text-muted-foreground transition-colors hover:text-foreground"
+          className={`transition-colors hover:text-foreground ${
+            isLinkActive('/private/analytics') ? 'text-foreground font-bold' : 'text-muted-foreground'
+          }`}
         >
           Analytics
         </Link>
         <Link
-          href="/private/billing"
-          className="text-muted-foreground transition-colors hover:text-foreground"
+          href="/private/templates"
+          className={`transition-colors hover:text-foreground ${
+            isLinkActive('/private/templates') ? 'text-foreground font-bold' : 'text-muted-foreground'
+          }`}
         >
-          Billing
+          Templates 
+        </Link>
+        <Link
+          href="/private/meetings"
+          className={`transition-colors hover:text-foreground ${
+            isLinkActive('/private/meetings') ? 'text-foreground font-bold' : 'text-muted-foreground'
+          }`}
+        >
+          Meetings 
+        </Link>
+        <Link
+          href="/private/settings"
+          className={`transition-colors hover:text-foreground ${
+            isLinkActive('/private/settings') ? 'text-foreground font-bold' : 'text-muted-foreground'
+          }`}
+        >
+          Settings 
         </Link>
       </nav>
       <Sheet>
@@ -66,38 +101,69 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
             size="icon"
             className="shrink-0 md:hidden"
           >
-            <Image src="/images/icon/kwill-logo1.png" alt="Kwill Logo" width={24} height={24} />
+            <div className="relative w-12 h-12">
+              <Image 
+                src="/images/logos/kwill.png" 
+                alt="Kwill Logo" 
+                fill
+                style={{ objectFit: 'contain' }}
+              /> 
+            </div>
             <span className="sr-only">Toggle navigation menu</span>
           </Button>
         </SheetTrigger>
         <SheetContent side="left">
           <nav className="grid gap-6 text-lg font-medium">
-            <Link
-              href="/private/dashboard"
-              className="flex items-center gap-2 text-lg font-semibold"
-            >
-              <Image src="/images/icon/kwill-logo1.png" alt="Kwill Logo" width={24} height={24} />
-              <span>Kwill</span>
-            </Link>
-            <Link href="/private/dashboard" className="hover:text-foreground">
+            <Link href="/private/dashboard" className={`hover:text-foreground ${
+              isLinkActive('/private/dashboard') ? 'text-foreground font-bold' : 'text-muted-foreground'
+            }`}>
               Dashboard
             </Link>
             <Link
               href="/private/analytics"
-              className="text-muted-foreground hover:text-foreground"
+              className={`hover:text-foreground ${
+                isLinkActive('/private/analytics') ? 'text-foreground font-bold' : 'text-muted-foreground'
+              }`}
             >
               Analytics
             </Link>
             <Link
+              href="/private/templates"
+              className={`hover:text-foreground ${
+                isLinkActive('/private/templates') ? 'text-foreground font-bold' : 'text-muted-foreground'
+              }`}
+            >
+              Templates
+            </Link>
+            <Link
+              href="/private/meetings"
+              className={`hover:text-foreground ${
+                isLinkActive('/private/meetings') ? 'text-foreground font-bold' : 'text-muted-foreground'
+              }`}
+            >
+              Meetings
+            </Link>
+            <Link
               href="/private/billing"
-              className="text-muted-foreground hover:text-foreground"
+              className={`hover:text-foreground ${
+                isLinkActive('/private/billing') ? 'text-foreground font-bold' : 'text-muted-foreground'
+              }`}
             >
               Billing
+            </Link>
+            <Link
+              href="/private/settings"
+              className={`hover:text-foreground ${
+                isLinkActive('/private/settings') ? 'text-foreground font-bold' : 'text-muted-foreground'
+              }`}
+            >
+              Settings
             </Link>
           </nav>
         </SheetContent>
       </Sheet>
-      <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+      <div className="flex w-full items-center justify-end gap-4 md:ml-auto md:gap-2 lg:gap-4">
+        {/*  TODO: Implement search functionality
         <form className="ml-auto flex-1 sm:flex-initial">
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -107,7 +173,7 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
               className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
             />
           </div>
-        </form>
+        </form> */}
         {children}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -133,64 +199,3 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
     </header>
   )
 }
-// 'use client'
-
-// import Link from 'next/link'
-// import { Button } from "@/components/ui/button"
-// import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-// import { 
-//   DropdownMenu, 
-//   DropdownMenuContent, 
-//   DropdownMenuItem, 
-//   DropdownMenuTrigger 
-// } from "@/components/ui/dropdown-menu"
-// import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-// import { useRouter } from 'next/navigation'
-
-// export function PrivateNavbar({ children }: { children: React.ReactNode }) {
-//   const supabase = createClientComponentClient()
-//   const router = useRouter()
-
-//   const handleSignOut = async () => {
-//     await supabase.auth.signOut()
-//     router.refresh()
-//   }
-
-//   return (
-//     <nav className="border-b">
-//       <div className="flex h-16 items-center px-4">
-//         <Link href="/private/dashboard" className="text-xl font-bold">
-//           Kwill
-//         </Link>
-//         <div className="ml-auto flex items-center space-x-4">
-//           <Link href="/private/dashboard">
-//             <Button variant="ghost">Dashboard</Button>
-//           </Link>
-//           <Link href="/private/analytics">
-//             <Button variant="ghost">Analytics</Button>
-//           </Link>
-//           <Link href="/private/billing">
-//             <Button variant="ghost">Billing</Button>
-//           </Link>
-//           <DropdownMenu>
-//             <DropdownMenuTrigger>
-//               <Avatar>
-//                 <AvatarImage src="https://github.com/shadcn.png" />
-//                 <AvatarFallback>CN</AvatarFallback>
-//               </Avatar>
-//             </DropdownMenuTrigger>
-//             <DropdownMenuContent>
-//               <DropdownMenuItem>
-//                 <Link href="/private/settings">Settings</Link>
-//               </DropdownMenuItem>
-//               <DropdownMenuItem>
-//                 <Button variant="ghost" onClick={handleSignOut}>Sign out</Button>
-//               </DropdownMenuItem>
-//             </DropdownMenuContent>
-//           </DropdownMenu>
-//           {children}
-//         </div>
-//       </div>
-//     </nav>
-//   )
-// }

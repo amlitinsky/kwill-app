@@ -42,7 +42,7 @@ export async function updateProfile(firstName: string, lastName: string) {
   const { error } = await supabase
     .from('users')
     .update({ first_name: firstName, last_name: lastName })
-    .match({ user_id: user.id });
+    .eq('id', user.id);
 
   if (error) throw error;
 
