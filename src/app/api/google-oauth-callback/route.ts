@@ -14,8 +14,8 @@ export async function GET(request: Request) {
   const supabase = createRouteHandlerClient({ cookies });
 
   try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
+    const { data: { user} } = await supabase.auth.getUser();
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -26,12 +26,13 @@ export async function GET(request: Request) {
     const { error } = await supabase
       .from('google_oauth_credentials')
       .upsert({
-        user_id: session.user.id,
+        user_id: user.id,
         access_token: tokens.access_token,
         refresh_token: tokens.refresh_token,
         expiry_date: tokens.expiry_date ? new Date(tokens.expiry_date).toISOString() : null,
       }, {
         onConflict: 'user_id',
+
       });
 
     if (error) throw error;
