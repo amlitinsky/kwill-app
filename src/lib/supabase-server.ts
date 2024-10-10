@@ -109,11 +109,10 @@ export async function deleteTemplate(id: string) {
 // MEETINGS
 
 // creating a initial meeting, updating other columns later
-export async function createMeeting(name: string, zoomLink: string, spreadsheetId: string, customInstructions: string) {
+export async function createMeeting(name: string, zoomLink: string, spreadsheetId: string, customInstructions: string, botId: string) {
   const supabase = createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
-  console.log("actively creating the meeting with supabase API")
 
   // Get Google OAuth credentials
   const { data: googleCreds, error: googleCredsError } = await supabase
@@ -122,19 +121,34 @@ export async function createMeeting(name: string, zoomLink: string, spreadsheetI
     .eq('user_id', user.id)
     .single();
 
+
   if (googleCredsError || !googleCreds) throw new Error('Google OAuth credentials not found');
+
   // Validate spreadsheet and get headers
   const auth = new OAuth2Client();
-  auth.setCredentials({ access_token: googleCreds.access_token });
-  const sheets = google.sheets({ version: 'v4', auth });
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId,
-    range: 'A1:ZZ1',
+  auth.setCredentials({
+    access_token: googleCreds.access_token,
+    refresh_token: googleCreds.refresh_token,
+    expiry_date: googleCreds.expiry_date
   });
+
+  // await checkTokenValidity(googleCreds.access_token)
+
+  const sheets = google.sheets({ version: 'v4', auth });
+
+  let response;
+  try {
+    response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: 'A1:ZZ1',
+    });
+  } catch (error) {
+    console.error('Error fetching spreadsheet headers:', error);
+    throw new Error('Failed to fetch spreadsheet headers');
+  }
 
   const fetchedColumnHeaders = response.data.values?.[0] || [];
 
-  console.log("alleged column headers", fetchedColumnHeaders)
 
   const { data, error } = await supabase
     .from('meetings')
@@ -145,18 +159,8 @@ export async function createMeeting(name: string, zoomLink: string, spreadsheetI
       spreadsheet_id: spreadsheetId,
       column_headers: fetchedColumnHeaders,
       custom_instructions: customInstructions,
+      bot_id: botId
     });
-
-  // Test write operation
-  const testValue = `Test value: ${new Date().toISOString()}`;
-  await sheets.spreadsheets.values.append({
-    spreadsheetId,
-    range: 'A4',
-    valueInputOption: 'RAW',
-    requestBody: {
-      values: [[testValue]]
-    }
-  });
 
   if (error) throw error;
   return data;
@@ -176,30 +180,27 @@ export async function fetchMeetings() {
   return data;
 }
 
-export async function updateMeetingStatus(id: string, status: string) {
+export async function updateMeetingStatus(botId: string, status: string) {
   const supabase = createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('No user logged in');
+  console.log('in supabase file with the following: ', botId, 'status ', status)
   const { data, error } = await supabase
     .from('meetings')
-    .update({ status: status })
-    .eq('id', id)
-    .eq('user_id', user.id)
+    .update({ status: status})
+    .eq('bot_id', botId)
 
+  console.log("data: ", data)
   if (error) throw error;
   return data;
 }
 
-export async function updateMeetingTranscript(id: string, transcript: string) {
+export async function updateMeetingTranscript(botId: string, transcript: string) {
   const supabase = createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('No user logged in');
   const { data, error } = await supabase
     .from('meetings')
     .update({ transcript: transcript })
-    .eq('id', id)
-    .eq('user_id', user.id);
+    .eq('bot_id', botId)
 
+  console.log("data: ", data)
   if (error) throw error;
   return data;
 }

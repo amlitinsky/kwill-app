@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { fetchMeetings, createMeeting, updateMeetingStatus, updateMeetingTranscript, updateMeetingProcessedData, deleteMeeting } from '@/lib/supabase-server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { createBot } from '@/lib/recall';
 
 export async function GET() {
   const supabase = createServerSupabaseClient()
@@ -22,15 +23,15 @@ export async function POST(request: Request) {
   const supabase = createServerSupabaseClient()
   const { data: { session } } = await supabase.auth.getSession();
 
-  console.log("in meetings API and about to create a meeting in supabase")
-
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const { name, zoomLink, spreadsheetId, customInstructions } = await request.json();
-    const newMeeting = await createMeeting(name, zoomLink, spreadsheetId, customInstructions);
+    const bot = await createBot(zoomLink)
+    const newMeeting = await createMeeting(name, zoomLink, spreadsheetId, customInstructions, bot.id);
+    await updateMeetingStatus(bot.id, "hello world part 2")
     return NextResponse.json(newMeeting);
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });

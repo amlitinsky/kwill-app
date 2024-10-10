@@ -13,7 +13,6 @@ export async function POST(request: Request) {
   try {
     const { spreadsheetId } = await request.json();
 
-    console.log("validating spreadsheet API")
     
     // Fetch the user's Google OAuth credentials
     const { data: credentials, error } = await supabase

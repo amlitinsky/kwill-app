@@ -12,6 +12,7 @@ export function getGoogleAuthUrl() {
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: ['https://www.googleapis.com/auth/spreadsheets'],
+    prompt: 'consent'
   });
 }
 
@@ -64,4 +65,17 @@ export async function refreshAccessToken(refreshToken: string) {
 export function extractSpreadsheetId(url: string): string | null {
   const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
   return match ? match[1] : null;
+}
+
+
+export async function checkTokenValidity(access_token: string) {
+  try {
+    const response = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${access_token}`);
+    const data = await response.json();
+    console.log('Token info:', data);
+    return data.error ? true : false;
+  } catch (error) {
+    console.error('Error checking token validity:', error);
+    return false;
+  }
 }

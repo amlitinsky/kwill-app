@@ -84,6 +84,7 @@ export default function MeetingsPage() {
 
       // Extract spreadsheet ID from the link
       const extractedSpreadsheetId = extractSpreadsheetId(spreadsheetId);
+      console.log("extracted id: ", extractedSpreadsheetId)
       if (!extractedSpreadsheetId) {
         throw new Error('Invalid spreadsheet link');
       }
@@ -112,7 +113,7 @@ export default function MeetingsPage() {
       const response = await fetch('/api/meetings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, zoomLink, spreadsheetId, customInstructions }),
+        body: JSON.stringify({ name, zoomLink, spreadsheetId : extractedSpreadsheetId, customInstructions }),
       });
 
       if (!response.ok) {

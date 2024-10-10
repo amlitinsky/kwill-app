@@ -20,7 +20,6 @@ export async function GET(request: Request) {
     }
 
     const tokens = await getGoogleTokens(code);
-    console.log("getting google tokens")
 
     // Store the tokens in your database
     const { error } = await supabase
@@ -37,7 +36,6 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
-    console.log("redirecting back to the meetings page")
 
     return NextResponse.redirect(`${requestUrl.origin}/private/meetings?google_connected=true`);
   } catch (error) {
