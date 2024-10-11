@@ -2,10 +2,16 @@ import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
+import { createClient } from '@supabase/supabase-js';
 
 export function createServerSupabaseClient() { 
     return createServerComponentClient({cookies})
 }
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
 // Add function for updating user's payment plan
 export async function updatePaymentPlan(userId: string, plan: string, stripeCustomerId: string) {
@@ -181,9 +187,9 @@ export async function fetchMeetings() {
 }
 
 export async function updateMeetingStatus(botId: string, status: string) {
-  const supabase = createServerSupabaseClient()
+  // const supabase = createServerSupabaseClient()
   console.log('in supabase file with the following: ', botId, 'status ', status)
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('meetings')
     .update({ status: status})
     .eq('bot_id', botId)
@@ -194,8 +200,8 @@ export async function updateMeetingStatus(botId: string, status: string) {
 }
 
 export async function updateMeetingTranscript(botId: string, transcript: string) {
-  const supabase = createServerSupabaseClient()
-  const { data, error } = await supabase
+  // const supabase = createServerSupabaseClient()
+  const { data, error } = await supabaseAdmin
     .from('meetings')
     .update({ transcript: transcript })
     .eq('bot_id', botId)
