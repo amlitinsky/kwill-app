@@ -17,7 +17,6 @@ export default function AuthListener({ initialSession }: AuthListenerProps) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('AuthListener - Auth state changed:', event, "session: ", session);
       if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
         setSession(!!session);
         router.refresh();

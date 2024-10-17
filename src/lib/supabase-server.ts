@@ -138,8 +138,8 @@ export async function createMeeting(name: string, zoomLink: string, spreadsheetI
     expiry_date: googleCreds.expiry_date
   });
 
-  // await checkTokenValidity(googleCreds.access_token)
 
+  // we need to replace this with the new column headers function
   const sheets = google.sheets({ version: 'v4', auth });
 
   let response;
@@ -212,17 +212,43 @@ export async function updateMeetingTranscript(botId: string, transcript: string)
 }
 
 // updating the dictionary/JSON for the result of the zoom meeting
-export async function updateMeetingProcessedData(id: string, processedData: Record<string, unknown>) {
-  const supabase = createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('No user logged in');
-  const { data, error } = await supabase
+export async function updateMeetingProcessedData(botId: string, processedData: Record<string, unknown>) {
+  const { data, error } = await supabaseAdmin
     .from('meetings')
     .update({ processed_data: processedData })
-    .eq('id', id)
-    .eq('user_id', user.id);
+    .eq('bot_id', botId);
 
   if (error) throw error;
+  return data;
+}
+
+export async function getMeetingDetails(botId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('meetings')
+    .select('user_id, spreadsheet_id, column_headers, custom_instructions')
+    .eq('bot_id', botId)
+    .single()
+
+  if (error) {
+    console.error('Error fetching meeting details:', error)
+    return null
+  }
+
+  return data
+}
+
+export async function getGoogleCreds(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('google_oauth_credentials')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching Google credentials:', error);
+    return null;
+  }
+
   return data;
 }
 

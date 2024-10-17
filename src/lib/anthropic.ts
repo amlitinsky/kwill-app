@@ -28,6 +28,7 @@ export async function processTranscriptWithClaude(
     5. Create a JSON object where:
     - Keys are the provided column headers
     - Values are the extracted information from your analysis
+    - If you don't find a relevant value for an associated header, leave it as an empty string
 
     6. Ensure the output is a valid JSON object.
   `;
@@ -39,6 +40,8 @@ export async function processTranscriptWithClaude(
       { role: 'user', content: prompt }
     ]
   });
+
+  console.log("initial LLM response: ", response)
 
   const result = response.content
   .filter(block => block.type === 'text')

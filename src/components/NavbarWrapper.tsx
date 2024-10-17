@@ -10,13 +10,11 @@ interface NavbarWrapperProps {
 }
 
 export function NavbarWrapper({ session}: NavbarWrapperProps) {
-  console.log('NavbarWrapper - Initial client-side session:', session)
 
   const pathname = usePathname()
   const hideNavbarRoutes = ['/public/login', '/public/signup']
   const shouldHideNavbar = hideNavbarRoutes.includes(pathname)
 
-  console.log('NavbarWrapper - Rendering with session:', session)
   if (session) {
     if (!shouldHideNavbar) {
       return (

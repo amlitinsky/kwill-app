@@ -31,7 +31,6 @@ export async function POST(request: Request) {
     const { name, zoomLink, spreadsheetId, customInstructions } = await request.json();
     const bot = await createBot(zoomLink)
     const newMeeting = await createMeeting(name, zoomLink, spreadsheetId, customInstructions, bot.id);
-    await updateMeetingStatus(bot.id, "hello world part 2")
     return NextResponse.json(newMeeting);
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });

@@ -1,18 +1,25 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-// import { useRouter } from 'next/navigation'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { updateProfile, getCurrentUser } from '@/lib/supabase-client'
+import { SubscriptionManager } from '@/components/SubscriptionManager'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useToast } from '@/hooks/use-toast'
 
 export default function SettingsPage() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [loading, setLoading] = useState(false)
-//   const router = useRouter()
+  const searchParams = useSearchParams()
+  const verificationCompleteRef = useRef(false)
+  const router = useRouter()
+  const { toast } = useToast()
+
+
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -27,9 +34,58 @@ export default function SettingsPage() {
         console.error('Error fetching user profile:', error)
       }
     }
-
     fetchProfile()
+
   }, [])
+
+  useEffect(() => {
+    const sessionId = searchParams.get('session_id')
+    
+    if (sessionId && !verificationCompleteRef.current) {
+      const verifyCheckout = async () => {
+        try {
+          verificationCompleteRef.current = true
+          const response = await fetch('/api/verify-checkout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ sessionId }),
+          });
+          const data = await response.json();
+          if (data.success) {
+            toast({
+              title: "Success",
+              description: "Subscription updated successfully!",
+            })
+            router.replace('/private/settings');
+
+          } else {
+            toast({
+              title: "Error",
+              description: "Failed to verify subscription. Please contact support.",
+              variant: "destructive",
+            })
+          }
+        } catch (error) {
+          console.error('Error verifying checkout:', error);
+          toast({
+            title: "Error",
+            description: "An error occurred while verifying your subscription. Please contact support.",
+            variant: "destructive",
+          })
+        }
+      };
+
+      verifyCheckout();
+    }
+
+    // return () => {
+    //   // This cleanup function will run when the component unmounts
+    //   // or before the effect runs again
+    //   setVerificationComplete(false);
+    // };
+  }, [searchParams, router, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,10 +93,17 @@ export default function SettingsPage() {
 
     try {
       await updateProfile(firstName, lastName)
-      alert('Profile updated successfully')
+      toast({
+        title: "Success",
+        description: "Profile updated successfully",
+      })
     } catch (error) {
       console.error('Error updating profile:', error)
-      alert('Error updating profile')
+      toast({
+        title: "Error",
+        description: "Error updating profile",
+        variant: "destructive",
+      })
     } finally {
       setLoading(false)
     }
@@ -98,8 +161,7 @@ export default function SettingsPage() {
                   <CardDescription>Manage your billing information and subscription</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/* Billing content will go here */}
-                  <p>Billing information coming soon.</p>
+                  <SubscriptionManager/>
                 </CardContent>
               </Card>
             </TabsContent>

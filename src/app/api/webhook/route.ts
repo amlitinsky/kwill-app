@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
 import { Webhook } from 'svix'
 import { analyzeMedia, getTranscript } from '@/lib/recall'
-import { updateMeetingStatus, updateMeetingTranscript } from '@/lib/supabase-server'
+import { getGoogleCreds, getMeetingDetails, updateMeetingProcessedData, updateMeetingStatus, updateMeetingTranscript } from '@/lib/supabase-server'
+import { processTranscriptWithClaude } from '@/lib/anthropic'
+import { mapHeadersAndAppendData } from '@/lib/google-auth'
 
 const secret = process.env.RECALL_WEBHOOK_SECRET!
 
@@ -62,11 +64,28 @@ export async function POST(req: Request) {
 
         await updateMeetingTranscript(bot_id, transcript)
         await updateMeetingStatus(bot_id, 'transcript_ready')
-        // call claude API
-        // update supabase
-        // write to google spreadsheet
 
-        console.log('Processed transcript:', JSON.stringify(transcript, null, 2))
+        const meetingDetails = await getMeetingDetails(bot_id)
+        if (!meetingDetails) {
+            throw new Error('Failed to retrieve meeting details')
+        }
+
+        const { user_id, spreadsheet_id, column_headers, custom_instructions } = meetingDetails
+
+        // call claude API (with the transcript)
+        const processed_data = await processTranscriptWithClaude(transcript, column_headers, custom_instructions)
+        console.log("LLM output: ", processed_data)
+
+        // get access token
+        const google_creds = await getGoogleCreds(user_id)
+        console.log("retrieved google creds in web hook", google_creds)
+
+        // update supabase
+        await updateMeetingProcessedData(bot_id, processed_data)
+
+        // appned to google sheets
+        await mapHeadersAndAppendData(spreadsheet_id, "", processed_data, google_creds.access_token)
+
       } catch (error) {
         console.error(`Error retrieving or processing transcript: Bot ${bot_id}`, error)
         return NextResponse.json({ error: 'Failed to retrieve or process transcript' }, { status: 500 })

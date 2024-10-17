@@ -29,9 +29,9 @@ BACKEND APIS via SUPABASE:
 
 STRIPE PAYMENT EXPERIENCE:
 - The Stripe API should handle the billing and subscription management for each month
-- The user should also be able to select a payment plan (free, pro, enterprise) via the Stripe API and have the ability to change their plan
+- The user should also be able to select a payment plan (free, pro, premium, enterprise) via the Stripe API and have the ability to change their plan
 - The user should be able to select a payment plan (free, pro, enterprise) via the Stripe API and have the ability to change their plan
-- we will be using a free trial for 7 days, and then 1 request every 3 days unless they want to upgrade, need to figure out how to track this
+- we will be using free 4 meetings then after the user has to pay for one of the plans
 
 FUTURES:
 - Templates? Instead of reusing same spreadsheet link and and instructions, we just reuse one of the templates

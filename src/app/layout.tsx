@@ -6,6 +6,7 @@ import { NavbarWrapper } from "@/components/NavbarWrapper";
 import { cookies } from "next/headers";
 import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import AuthListener from "@/components/AuthListener";
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -41,6 +42,7 @@ export default async function RootLayout({
             <NavbarWrapper session={!!session}/>
             <main className="flex-grow">
               {children}
+              <Toaster />
             </main>
           </div>
         </ThemeProvider>

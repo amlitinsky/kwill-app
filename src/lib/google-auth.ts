@@ -1,5 +1,5 @@
 import { OAuth2Client } from 'google-auth-library';
-import { google } from 'googleapis';
+import { google, sheets_v4 } from 'googleapis';
 
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_API_CLIENT_ID,
@@ -23,29 +23,65 @@ export async function getGoogleTokens(code: string) {
 }
 
 // Appends a new row to a Google Spreadsheet
-export async function appendToGoogleSheet(spreadsheetId: string, range: string, values: string[][], accessToken: string) {
-  const auth = new OAuth2Client();
-  auth.setCredentials({ access_token: accessToken });
-  const sheets = google.sheets({ version: 'v4', auth });
-  
-  try {
-    const response = await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range,
-      valueInputOption: 'USER_ENTERED',
-      requestBody: { values },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error appending to Google Sheet:', error);
-    throw error;
+async function findNextEmptyRow(sheets: sheets_v4.Sheets, spreadsheetId: string, sheetName: string): Promise<number> {
+  const range = `${sheetName}!A:A`;
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId,
+    range,
+  });
+
+  const values = response.data.values;
+  if (!values || values.length === 0) {
+    return 1;
   }
+  return values.length + 1;
+}
+
+export async function mapHeadersAndAppendData(
+  spreadsheetId: string, 
+  sheetName: string | null, 
+  dataDict: Record<string, string>, 
+  accessToken: string
+) {
+  oauth2Client.setCredentials({ access_token: accessToken });
+  const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
+  console.log("in append spreadsheet function, these are the values we have: ", "spread id", spreadsheetId, "data dict", dataDict, "access token", accessToken)
+
+  // If no sheet name is provided, get the first sheet's name
+  if (!sheetName) {
+    const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId });
+    sheetName = spreadsheet.data.sheets?.[0].properties?.title || 'Sheet1';
+  }
+
+  // Get headers using the getColumnHeaders function
+  const headers = await getColumnHeaders(accessToken, spreadsheetId);
+
+  if (headers.length === 0) {
+    throw new Error('No headers found in the spreadsheet');
+  }
+
+  const rowData = headers.map(header => dataDict[header] || null);
+
+  // Append the mapped data to the spreadsheet
+  const nextEmptyRow = await findNextEmptyRow(sheets, spreadsheetId, sheetName);
+  const appendRange = `${sheetName}!A${nextEmptyRow}`;
+
+  const appendResponse = await sheets.spreadsheets.values.append({
+    spreadsheetId,
+    range: appendRange,
+    valueInputOption: 'USER_ENTERED',
+    insertDataOption: 'INSERT_ROWS',
+    requestBody: {
+      values: [rowData],
+    },
+  });
+
+  return appendResponse.data;
 }
 
 export async function validateSpreadsheet(spreadsheetId: string, accessToken: string) {
-  const auth = new OAuth2Client();
-  auth.setCredentials({ access_token: accessToken });
-  const sheets = google.sheets({ version: 'v4', auth });
+  oauth2Client.setCredentials({ access_token: accessToken });
+  const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
   
   try {
     await sheets.spreadsheets.get({ spreadsheetId });
@@ -77,5 +113,26 @@ export async function checkTokenValidity(access_token: string) {
   } catch (error) {
     console.error('Error checking token validity:', error);
     return false;
+  }
+}
+
+export async function getColumnHeaders(accessToken: string, spreadsheetId: string) {
+  oauth2Client.setCredentials({ access_token: accessToken });
+  const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
+
+  try {
+    const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId });
+    const sheetName = spreadsheet.data.sheets?.[0].properties?.title || 'Sheet1';
+    const headerRange = `${sheetName}!1:1`;
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range: headerRange,
+    });
+
+    return response.data.values?.[0] || [];
+  } catch (error) {
+    console.error('Error getting column headers:', error);
+    throw new Error('Failed to retrieve column headers');
   }
 }
