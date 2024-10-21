@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createCheckoutSession, createStripeCustomer} from '@/lib/stripe';
+import { createCheckoutSession, createStripeCustomer, listStripeCustomer} from '@/lib/stripe';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function POST(request: Request) {
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const { priceId } = await request.json();
     const { data: userData, error: userError } = await supabase
       .from('users')
-      .select('stripe_customer_id')
+      .select('stripe_customer_id, stripe_subscription_id')
       .eq('id', user.id)
       .single();
 
@@ -22,18 +22,32 @@ export async function POST(request: Request) {
     if (userError) throw userError;
 
     let stripeCustomerId = userData?.stripe_customer_id;
-    // If user doesn't have a Stripe customer ID, create one
-    if (!stripeCustomerId) {
-      const customer = await createStripeCustomer(user.email!);
-      await supabase
+
+    // Check for existing customer in Stripe
+    const existingCustomerId = await listStripeCustomer(user.email!)
+
+    if (existingCustomerId) {
+      // If a customer exists in Stripe
+      if (!stripeCustomerId || stripeCustomerId !== existingCustomerId) {
+        // Update our database with the Stripe customer ID
+        stripeCustomerId = existingCustomerId;
+        await supabase
+          .from('users')
+          .update({ stripe_customer_id: stripeCustomerId })
+          .eq('id', user.id);
+      }
+    } else if (!stripeCustomerId) {
+    // If no customer in Stripe and no customer ID in our database, create a new one
+    const customer = await createStripeCustomer(user.email!);
+    stripeCustomerId = customer.id;
+    await supabase
         .from('users')
-        .update({ stripe_customer_id: customer.id })
+        .update({ stripe_customer_id: stripeCustomerId })
         .eq('id', user.id);
-      stripeCustomerId = customer.id;
     }
 
-
-    const session = await createCheckoutSession(priceId)
+    const previous_subscription_id = userData.stripe_subscription_id
+    const session = await createCheckoutSession(priceId, previous_subscription_id, stripeCustomerId)
 
     return NextResponse.json({ 
         sessionId: session.id

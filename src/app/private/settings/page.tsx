@@ -14,6 +14,7 @@ export default function SettingsPage() {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [loading, setLoading] = useState(false)
+  const [activeTab, setActiveTab] = useState('profile')
   const searchParams = useSearchParams()
   const verificationCompleteRef = useRef(false)
   const router = useRouter()
@@ -22,10 +23,15 @@ export default function SettingsPage() {
 
 
   useEffect(() => {
+    // Load the active tab from localStorage
+    const savedTab = localStorage.getItem('settingsActiveTab')
+    if (savedTab) {
+      setActiveTab(savedTab)
+    }
+
     const fetchProfile = async () => {
       try {
         const user = await getCurrentUser()
-        console.log("user: ", user)
         if (user && user.user_metadata) {
           setFirstName(user.user_metadata.first_name || '')
           setLastName(user.user_metadata.last_name || '')
@@ -37,6 +43,12 @@ export default function SettingsPage() {
     fetchProfile()
 
   }, [])
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    // Save the active tab to localStorage
+    localStorage.setItem('settingsActiveTab', value)
+  }
 
   useEffect(() => {
     const sessionId = searchParams.get('session_id')
@@ -80,11 +92,6 @@ export default function SettingsPage() {
       verifyCheckout();
     }
 
-    // return () => {
-    //   // This cleanup function will run when the component unmounts
-    //   // or before the effect runs again
-    //   setVerificationComplete(false);
-    // };
   }, [searchParams, router, toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -110,15 +117,17 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <Tabs defaultValue="profile" className="w-full">
+    <div className="container py-10">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <div className="flex">
-          <TabsList className="flex flex-col h-full space-y-2 mr-8">
-            <TabsTrigger value="profile" className="w-full justify-start">Profile</TabsTrigger>
-            <TabsTrigger value="billing" className="w-full justify-start">Billing</TabsTrigger>
-            <TabsTrigger value="integrations" className="w-full justify-start">Integrations</TabsTrigger>
-          </TabsList>
-          <div className="flex-grow">
+          <div className="w-48 pr-8">
+            <TabsList className="flex flex-col space-y-2 w-full bg-transparent">
+              <TabsTrigger value="profile" className="w-full justify-center text-center !bg-transparent">Profile</TabsTrigger>
+              <TabsTrigger value="billing" className="w-full justify-center text-center !bg-transparent">Billing</TabsTrigger>
+              <TabsTrigger value="integrations" className="w-full justify-center text-center !bg-transparent">Integrations</TabsTrigger>
+            </TabsList>
+          </div>
+          <div className="flex-grow -mt-12">
             <TabsContent value="profile">
               <Card>
                 <CardHeader>
@@ -155,15 +164,7 @@ export default function SettingsPage() {
               </Card>
             </TabsContent>
             <TabsContent value="billing">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Billing</CardTitle>
-                  <CardDescription>Manage your billing information and subscription</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <SubscriptionManager/>
-                </CardContent>
-              </Card>
+              <SubscriptionManager />
             </TabsContent>
             <TabsContent value="integrations">
               <Card>
@@ -172,7 +173,6 @@ export default function SettingsPage() {
                   <CardDescription>Manage your integrated services</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/* Integrations content will go here */}
                   <p>Integrations information coming soon.</p>
                 </CardContent>
               </Card>

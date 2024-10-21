@@ -20,6 +20,7 @@ export async function GET() {
       throw userError;
     }
 
+
     return NextResponse.json({ currentPlan: userData?.payment_plan || 'free' });
   } catch (error) {
     console.error('Error fetching current plan:', error);

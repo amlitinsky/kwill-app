@@ -27,7 +27,7 @@ export async function POST() {
     await supabase
       .from('users')
       .update({ 
-        payment_plan: 'free',
+        subscription_end_date: new Date(canceledSubscription.current_period_end * 1000).toISOString(),
         stripe_subscription_id: null
       })
       .eq('id', user.id);

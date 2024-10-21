@@ -29,3 +29,7 @@ export const FREE_PLAN =   {
       'White-labeling options'
     ]
   }
+
+  export const FREE_MEETING_USAGE = 4
+  export const PRO_MEETING_USAGE = 50
+  export const PREMIUM_MEETING_USAGE = 200

@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { MoreHorizontal, Plus } from "lucide-react"
+import { MoreHorizontal, Plus, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useMeetings } from '@/hooks/use-meetings'
 
@@ -37,6 +37,7 @@ export default function MeetingsPage() {
   const [zoomLink, setZoomLink] = useState('')
   const [spreadsheetId, setSpreadsheetId] = useState('')
   const [customInstructions, setCustomInstructions] = useState('')
+  const [showLimitModal, setShowLimitModal] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -76,8 +77,30 @@ export default function MeetingsPage() {
     }
   }, [mutate, toast]);
 
+  const handleCreateButtonClick = async () => {
+    try {
+      const meetingLimitResponse = await fetch('/api/check-meeting-limit');
+      const meetingLimitData = await meetingLimitResponse.json();
+      console.log("meeting limit data: ", meetingLimitData)
+
+      if (!meetingLimitData.canCreateMeeting) {
+        setShowLimitModal(true);
+      } else {
+        setIsCreateOpen(true);
+      }
+    } catch (error) {
+      console.error('Error checking meeting limit:', error);
+      toast({ 
+        title: "Error", 
+        description: "Unable to check meeting limit. Please try again.", 
+        variant: "destructive" 
+      });
+    }
+  };
+
   const handleCreateMeeting = async () => {
     try {
+
       // First we check if if we have Google OAuth credentials
       const authCheckResponse = await fetch('/api/check-google-oauth');
       const authCheckData = await authCheckResponse.json();
@@ -174,6 +197,10 @@ export default function MeetingsPage() {
     setIsEditOpen(true)
   }
 
+  const handleUpgradeClick = () => {
+    window.location.href = '/private/settings'
+  }
+
   if (isLoading) return <div>Loading...</div>
   if (isError) return <div>Error loading meetings</div>
 
@@ -182,35 +209,9 @@ export default function MeetingsPage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-2xl font-bold">Meetings</CardTitle>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" /> Create Meeting</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Create New Meeting</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">Name</Label>
-                  <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="zoom-link" className="text-right">Zoom Link</Label>
-                  <Input id="zoom-link" value={zoomLink} onChange={(e) => setZoomLink(e.target.value)} className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="spreadsheet-id" className="text-right">Spreadsheet Link</Label>
-                  <Input id="spreadsheet-id" value={spreadsheetId} onChange={(e) => setSpreadsheetId(e.target.value)} className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="instructions" className="text-right">Custom Instructions</Label>
-                  <Textarea id="instructions" value={customInstructions} onChange={(e) => setCustomInstructions(e.target.value)} className="col-span-3" />
-                </div>
-              </div>
-              <Button onClick={handleCreateMeeting}>Create Meeting</Button>
-            </DialogContent>
-          </Dialog>
+        <Button onClick={handleCreateButtonClick}>
+          <Plus className="mr-2 h-4 w-4" /> Create Meeting
+        </Button>
         </CardHeader>
         <CardContent>
           {meetings && meetings.length === 0 ? (
@@ -252,6 +253,35 @@ export default function MeetingsPage() {
         </CardContent>
       </Card>
 
+      <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+        {/* <DialogTrigger asChild>
+          <Button><Plus className="mr-2 h-4 w-4" /> Create Meeting</Button>
+        </DialogTrigger> */}
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create New Meeting</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">Name</Label>
+              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="zoom-link" className="text-right">Zoom Link</Label>
+              <Input id="zoom-link" value={zoomLink} onChange={(e) => setZoomLink(e.target.value)} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="spreadsheet-id" className="text-right">Spreadsheet Link</Label>
+              <Input id="spreadsheet-id" value={spreadsheetId} onChange={(e) => setSpreadsheetId(e.target.value)} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="instructions" className="text-right">Custom Instructions</Label>
+              <Textarea id="instructions" value={customInstructions} onChange={(e) => setCustomInstructions(e.target.value)} className="col-span-3" />
+            </div>
+          </div>
+          <Button onClick={handleCreateMeeting}>Create Meeting</Button>
+        </DialogContent>
+      </Dialog>
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -276,6 +306,34 @@ export default function MeetingsPage() {
             </div>
           </div>
           <Button onClick={handleUpdateMeeting}>Update Meeting</Button>
+        </DialogContent>
+      </Dialog>
+     <Dialog open={showLimitModal} onOpenChange={setShowLimitModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Meeting Limit Reached</DialogTitle>
+            <DialogDescription>
+              You have reached your usage limit for creating meetings.
+            </DialogDescription>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            To create more meetings, please upgrade your account to access additional resources.
+          </p>
+          <DialogFooter className="sm:justify-between">
+            <Button variant="secondary" onClick={() => setShowLimitModal(false)}>
+              Close
+            </Button>
+            <Button onClick={handleUpgradeClick}>
+              Upgrade Now
+            </Button>
+          </DialogFooter>
+          <button
+            onClick={() => setShowLimitModal(false)}
+            className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </button>
         </DialogContent>
       </Dialog>
     </div>

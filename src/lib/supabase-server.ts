@@ -3,6 +3,8 @@ import { cookies } from 'next/headers';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { createClient } from '@supabase/supabase-js';
+import Stripe from 'stripe';
+import { retrieveSubscription } from './stripe';
 
 export function createServerSupabaseClient() { 
     return createServerComponentClient({cookies})
@@ -264,4 +266,151 @@ export async function deleteMeeting(id: string) {
     .eq('user_id', user.id);
 
   if (error) throw error;
+}
+
+
+export async function handleFailedPayment(invoice: Stripe.Invoice) {
+  const customerId = invoice.customer as string;
+
+  const { data: userData, error } = await supabaseAdmin
+    .from('users')
+    .select('id')
+    .eq('stripe_customer_id', customerId)
+    .single();
+
+  if (error || !userData) {
+    console.error('Error fetching user:', error);
+    return;
+  }
+
+  const { error: updateError } = await supabaseAdmin
+    .from('users')
+    .update({ 
+      payment_status: 'failed',
+      subscription_status: 'inactive',
+      payment_plan: 'Free'
+    })
+    .eq('id', userData.id);
+
+  if (updateError) {
+    console.error('Error updating user payment status:', updateError);
+  }
+
+  // TODO: Implement email sending logic here
+}
+
+export async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
+  const customerId = subscription.customer;
+  const status = subscription.status;
+
+  const { data: userData, error } = await supabaseAdmin
+    .from('users')
+    .select('id')
+    .eq('stripe_customer_id', customerId)
+    .single();
+
+  if (error || !userData) {
+    console.error('Error fetching user:', error);
+    return;
+  }
+
+  const { error: updateError } = await supabaseAdmin
+    .from('users')
+    .update({ subscription_status: status })
+    .eq('id', userData.id);
+
+  if (updateError) {
+    console.error('Error updating user subscription status:', updateError);
+  }
+}
+export async function handlePaidInvoice(invoice: Stripe.Invoice) {
+  const customerId = invoice.customer as string;
+  const subscriptionId = invoice.subscription as string;
+
+  const subscription = await retrieveSubscription(subscriptionId);
+
+  const { data: userData, error } = await supabaseAdmin
+    .from('users')
+    .select('id')
+    .eq('stripe_customer_id', customerId)
+    .single();
+
+  if (error || !userData) {
+    console.error('Error fetching user:', error);
+    return;
+  }
+
+  const { error: updateError } = await supabaseAdmin
+    .from('users')
+    .update({ 
+      meetings_used: 0,
+      payment_status: 'paid',
+      subscription_status: subscription.status,
+      payment_plan: subscription.items.data[0]?.price.nickname || 'Pro',
+      subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString()
+    })
+    .eq('id', userData.id);
+
+  if (updateError) {
+    console.error('Error updating user after paid invoice:', updateError);
+  }
+}
+
+export async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+  const customerId = subscription.customer as string;
+
+  const { data: userData, error } = await supabaseAdmin
+    .from('users')
+    .select('id')
+    .eq('stripe_customer_id', customerId)
+    .single();
+
+  if (error || !userData) {
+    console.error('Error fetching user:', error);
+    return;
+  }
+
+  const { error: updateError } = await supabaseAdmin
+    .from('users')
+    .update({ 
+      subscription_status: 'canceled',
+      stripe_subscription_id: null,
+      subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString()
+    })
+    .eq('id', userData.id);
+
+  if (updateError) {
+    console.error('Error updating user after subscription deletion:', updateError);
+  }
+}
+
+export async function incrementMeetingCount(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('users')
+    .update({ meetings_used: supabaseAdmin.rpc('increment', { inc: 1 }) })
+    .eq('id', userId)
+    .select('meetings_used')
+    .single();
+
+  if (error) {
+    console.error('Error incrementing meeting count:', error);
+    throw error;
+  }
+
+  return data?.meetings_used;
+}
+
+export async function getStripeCustomerId(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('users')
+    .select('stripe_customer_id')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error incrementing meeting count:', error);
+    throw error;
+  }
+
+  return data?.stripe_customer_id;
 }
