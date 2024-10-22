@@ -12,6 +12,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { MoreHorizontal, Plus, X } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { useMeetings } from '@/hooks/use-meetings'
+import { motion } from 'framer-motion'
+
 
 interface Meeting {
   id: string
@@ -27,6 +29,20 @@ export function extractSpreadsheetId(url: string): string | null {
   const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
   return match ? match[1] : null;
 }
+
+const LoadingRow = ({ delay = 0 }) => (
+  <motion.tr
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ delay, duration: 0.3 }}
+    className="animate-pulse"
+  >
+    <TableCell><div className="h-4 bg-gray-200 rounded w-3/4"></div></TableCell>
+    <TableCell><div className="h-4 bg-gray-200 rounded w-1/2"></div></TableCell>
+    <TableCell><div className="h-4 bg-gray-200 rounded w-1/4"></div></TableCell>
+    <TableCell><div className="h-4 bg-gray-200 rounded w-8"></div></TableCell>
+  </motion.tr>
+);
 
 export default function MeetingsPage() {
   const { meetings, isLoading, isError, mutate } = useMeetings()
@@ -201,62 +217,97 @@ export default function MeetingsPage() {
     window.location.href = '/private/settings'
   }
 
-  if (isLoading) return <div>Loading...</div>
-  if (isError) return <div>Error loading meetings</div>
-
   return (
     <div className="container mx-auto py-10">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-2xl font-bold">Meetings</CardTitle>
-        <Button onClick={handleCreateButtonClick}>
-          <Plus className="mr-2 h-4 w-4" /> Create Meeting
-        </Button>
+          <Button onClick={handleCreateButtonClick}>
+            <Plus className="mr-2 h-4 w-4" /> Create Meeting
+          </Button>
         </CardHeader>
         <CardContent>
-          {meetings && meetings.length === 0 ? (
-            <p>No meetings available. Create one to get started!</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Zoom Link</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {meetings && meetings.map((meeting: Meeting) => (
-                  <TableRow key={meeting.id}>
-                    <TableCell className="font-medium">{meeting.name}</TableCell>
-                    <TableCell>{meeting.zoom_link}</TableCell>
-                    <TableCell>{meeting.status}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEditDialog(meeting)}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDeleteMeeting(meeting.id)}>Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
+          {isLoading ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Zoom Link</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  <LoadingRow delay={0.1} />
+                  <LoadingRow delay={0.2} />
+                  <LoadingRow delay={0.3} />
+                </TableBody>
+              </Table>
+            </motion.div>
+          ) : isError ? (
+            <div>Error loading meetings</div>
+          ) : meetings && meetings.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="text-center py-10"
+            >
+              <p className="text-lg mb-4">No meetings available. Create one to get started!</p>
+              <Button onClick={handleCreateButtonClick}>
+                <Plus className="mr-2 h-4 w-4" /> Create Your First Meeting
+              </Button>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            >
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Zoom Link</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {meetings && meetings.map((meeting: Meeting) => (
+                    <TableRow key={meeting.id}>
+                      <TableCell className="font-medium">{meeting.name}</TableCell>
+                      <TableCell>{meeting.zoom_link}</TableCell>
+                      <TableCell>{meeting.status}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEditDialog(meeting)}>Edit</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleDeleteMeeting(meeting.id)}>Delete</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </motion.div>
           )}
         </CardContent>
       </Card>
 
+      {/* Meeting Creation Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        {/* <DialogTrigger asChild>
-          <Button><Plus className="mr-2 h-4 w-4" /> Create Meeting</Button>
-        </DialogTrigger> */}
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Create New Meeting</DialogTitle>
@@ -282,33 +333,9 @@ export default function MeetingsPage() {
           <Button onClick={handleCreateMeeting}>Create Meeting</Button>
         </DialogContent>
       </Dialog>
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit Meeting</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-name" className="text-right">Name</Label>
-              <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-zoom-link" className="text-right">Zoom Link</Label>
-              <Input id="edit-zoom-link" value={zoomLink} onChange={(e) => setZoomLink(e.target.value)} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-spreadsheet-id" className="text-right">Spreadsheet ID</Label>
-              <Input id="edit-spreadsheet-id" value={spreadsheetId} onChange={(e) => setSpreadsheetId(e.target.value)} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-instructions" className="text-right">Custom Instructions</Label>
-              <Textarea id="edit-instructions" value={customInstructions} onChange={(e) => setCustomInstructions(e.target.value)} className="col-span-3" />
-            </div>
-          </div>
-          <Button onClick={handleUpdateMeeting}>Update Meeting</Button>
-        </DialogContent>
-      </Dialog>
-     <Dialog open={showLimitModal} onOpenChange={setShowLimitModal}>
+
+      {/* Limit Reached Modal */}
+      <Dialog open={showLimitModal} onOpenChange={setShowLimitModal}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Meeting Limit Reached</DialogTitle>
@@ -334,6 +361,34 @@ export default function MeetingsPage() {
             <X className="h-4 w-4" />
             <span className="sr-only">Close</span>
           </button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Meeting Dialog */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Meeting</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-name" className="text-right">Name</Label>
+              <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-zoom-link" className="text-right">Zoom Link</Label>
+              <Input id="edit-zoom-link" value={zoomLink} onChange={(e) => setZoomLink(e.target.value)} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-spreadsheet-id" className="text-right">Spreadsheet ID</Label>
+              <Input id="edit-spreadsheet-id" value={spreadsheetId} onChange={(e) => setSpreadsheetId(e.target.value)} className="col-span-3" />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="edit-instructions" className="text-right">Custom Instructions</Label>
+              <Textarea id="edit-instructions" value={customInstructions} onChange={(e) => setCustomInstructions(e.target.value)} className="col-span-3" />
+            </div>
+          </div>
+          <Button onClick={handleUpdateMeeting}>Update Meeting</Button>
         </DialogContent>
       </Dialog>
     </div>

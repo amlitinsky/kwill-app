@@ -108,7 +108,6 @@ export async function checkTokenValidity(access_token: string) {
   try {
     const response = await fetch(`https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=${access_token}`);
     const data = await response.json();
-    console.log('Token info:', data);
     return data.error ? true : false;
   } catch (error) {
     console.error('Error checking token validity:', error);
@@ -134,5 +133,30 @@ export async function getColumnHeaders(accessToken: string, spreadsheetId: strin
   } catch (error) {
     console.error('Error getting column headers:', error);
     throw new Error('Failed to retrieve column headers');
+  }
+}
+
+export async function getGoogleUserInfo(accessToken: string) {
+  try {
+    const userInfoResponse = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    if (!userInfoResponse.ok) {
+      throw new Error('Failed to fetch user info from Google');
+    }
+
+    const googleUserInfo = await userInfoResponse.json();
+
+    return {
+      firstName: googleUserInfo.given_name || '',
+      lastName: googleUserInfo.family_name || '',
+      picture: googleUserInfo.picture || '',
+    };
+  } catch (error) {
+    console.error('Error fetching Google user info:', error);
+    throw error;
   }
 }

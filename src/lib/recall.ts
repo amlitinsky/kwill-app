@@ -8,6 +8,7 @@ export async function createBot(meetingUrl: string) {
   try {
     const response = await axios.post(RECALL_API_URL, {
       meeting_url: meetingUrl,
+      bot_name: "Kwill Scribe",
       transcription_options: {
         provider: 'gladia',
       },
@@ -53,7 +54,6 @@ export async function getBotStatus(botId: string) {
 }
 
 export async function analyzeMedia(botId: string) {
-  console.log(`Initiating analysis for bot ${botId}`)
   try {
     const response = await axios.post(`${RECALL_API_URL_ANALYZE}/${botId}/analyze`, {gladia_async_transcription: {}}, {
       headers: {
@@ -62,7 +62,6 @@ export async function analyzeMedia(botId: string) {
         'content-type': 'application/json'
       },
     })
-    console.log(`Analysis initiated successfully for bot ${botId}:`, response.data)
     return response.data
   } catch (error) {
     console.error('Error fetching bot analysis')

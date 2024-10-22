@@ -74,7 +74,6 @@ export async function signInWithGoogle() {
       // },
     },
   });
-  console.log("data from sign in with google: ", data)
 
   if (error) throw error;
 

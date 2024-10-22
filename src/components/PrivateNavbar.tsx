@@ -61,7 +61,7 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
         >
           Dashboard
         </Link>
-        <Link
+        {/* <Link
           href="/private/analytics"
           className={`transition-colors hover:text-foreground ${
             isLinkActive('/private/analytics') ? 'text-foreground font-bold' : 'text-muted-foreground'
@@ -76,7 +76,7 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
           }`}
         >
           Templates 
-        </Link>
+        </Link> */}
         <Link
           href="/private/meetings"
           className={`transition-colors hover:text-foreground ${
@@ -119,7 +119,7 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
             }`}>
               Dashboard
             </Link>
-            <Link
+            {/* <Link
               href="/private/analytics"
               className={`hover:text-foreground ${
                 isLinkActive('/private/analytics') ? 'text-foreground font-bold' : 'text-muted-foreground'
@@ -134,7 +134,7 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
               }`}
             >
               Templates
-            </Link>
+            </Link> */}
             <Link
               href="/private/meetings"
               className={`hover:text-foreground ${

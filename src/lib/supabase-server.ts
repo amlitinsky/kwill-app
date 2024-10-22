@@ -5,6 +5,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { retrieveSubscription } from './stripe';
+import { getGoogleUserInfo } from './google-auth';
 
 export function createServerSupabaseClient() { 
     return createServerComponentClient({cookies})
@@ -182,6 +183,7 @@ export async function fetchMeetings() {
   const { data, error } = await supabase
     .from('meetings')
     .select('*')
+    .order('created_at', {ascending: false})
     .eq('user_id', user.id);
 
   if (error) throw error;
@@ -413,4 +415,27 @@ export async function getStripeCustomerId(userId: string) {
   }
 
   return data?.stripe_customer_id;
+}
+
+// Function to update user profile in Supabase
+export async function updateUserProfileWithGoogleInfo(accessToken: string) {
+  if (!accessToken) throw new Error('Access token is required');
+
+  const supabase = createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) throw new Error('No user logged in');
+  const { firstName, lastName } = await getGoogleUserInfo(accessToken);
+
+  const { error } = await supabase
+    .from('users')
+    .update({ first_name: firstName, last_name: lastName })
+    .eq('id', user.id);
+
+  if (error) {
+    console.error('Error updating user profile:', error);
+    throw error;
+  }
+
+  return { firstName, lastName };
 }
