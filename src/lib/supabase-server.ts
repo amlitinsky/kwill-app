@@ -7,8 +7,9 @@ import Stripe from 'stripe';
 import { retrieveSubscription } from './stripe';
 import { getGoogleUserInfo } from './google-auth';
 
-export function createServerSupabaseClient() { 
-    return createServerComponentClient({cookies})
+export async function createServerSupabaseClient() { 
+  return await createServerComponentClient({ cookies: () => cookies() });
+
 }
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -18,7 +19,7 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
 // Add function for updating user's payment plan
 export async function updatePaymentPlan(userId: string, plan: string, stripeCustomerId: string) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data, error } = await supabase
     .from('users')
     .update({ 
@@ -33,7 +34,7 @@ export async function updatePaymentPlan(userId: string, plan: string, stripeCust
 
 
 export async function deleteAccount() {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
 
@@ -51,7 +52,7 @@ export async function deleteAccount() {
 }
 
 export async function fetchTemplates() {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
 
@@ -65,7 +66,7 @@ export async function fetchTemplates() {
 }
 
 export async function createTemplate(name: string, spreadsheetLink: string, customInstructions: string) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
   console.log("hello")
@@ -84,7 +85,7 @@ export async function createTemplate(name: string, spreadsheetLink: string, cust
 }
 
 export async function updateTemplate(id: string, name: string, spreadsheetLink: string, customInstructions: string) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
 
@@ -103,7 +104,7 @@ export async function updateTemplate(id: string, name: string, spreadsheetLink: 
 }
 
 export async function deleteTemplate(id: string) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
 
@@ -119,7 +120,7 @@ export async function deleteTemplate(id: string) {
 
 // creating a initial meeting, updating other columns later
 export async function createMeeting(name: string, zoomLink: string, spreadsheetId: string, customInstructions: string, botId: string) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
 
@@ -176,7 +177,7 @@ export async function createMeeting(name: string, zoomLink: string, spreadsheetI
 }
 
 export async function fetchMeetings() {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
 
@@ -257,7 +258,7 @@ export async function getGoogleCreds(userId: string) {
 }
 
 export async function deleteMeeting(id: string) {
-  const supabase = createServerSupabaseClient()
+  const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
 
@@ -421,7 +422,7 @@ export async function getStripeCustomerId(userId: string) {
 export async function updateUserProfileWithGoogleInfo(accessToken: string) {
   if (!accessToken) throw new Error('Access token is required');
 
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) throw new Error('No user logged in');
