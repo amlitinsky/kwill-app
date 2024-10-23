@@ -6,12 +6,38 @@ import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { retrieveSubscription } from './stripe';
 import { getGoogleUserInfo } from './google-auth';
+// import { CookieOptions } from '@supabase/ssr';
 
-export async function createServerSupabaseClient() { 
-  return await createServerComponentClient({ cookies: () => cookies() });
+// import { CookieOptions, createServerClient } from '@supabase/ssr';
 
+export async function createServerSupabaseClient() {
+  return createServerComponentClient({ cookies: cookies })
 }
 
+// export async function createServerSupabaseClient() {
+//   return await createRouteHandlerClient({ cookies })
+
+// }
+
+// export async function createServerSupabaseClient() {
+//   return createServerComponentClient({
+//     cookies: async () => {
+//       const cookieStore = await cookies()
+//       return {
+//         get: async (name: string) => {
+//           const cookie = cookieStore.get(name)
+//           return cookie?.value
+//         },
+//         set: async (name: string, value: string, options: CookieOptions) => {
+//           cookieStore.set(name, value, options)
+//         },
+//         remove: async (name: string, options: CookieOptions) => {
+//           cookieStore.set(name, '', { ...options, maxAge: 0 })
+//         },
+//       }
+//     },
+//   })
+// }
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
@@ -192,8 +218,6 @@ export async function fetchMeetings() {
 }
 
 export async function updateMeetingStatus(botId: string, status: string) {
-  // const supabase = createServerSupabaseClient()
-  console.log('in supabase file with the following: ', botId, 'status ', status)
   const { data, error } = await supabaseAdmin
     .from('meetings')
     .update({ status: status})
@@ -205,7 +229,6 @@ export async function updateMeetingStatus(botId: string, status: string) {
 }
 
 export async function updateMeetingTranscript(botId: string, transcript: string) {
-  // const supabase = createServerSupabaseClient()
   const { data, error } = await supabaseAdmin
     .from('meetings')
     .update({ transcript: transcript })

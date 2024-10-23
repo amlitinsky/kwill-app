@@ -35,11 +35,10 @@ const LoadingRow = ({ delay = 0 }) => (
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay, duration: 0.3 }}
-    className="animate-pulse"
   >
-    <TableCell><div className="h-4 bg-gray-200 rounded w-3/4"></div></TableCell>
-    <TableCell><div className="h-4 bg-gray-200 rounded w-1/2"></div></TableCell>
-    <TableCell><div className="h-4 bg-gray-200 rounded w-1/4"></div></TableCell>
+    <TableCell><div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div></TableCell>
+    <TableCell><div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div></TableCell>
+    <TableCell><div className="h-4 bg-gray-200 rounded w-1/4 animate-pulse"></div></TableCell>
     <TableCell><div className="h-4 bg-gray-200 rounded w-8"></div></TableCell>
   </motion.tr>
 );
@@ -256,12 +255,13 @@ export default function MeetingsPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="text-center py-10"
             >
-              <p className="text-lg mb-4">No meetings available. Create one to get started!</p>
-              <Button onClick={handleCreateButtonClick}>
-                <Plus className="mr-2 h-4 w-4" /> Create Your First Meeting
-              </Button>
+              <div className="text-center py-10">
+                <p className="text-lg mb-4">No meetings available. Create one to get started!</p>
+                <Button onClick={handleCreateButtonClick}>
+                  <Plus className="mr-2 h-4 w-4" /> Create Your First Meeting
+                </Button>
+              </div>
             </motion.div>
           ) : (
             <motion.div

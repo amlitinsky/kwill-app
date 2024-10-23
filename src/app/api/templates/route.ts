@@ -3,7 +3,7 @@ import { fetchTemplates, createTemplate, updateTemplate, deleteTemplate } from '
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function GET() {
-  const supabase =  createServerSupabaseClient()
+  const supabase =  await createServerSupabaseClient()
 //   const supabase = createServerComponentClient({ cookies });
   const { data: { session } } = await supabase.auth.getSession();
 
@@ -20,8 +20,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const supabase =  createServerSupabaseClient()
-//   const supabase = createServerComponentClient({ cookies });
+  const supabase =  await createServerSupabaseClient()
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
@@ -40,8 +39,7 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  const supabase =  createServerSupabaseClient()
-//   const supabase = createServerComponentClient({ cookies });
+  const supabase =  await createServerSupabaseClient()
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
@@ -58,8 +56,7 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const supabase =  createServerSupabaseClient()
-//   const supabase = createServerComponentClient({ cookies });
+  const supabase =  await createServerSupabaseClient()
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {

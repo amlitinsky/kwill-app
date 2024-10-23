@@ -3,7 +3,7 @@ import { createCheckoutSession, createStripeCustomer, listStripeCustomer} from '
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function POST(request: Request) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user }, error } = await supabase.auth.getUser();
 
   if (error || !user) {

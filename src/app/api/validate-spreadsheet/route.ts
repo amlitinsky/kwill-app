@@ -3,7 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { validateSpreadsheet } from '@/lib/google-auth';
 
 export async function POST(request: Request) {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {

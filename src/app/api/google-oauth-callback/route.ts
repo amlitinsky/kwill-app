@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Invalid OAuth code' }, { status: 400 });
   }
 
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createRouteHandlerClient({ cookies });
 
   try {
     const { data: { user} } = await supabase.auth.getUser();

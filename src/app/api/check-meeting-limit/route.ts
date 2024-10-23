@@ -3,7 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { FREE_MEETING_USAGE, PRO_MEETING_USAGE } from '@/constants/plan';
 
 export async function GET() {
-  const supabase = createServerSupabaseClient();
+  const supabase = await createServerSupabaseClient();
   const { data: { user }, error } = await supabase.auth.getUser();
 
   if (!user || error) {

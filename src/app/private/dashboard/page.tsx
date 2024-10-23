@@ -101,10 +101,11 @@ export default function PrivateDashboard() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.5 }}
-              className="flex justify-center items-center mt-8"
             >
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <span className="ml-2 text-lg text-primary">Loading dashboard...</span>
+              <div className="flex justify-center items-center mt-8">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2 text-lg text-primary">Loading dashboard...</span>
+              </div>
             </motion.div>
           </div>
         ) : (

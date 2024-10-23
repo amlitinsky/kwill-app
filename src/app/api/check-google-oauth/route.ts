@@ -4,7 +4,7 @@ import { cookies } from 'next/headers';
 import { checkTokenValidity, refreshAccessToken } from '@/lib/google-auth';
 
 export async function GET() {
-  const supabase = createRouteHandlerClient({ cookies });
+  const supabase = await createRouteHandlerClient({ cookies });
 
   try {
     const { data: { user} } = await supabase.auth.getUser();
