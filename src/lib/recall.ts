@@ -72,9 +72,11 @@ export async function analyzeMedia(botId: string) {
 
 export async function createZoomOAuthCredential(code: string) {
   try {
-    const response = await axios.post(`${RECALL_API_ZOOM_OAUTH_CREDENTIALS}/`, {
+
+    const response = await fetch(`${RECALL_API_ZOOM_OAUTH_CREDENTIALS}/`, {
+      method: 'POST',
       headers: {
-        'Authorization': `Bearer ${RECALL_API_KEY}`,
+        'Authorization': `Token ${RECALL_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -86,11 +88,12 @@ export async function createZoomOAuthCredential(code: string) {
       }),
     });
 
-    if (response.status !== 201) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`HTTP error! status: ${response.status}, message: ${JSON.stringify(errorData)}`);
     }
 
-    const data = response.data;
+    const data = await response.json();
     return data;
   } catch (error) {
     console.error('Error creating Zoom OAuth credential:', error);
@@ -99,24 +102,32 @@ export async function createZoomOAuthCredential(code: string) {
 }
 
 export async function deleteZoomOAuthCredential(credentialId: string) {
-  const response = await axios.delete(`${RECALL_API_ZOOM_OAUTH_CREDENTIALS}/${credentialId}/`, {
-    method: 'DELETE',
-    headers: {
-      'Authorization': `Bearer ${process.env.RECALL_API_KEY}`,
-    },
-  })
+  try {
+    const response = await fetch(`${RECALL_API_ZOOM_OAUTH_CREDENTIALS}/${credentialId}/`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Token ${RECALL_API_KEY}`,
+      },
+    })
 
-  if (response.status !== 204) {
-    throw new Error(`Failed to delete Zoom OAuth Credential. Status: ${response.status}`)
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(`Failed to delete Zoom OAuth Credential. Status: ${response.status}, Error: ${JSON.stringify(errorData)}`)
+    }
+
+  } catch (error) {
+    console.error('Error deleting Zoom OAuth credential:', error)
+    throw error
   }
 }
 
+//TODO verify that using next public zoom api client id actually generates the valid URL
 export function generateZoomAuthURL(): string {
   const baseUrl = "https://zoom.us/oauth/authorize"
   const queryParams = {
     "response_type": "code",
     "redirect_uri": `${process.env.NEXT_PUBLIC_NGROK_URL}/api/zoom-oauth-callback`,
-    "client_id": process.env.NEXT_PUBLIC_ZOOM_CLIENT_ID!,
+    "client_id": process.env.NEXT_PUBLIC_ZOOM_API_CLIENT_ID!,
   }
   const queryString = new URLSearchParams(queryParams).toString()
   return `${baseUrl}?${queryString}`

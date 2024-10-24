@@ -14,6 +14,10 @@ export async function GET() {
 
   try {
     const stripeCustomerId = await getStripeCustomerId(user.id);
+
+    if (!stripeCustomerId) {
+      return NextResponse.json({ invoices: [] });
+    }
     
     const invoices = await getCustomerInvoices(stripeCustomerId)
     return NextResponse.json({ invoices });

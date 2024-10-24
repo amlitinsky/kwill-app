@@ -1,23 +1,23 @@
 import { useState, useEffect } from 'react'
 import { generateZoomAuthURL } from '@/lib/recall'
+import { useSearchParams } from 'next/navigation'
 
 export function ZoomConnectButton() {
   const [isConnected, setIsConnected] = useState(false)
+  const searchParams = useSearchParams()
 
   useEffect(() => {
-    async function checkZoomConnection() {
-      try {
-        const response = await fetch('/api/check-zoom-connection');
-        const data = await response.json();
-        setIsConnected(data.isConnected);
-      } catch (error) {
-        console.error('Error checking Zoom connection:', error);
-        setIsConnected(false);
-      }
+    const storedConnectionStatus = localStorage.getItem('zoomConnected')
+    if (storedConnectionStatus === 'true') {
+      setIsConnected(true)
     }
 
-    checkZoomConnection();
-  }, []);
+    const zoomConnected = searchParams.get('zoom_connected')
+    if (zoomConnected === 'true') {
+      setIsConnected(true)
+      localStorage.setItem('zoomConnected', 'true')
+    }
+  }, [searchParams])
 
   const handleConnect = () => {
     if (!isConnected) {
