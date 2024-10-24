@@ -37,6 +37,7 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
+    // need to fix this
     // Check if the user's profile needs to be updated
     const { data: profileData, error: profileError } = await supabase
       .from('users')

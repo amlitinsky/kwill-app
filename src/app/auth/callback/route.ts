@@ -3,7 +3,6 @@ import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
-  console.log("request received: ", request)
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
 
@@ -13,6 +12,7 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
+      console.error(`Auth error: ${error}, Description: ${error.message}`);
       return NextResponse.redirect(`${requestUrl.origin}/auth-error?reason=${encodeURIComponent(error.message)}`);
     }
   } else {
