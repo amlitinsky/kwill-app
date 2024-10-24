@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createRouteHandlerClient} from '@supabase/auth-helpers-nextjs'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
+import { createZoomOAuthCredential, deleteZoomOAuthCredential } from '@/lib/recall'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
@@ -10,8 +11,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid OAuth code' }, { status: 400 })
   }
 
-  const supabase = createRouteHandlerClient({ cookies })
-
+  const supabase = await createRouteHandlerClient({ cookies })
 
   try {
     // Check if user is authenticated
@@ -20,47 +20,63 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Call Recall API to create Zoom OAuth Credential
-    const recallResponse = await fetch('https://us-west-2.recall.ai/api/v2/zoom-oauth-credentials/', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.RECALL_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        oauth_app: process.env.RECALL_ZOOM_OAUTH_APP_ID,
-        authorization_code: {
-          code: code,
-          redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/zoom-oauth-callback`,
-        },
-      }),
-    })
+    // Function to create Zoom OAuth Credential
+    const createCredential = async () => {
+      try {
+        return await createZoomOAuthCredential(code)
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          'status' in error &&
+          error.status === 400 &&
+          'body' in error &&
+          typeof error.body === 'object' &&
+          error.body &&
+          'conflicting_zoom_account_id' in error.body
+        ) {
+          // Handle re-authorization
+          const { data: existingCred } = await supabase
+            .from('zoom_oauth_credentials')
+            .select('recall_user_id')
+            .eq('user_id', session.user.id)
+            .single()
 
-    if (!recallResponse.ok) {
-      const errorData = await recallResponse.json()
-      if (errorData.conflicting_zoom_account_id) {
-        // Handle re-authorization
-        // This is a simplified example and should be expanded in a real application
-        return NextResponse.json({ error: 'Zoom account already connected. Please disconnect and try again.' }, { status: 400 })
+          if (existingCred) {
+            // Delete existing credential from Recall
+            await deleteZoomOAuthCredential(existingCred.recall_user_id)
+            
+            // Delete existing credential from database
+            await supabase
+              .from('zoom_oauth_credentials')
+              .delete()
+              .eq('user_id', session.user.id)
+
+            // Retry creating the credential
+            return await createZoomOAuthCredential(code)
+          }
+        }
+        throw error
       }
-      throw new Error('Failed to create Zoom OAuth Credential')
     }
 
-    const recallData = await recallResponse.json()
+    // Call Recall API to create Zoom OAuth Credential
+    const recallData = await createCredential()
 
     // Store the credential in your database
     const { error } = await supabase
       .from('zoom_oauth_credentials')
       .insert({
         user_id: session.user.id,
-        recall_credential_id: recallData.id,
-        zoom_account_id: recallData.account_id,
+        recall_id: recallData.id,
+        recall_oauth_app: recallData.oauth_app,
+        recall_user_id: recallData.user_id,
+        created_at: recallData.created_at
       })
 
     if (error) throw error
 
     // Redirect to dashboard with success parameter
-    return NextResponse.redirect(`${requestUrl.origin}/dashboard?zoom_connected=true`)
+    return NextResponse.redirect(`${requestUrl.origin}/private/settings?zoom_connected=true`)
   } catch (error) {
     console.error('Error in Zoom OAuth callback:', error)
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })

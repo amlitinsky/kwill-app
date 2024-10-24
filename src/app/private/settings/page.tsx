@@ -9,6 +9,7 @@ import { updateProfile, getCurrentUser } from '@/lib/supabase-client'
 import { SubscriptionManager } from '@/components/SubscriptionManager'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
+import { ZoomConnectButton } from '@/components/ZoomConnectButton'
 
 export default function SettingsPage() {
   const [firstName, setFirstName] = useState('')
@@ -173,7 +174,7 @@ export default function SettingsPage() {
                   <CardDescription>Manage your integrated services</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <p>Integrations information coming soon.</p>
+                  <ZoomConnectButton />
                 </CardContent>
               </Card>
             </TabsContent>
