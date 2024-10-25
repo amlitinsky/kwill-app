@@ -72,7 +72,7 @@ export async function analyzeMedia(botId: string) {
 
 export async function createZoomOAuthCredential(code: string) {
   try {
-
+    // TODO when we go to production I have to change this to use the base url
     const response = await fetch(`${RECALL_API_ZOOM_OAUTH_CREDENTIALS}/`, {
       method: 'POST',
       headers: {
@@ -121,7 +121,7 @@ export async function deleteZoomOAuthCredential(credentialId: string) {
   }
 }
 
-//TODO verify that using next public zoom api client id actually generates the valid URL
+//TODO verify that using next public zoom api client id actually generates the valid URL and update the NGROK for production to use base url
 export function generateZoomAuthURL(): string {
   const baseUrl = "https://zoom.us/oauth/authorize"
   const queryParams = {

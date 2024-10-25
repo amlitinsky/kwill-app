@@ -26,6 +26,9 @@ export function PublicNavbar({ children }: { children: React.ReactNode }) {
         <Link href="/public/pricing" className="text-muted-foreground transition-colors hover:text-foreground">
           Pricing
         </Link>
+        <Link href="/public/documentation" className="text-muted-foreground transition-colors hover:text-foreground">
+          Documentation 
+        </Link>
       </nav>
 
       <div className="flex w-full items-center justify-end gap-4 md:ml-auto md:gap-2 lg:gap-4">

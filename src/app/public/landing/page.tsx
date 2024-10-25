@@ -30,6 +30,9 @@ export default function LandingPage() {
           <Link href="/public/privacy" className="text-sm text-muted-foreground hover:underline">
             Privacy Policy
           </Link>
+          <Link href="/public/support" className="text-sm text-muted-foreground hover:underline">
+            Contact us 
+          </Link>
         </div>
       </footer>
     </div>

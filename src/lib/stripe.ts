@@ -1,7 +1,7 @@
 import Stripe from 'stripe';
 
 // should I use the api version or nah
-export const stripe = new Stripe(process.env.STRIPE_API_SECRET_TEST_KEY!, {
+export const stripe = new Stripe(process.env.STRIPE_API_SECRET_KEY!, {
   apiVersion: '2024-09-30.acacia', // Use the latest API version
 });
 
