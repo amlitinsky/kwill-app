@@ -54,33 +54,79 @@ export function SubscriptionManager() {
 
   useEffect(() => {
     // Simulate loading delay
-    const timer = setTimeout(() => {
-      fetchCurrentPlan();
-      fetchAvailablePlans();
-      fetchInvoices()
-    }, 2000); // 2 second delay
 
+    const fetchInvoices = async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/get-invoices');
+            const data = await response.json();
+            if (response.ok) {
+            setInvoices(data.invoices);
+            } else {
+            throw new Error(data.error || 'Failed to fetch invoices');
+            }
+        } catch (error) {
+            toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    return () => clearTimeout(timer);
-  }, []);
-
-
-  const fetchInvoices = async () => {
-    setLoading(true);
-    try {
-        const response = await fetch('/api/get-invoices');
+    const fetchCurrentPlan = async () => {
+        try {
+        const response = await fetch('/api/get-current-plan');
         const data = await response.json();
         if (response.ok) {
-        setInvoices(data.invoices);
+            setCurrentPlan(data.currentPlan);
         } else {
-        throw new Error(data.error || 'Failed to fetch invoices');
+            throw new Error(data.error || 'Failed to fetch current plan');
         }
-    } catch (error) {
+        } catch (error) {
         toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
-    } finally {
+        } finally {
         setLoading(false);
+        }
+    };
+
+    const fetchAvailablePlans = async () => {
+        try {
+        const response = await fetch('/api/get-plans');
+        const data = await response.json();
+        if (response.ok) {
+            setAvailablePlans(data.plans);
+        } else {
+            throw new Error(data.error || 'Failed to fetch available plans');
+        }
+        } catch (error) {
+        toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
+        }
+    };
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      await fetchCurrentPlan();
+      await fetchAvailablePlans();
+      await fetchInvoices();
+    } catch (error) {
+      console.error('Error fetching subscription data:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load subscription data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
   };
+
+    const timer = setTimeout(fetchData, 2000);
+
+    return () => clearTimeout(timer);
+  }, [toast]);
+
+
+
 
   const handleDownloadInvoice = (pdfUrl: string) => {
     window.open(pdfUrl, '_blank');
@@ -112,35 +158,6 @@ export function SubscriptionManager() {
   };
 
 
-  const fetchCurrentPlan = async () => {
-    try {
-      const response = await fetch('/api/get-current-plan');
-      const data = await response.json();
-      if (response.ok) {
-        setCurrentPlan(data.currentPlan);
-      } else {
-        throw new Error(data.error || 'Failed to fetch current plan');
-      }
-    } catch (error) {
-      toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAvailablePlans = async () => {
-    try {
-      const response = await fetch('/api/get-plans');
-      const data = await response.json();
-      if (response.ok) {
-        setAvailablePlans(data.plans);
-      } else {
-        throw new Error(data.error || 'Failed to fetch available plans');
-      }
-    } catch (error) {
-      toast({ title: 'Error', description: (error as Error).message, variant: 'destructive' });
-    }
-  };
 
   const handleSubscribe = async (priceId: string) => {
     setLoading(true);

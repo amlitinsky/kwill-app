@@ -24,16 +24,16 @@ export async function GET(request: Request) {
   })
 }
 
-export async function updateClient(botId: string, data: Record<string, unknown>) {
-  const writer = clients.get(botId)
-  if (writer) {
-    const encoder = new TextEncoder()
-    try {
-      await writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
-    } catch (error) {
-      console.error(`Error updating client for bot ${botId}:`, error)
-    }
-  } else {
-    console.warn(`No client found for bot ${botId}`)
-  }
-}
+// export async function updateClient(botId: string, data: Record<string, unknown>) {
+//   const writer = clients.get(botId)
+//   if (writer) {
+//     const encoder = new TextEncoder()
+//     try {
+//       await writer.write(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
+//     } catch (error) {
+//       console.error(`Error updating client for bot ${botId}:`, error)
+//     }
+//   } else {
+//     console.warn(`No client found for bot ${botId}`)
+//   }
+// }
