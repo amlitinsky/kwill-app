@@ -73,6 +73,7 @@ export async function analyzeMedia(botId: string) {
 export async function createZoomOAuthCredential(code: string) {
   try {
     // TODO when we go to production I have to change this to use the base url
+    // when I do locally it has to be the ngrok one
     const response = await fetch(`${RECALL_API_ZOOM_OAUTH_CREDENTIALS}/`, {
       method: 'POST',
       headers: {
