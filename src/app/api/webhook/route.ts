@@ -36,7 +36,6 @@ export async function POST(req: Request) {
   }
 
   const { event, data } = evt
-  console.log(`Event: ${event}, Bot ID: ${data.bot_id}, Status: ${data.status.code}`)
 
   if (event === 'bot.status_change') {
     const { bot_id, status } = data
