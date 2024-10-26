@@ -10,8 +10,8 @@ import { Label } from "@/components/ui/label"
 import { signIn, signInWithGoogle } from '@/lib/supabase-client'
 import { toast } from '@/hooks/use-toast';
 
-export const description =
-  "A login page with two columns. The first column has the login form with email and password. There's a Forgot your passwork link and a link to sign up if you do not have an account. The second column has a cover image."
+// const description =
+//   "A login page with two columns. The first column has the login form with email and password. There's a Forgot your passwork link and a link to sign up if you do not have an account. The second column has a cover image."
 
 export default function Login() {
   const [email, setEmail] = useState('');
