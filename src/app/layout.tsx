@@ -22,6 +22,9 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Kwill",
   description: "AI-powered query analysis",
+  icons : {
+    icon: '/favicon.ico'
+  }
 };
 
 export default async function RootLayout({
