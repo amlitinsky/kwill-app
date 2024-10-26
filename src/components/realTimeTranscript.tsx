@@ -19,11 +19,9 @@ export default function TranscriptComponent({ botId }: TranscriptComponentProps)
       try {
         const response = await fetch(`/api/get-transcript?botId=${botId}`)
         const data = await response.json()
-        console.log('Received data from API:', data)
         if (data.success) {
           setTranscript(prevTranscript => {
             if (JSON.stringify(data.transcript) !== JSON.stringify(prevTranscript)) {
-              console.log('New transcript:', data.transcript)
               return data.transcript
             }
             return prevTranscript
@@ -43,7 +41,6 @@ export default function TranscriptComponent({ botId }: TranscriptComponentProps)
     return () => clearInterval(intervalId)
   }, [botId])
 
-  console.log('Current transcript state:', transcript)
 
   if (isLoading) {
     return <div>Loading transcript...</div>

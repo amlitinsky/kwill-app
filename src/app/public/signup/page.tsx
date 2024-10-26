@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { signUp, signInWithGoogle } from '@/lib/supabase-client'
+import { toast } from '@/hooks/use-toast';
 
 export default function SignUp() {
   const [firstName, setFirstName] = useState('');
@@ -26,10 +27,19 @@ export default function SignUp() {
     e.preventDefault();
     try {
       await signUp(email, password, firstName, lastName);
-      router.push('/public/login');
+      router.push('/');  // Redirect to the landing page
+      toast({
+        title: "Sign Up Successful",
+        description: "A verification email has been sent. Please check your inbox and verify your email to access your account.",
+        variant: "default",
+      });
     } catch (error) {
       console.error('Sign up error:', error);
-      // Handle error (e.g., show error message to user)
+      toast({
+        title: "Sign Up Error",
+        description: (error as Error).message || "An error occurred during sign up.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -39,7 +49,11 @@ export default function SignUp() {
       // The redirect to Google's OAuth page is handled in the signInWithGoogle function
     } catch (error) {
       console.error('Google sign-up error:', error);
-      // Handle error
+      toast({
+        title: "Sign Up Error",
+        description: (error as Error).message || "An error occurred during sign up.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -96,7 +110,7 @@ export default function SignUp() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <Button type="submit" className="w-full">
+          <Button type="submit" className="w-full" onClick={handleSignUp}>
             Create an account
           </Button>
         </form>

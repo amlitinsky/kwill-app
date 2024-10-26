@@ -1,11 +1,12 @@
 import Anthropic from '@anthropic-ai/sdk';
+import { ProcessedTranscriptSegment } from './transcript-utils';
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 export async function processTranscriptWithClaude(
-  transcript: string, 
+  transcript: ProcessedTranscriptSegment[], 
   columnHeaders: string[], 
   customInstructions: string
 ): Promise<Record<string, string>> {
@@ -41,7 +42,6 @@ export async function processTranscriptWithClaude(
     ]
   });
 
-  console.log("initial LLM response: ", response)
 
   const result = response.content
   .filter(block => block.type === 'text')

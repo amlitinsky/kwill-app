@@ -83,7 +83,7 @@ export async function createZoomOAuthCredential(code: string) {
         oauth_app: process.env.RECALL_ZOOM_OAUTH_APP_ID,
         authorization_code: {
           code: code,
-          redirect_uri: `${process.env.NEXT_PUBLIC_NGROK_URL}/api/zoom-oauth-callback`,
+          redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/zoom-oauth-callback`,
         },
       }),
     });
@@ -126,7 +126,7 @@ export function generateZoomAuthURL(): string {
   const baseUrl = "https://zoom.us/oauth/authorize"
   const queryParams = {
     "response_type": "code",
-    "redirect_uri": `${process.env.NEXT_PUBLIC_NGROK_URL}/api/zoom-oauth-callback`,
+    "redirect_uri": `${process.env.NEXT_PUBLIC_BASE_URL}/api/zoom-oauth-callback`,
     "client_id": process.env.NEXT_PUBLIC_ZOOM_API_CLIENT_ID!,
   }
   const queryString = new URLSearchParams(queryParams).toString()

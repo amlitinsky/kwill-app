@@ -95,7 +95,6 @@ export async function createTemplate(name: string, spreadsheetLink: string, cust
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
-  console.log("hello")
 
   const { data, error } = await supabase
     .from('templates')
@@ -223,7 +222,6 @@ export async function updateMeetingStatus(botId: string, status: string) {
     .update({ status: status})
     .eq('bot_id', botId)
 
-  console.log("data: ", data)
   if (error) throw error;
   return data;
 }
@@ -234,7 +232,6 @@ export async function updateMeetingTranscript(botId: string, transcript: string)
     .update({ transcript: transcript })
     .eq('bot_id', botId)
 
-  console.log("data: ", data)
   if (error) throw error;
   return data;
 }
@@ -253,7 +250,7 @@ export async function updateMeetingProcessedData(botId: string, processedData: R
 export async function getMeetingDetails(botId: string) {
   const { data, error } = await supabaseAdmin
     .from('meetings')
-    .select('user_id, spreadsheet_id, column_headers, custom_instructions')
+    .select('user_id, spreadsheet_id, column_headers, custom_instructions, status')
     .eq('bot_id', botId)
     .single()
 
@@ -411,9 +408,25 @@ export async function handleSubscriptionDeleted(subscription: Stripe.Subscriptio
 }
 
 export async function incrementMeetingCount(userId: string) {
+  // First, get the current meetings_used count
+  const { data: userData, error: fetchError } = await supabaseAdmin
+    .from('users')
+    .select('meetings_used')
+    .eq('id', userId)
+    .single();
+
+  if (fetchError) {
+    console.error('Error fetching user data:', fetchError);
+    throw fetchError;
+  }
+
+  const currentCount = userData?.meetings_used || 0;
+  const newCount = currentCount + 1;
+
+  // Now, update the meetings_used count
   const { data, error } = await supabaseAdmin
     .from('users')
-    .update({ meetings_used: supabaseAdmin.rpc('increment', { inc: 1 }) })
+    .update({ meetings_used: newCount })
     .eq('id', userId)
     .select('meetings_used')
     .single();
@@ -462,4 +475,24 @@ export async function updateUserProfileWithGoogleInfo(accessToken: string) {
   }
 
   return { firstName, lastName };
+}
+
+export async function getUserDisplayName(userId: string): Promise<string | null> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('auth.users')
+      .select('raw_user_meta_data')
+      .eq('id', userId)
+      .single()
+
+    if (error) throw error
+
+    // The display name is stored in the raw_user_meta_data column
+    const displayName = data?.raw_user_meta_data?.display_name
+
+    return displayName || null
+  } catch (error) {
+    console.error('Error fetching user display name:', error)
+    return null
+  }
 }

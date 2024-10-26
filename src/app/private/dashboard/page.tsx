@@ -3,12 +3,10 @@
 import Link from "next/link"
 import { useEffect, useState } from "react"
 import {
-  Activity,
   ArrowUpRight,
   FileText,
   Users,
   Clock,
-  Calendar
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -38,8 +36,14 @@ interface Meeting {
   name: string;
   created_at: string;
   status: string;
-  duration?: number;
-  // Add other properties as needed
+  column_headers?: string[];
+  custom_instructions?: string;
+  spreadsheet_id?: string;
+}
+// Define the RecentSpreadsheet interface
+interface RecentSpreadsheet {
+  id: string;
+  instructions: string;
 }
 
 export const description =
@@ -64,22 +68,29 @@ export default function PrivateDashboard() {
   const { meetings, isLoading, isError } = useMeetings()
   const [stats, setStats] = useState({
     totalMeetings: 0,
-    completedMeetings: 0,
-    averageDuration: 0,
-    recentActivity: 0
+    fieldsAnalyzed: 0,
+    totalCustomInstructions: 0,
+    recentSpreadsheets: [] as RecentSpreadsheet[]
   })
 
   useEffect(() => {
     if (meetings) {
-      // Calculate stats
-      const completed = meetings.filter((m: Meeting) => m.status === 'completed').length;
-      const avgDuration = meetings.reduce((acc: number, m: Meeting) => acc + (m.duration || 0), 0) / meetings.length;
+      const totalFields = meetings.reduce((acc: number, m: Meeting) => acc + (m.column_headers?.length || 0), 0);
+      const totalInstructions = meetings.reduce((acc: number, m: Meeting) => acc + (m.custom_instructions?.length || 0), 0);
+      const recentSpreadsheets: RecentSpreadsheet[] = meetings
+        .filter((m: Meeting) => m.spreadsheet_id)
+        .sort((a: Meeting, b: Meeting) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, 3)
+        .map((m: Meeting) => ({
+          id: m.spreadsheet_id,
+          instructions: m.custom_instructions
+        }));
 
       setStats({
         totalMeetings: meetings.length,
-        completedMeetings: completed,
-        averageDuration: Math.round(avgDuration),
-        recentActivity: meetings.filter((m: Meeting) => new Date(m.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)).length
+        fieldsAnalyzed: totalFields,
+        totalCustomInstructions: totalInstructions,
+        recentSpreadsheets: recentSpreadsheets
       })
     }
   }, [meetings])
@@ -114,7 +125,7 @@ export default function PrivateDashboard() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <div className="grid gap-8 md:grid-cols-2 md:gap-8 lg:grid-cols-4 mb-8">
+            <div className="grid gap-8 md:grid-cols-2 md:gap-8 lg:grid-cols-3 mb-8">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
@@ -132,38 +143,26 @@ export default function PrivateDashboard() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
-                    Completed Meetings
+                    Fields Analyzed
                   </CardTitle>
                   <Users className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.completedMeetings}</div>
+                  <div className="text-2xl font-bold">{stats.fieldsAnalyzed}</div>
                   <p className="text-xs text-muted-foreground">
-                    Successfully processed meetings
+                    Total fields analyzed across all meetings
                   </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Average Duration</CardTitle>
+                  <CardTitle className="text-sm font-medium">Custom Instructions</CardTitle>
                   <Clock className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{stats.averageDuration} min</div>
+                  <div className="text-2xl font-bold">{stats.totalCustomInstructions}</div>
                   <p className="text-xs text-muted-foreground">
-                    Average meeting duration
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
-                  <Activity className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{stats.recentActivity}</div>
-                  <p className="text-xs text-muted-foreground">
-                    Meetings in the last 7 days
+                    Total characters in custom instructions
                   </p>
                 </CardContent>
               </Card>
@@ -191,7 +190,7 @@ export default function PrivateDashboard() {
                         <TableHead>Meeting Name</TableHead>
                         <TableHead className="hidden xl:table-column">Date</TableHead>
                         <TableHead className="hidden xl:table-column">Status</TableHead>
-                        <TableHead className="text-right">Duration</TableHead>
+                        <TableHead className="text-right">Fields Analyzed</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -208,7 +207,7 @@ export default function PrivateDashboard() {
                               {meeting.status}
                             </Badge>
                           </TableCell>
-                          <TableCell className="text-right">{meeting.duration || 'N/A'} min</TableCell>
+                          <TableCell className="text-right">{meeting.column_headers?.length || 0}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -217,42 +216,24 @@ export default function PrivateDashboard() {
               </Card>
               <Card>
                 <CardHeader>
-                  <CardTitle>Quick Info</CardTitle>
+                  <CardTitle>Recently Used Spreadsheet Templates</CardTitle>
                 </CardHeader>
-                <CardContent className="grid gap-8">
-                  <div className="flex items-center gap-4">
-                    <Calendar className="h-9 w-9" />
-                    <div className="grid gap-1">
-                      <p className="text-sm font-medium leading-none">
-                        Next Scheduled Meeting
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Tomorrow, 2:00 PM
-                      </p>
+                <CardContent className="grid gap-4">
+                  {stats.recentSpreadsheets.map((spreadsheet, index) => (
+                    <div key={index} className="flex items-center gap-4">
+                      <FileText className="h-9 w-9" />
+                      <div className="grid gap-1">
+                        <p className="text-sm font-medium leading-none">
+                          Spreadsheet ID: {spreadsheet.id.substring(0, 8)}...
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Instructions: {spreadsheet.instructions.length > 50
+                            ? `${spreadsheet.instructions.substring(0, 50)}...`
+                            : spreadsheet.instructions}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <Users className="h-9 w-9" />
-                    <div className="grid gap-1">
-                      <p className="text-sm font-medium leading-none">
-                        Team Members
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        5 active members
-                      </p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <FileText className="h-9 w-9" />
-                    <div className="grid gap-1">
-                      <p className="text-sm font-medium leading-none">
-                        Latest Transcript
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        Project Review - 05/15/2023
-                      </p>
-                    </div>
-                  </div>
+                  ))}
                 </CardContent>
               </Card>
             </div>

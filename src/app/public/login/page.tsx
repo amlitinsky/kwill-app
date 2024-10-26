@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { signIn, signInWithGoogle } from '@/lib/supabase-client'
+import { toast } from '@/hooks/use-toast';
 
 export const description =
   "A login page with two columns. The first column has the login form with email and password. There's a Forgot your passwork link and a link to sign up if you do not have an account. The second column has a cover image."
@@ -24,22 +25,26 @@ export default function Login() {
       router.push('/private/dashboard');
     } catch (error) {
       console.error('Login error:');
-      // Handle error (e.g., show error message to user)
+      toast({
+        title: "Login Error",
+        description: "Failed to sign in. Did you verify your email? If your verification email expired, try signing up again.",
+        variant: "destructive",
+      });
     }
   };
 
   const handleGoogleSignIn = async () => {
-    console.log('Starting Google Sign-In process');
     try {
-      console.log('Calling signInWithGoogle function');
       const data = await signInWithGoogle();
       router.push(data.url)
-      console.log("url: ", data.url)
-      console.log('Google Sign-In initiated');
       // Don't redirect here, the callback will handle the redirect
     } catch (error) {
       console.error('Google sign-in error:');
-      // Handle error
+      toast({
+        title: "Sign in Error",
+        description: (error as Error).message || "An error occurred during sign in.",
+        variant: "destructive",
+      });
     }
   };
 

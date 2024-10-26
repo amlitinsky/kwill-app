@@ -11,10 +11,8 @@ export async function GET(request: Request) {
 
   try {
     const transcriptData = await getTranscript(botId);
-    console.log('Raw transcript data:', JSON.stringify(transcriptData, null, 2));
     
     if (!transcriptData || !Array.isArray(transcriptData)) {
-      console.log('No valid transcript data available yet');
       return NextResponse.json({ success: true, transcript: [] });
     }
     
@@ -23,7 +21,6 @@ export async function GET(request: Request) {
       text: segment.words.map((word: { text: string }) => word.text).join(' ')
     }));
 
-    console.log('Formatted transcript:', JSON.stringify(formattedTranscript, null, 2));
     return NextResponse.json({ success: true, transcript: formattedTranscript });
   } catch (error) {
     console.error('Error fetching transcript:', error);

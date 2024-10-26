@@ -34,7 +34,6 @@ export function ZoomLinkForm() {
       })
       const data = await response.json()
       if (response.ok && data.success) {
-        console.log('Bot created successfully:', data.botId)
         setBotId(data.botId)
       } else {
         console.error('Failed to create bot:', data.message)

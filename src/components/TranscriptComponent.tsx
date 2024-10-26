@@ -23,16 +23,13 @@ export default function TranscriptComponent({ botId }: TranscriptComponentProps)
         const response = await fetch(`/api/bot-status?botId=${botId}`)
         const data = await response.json()
         if (data.success) {
-          console.log('Bot status:', data.status.status)
           setMeetingStatus(data.status.status)
 
           if (data.status.status === 'TRANSCRIBING') {
-            console.log('Meeting started')
             // Start fetching transcript
             fetchTranscript()
             transcriptIntervalId = setInterval(fetchTranscript, 10000) // Fetch every 10 seconds
           } else if (data.status.status === 'COMPLETED') {
-            console.log('Meeting ended')
             // Fetch final transcript
             await fetchTranscript()
             // Clear intervals

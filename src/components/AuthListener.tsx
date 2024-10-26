@@ -28,7 +28,6 @@ export default function AuthListener({ initialSession }: AuthListenerProps) {
 
   useEffect(() => {
     if (session !== initialSession) {
-      console.log('Session changed, refreshing...');
       router.refresh();
     }
   }, [session, initialSession, router]);

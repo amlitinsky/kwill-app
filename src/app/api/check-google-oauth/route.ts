@@ -28,11 +28,8 @@ export async function GET() {
     const expiryDate = credentials.expiry_date;
     const expiryTime = expiryDate ? new Date(expiryDate).getTime() : 0;
     const tokenError = await checkTokenValidity(credentials.access_token)
-    console.log("token error?", tokenError)
 
     if ((expiryTime && expiryTime <= now) || tokenError) {
-      // Token is expired, refresh it
-      console.log("refreshing access token")
       try {
         const newCredentials = await refreshAccessToken(credentials.refresh_token);
 

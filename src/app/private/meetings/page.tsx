@@ -96,7 +96,6 @@ export default function MeetingsPage() {
     try {
       const meetingLimitResponse = await fetch('/api/check-meeting-limit');
       const meetingLimitData = await meetingLimitResponse.json();
-      console.log("meeting limit data: ", meetingLimitData)
 
       if (!meetingLimitData.canCreateMeeting) {
         setShowLimitModal(true);
@@ -122,7 +121,6 @@ export default function MeetingsPage() {
 
       // Extract spreadsheet ID from the link
       const extractedSpreadsheetId = extractSpreadsheetId(spreadsheetId);
-      console.log("extracted id: ", extractedSpreadsheetId)
       if (!extractedSpreadsheetId) {
         throw new Error('Invalid spreadsheet link');
       }

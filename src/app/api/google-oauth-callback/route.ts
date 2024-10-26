@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { getGoogleTokens } from '@/lib/google-auth';
-import { updateUserProfileWithGoogleInfo } from '@/lib/supabase-server';
+// import { updateUserProfileWithGoogleInfo } from '@/lib/supabase-server';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -39,18 +39,18 @@ export async function GET(request: Request) {
 
     // need to fix this
     // Check if the user's profile needs to be updated
-    const { data: profileData, error: profileError } = await supabase
-      .from('users')
-      .select('first_name, last_name')
-      .eq('id', user.id)
-      .single();
+    // const { data: profileData, error: profileError } = await supabase
+    //   .from('users')
+    //   .select('first_name, last_name')
+    //   .eq('id', user.id)
+    //   .single();
 
-    if (profileError) throw profileError;
+    // if (profileError) throw profileError;
 
-    if (!profileData.first_name || !profileData.last_name) {
-      // Update user profile with Google info
-      await updateUserProfileWithGoogleInfo(tokens.access_token!);
-    }
+    // if (!profileData.first_name || !profileData.last_name) {
+    //   // Update user profile with Google info
+    //   await updateUserProfileWithGoogleInfo(tokens.access_token!);
+    // }
 
     return NextResponse.redirect(`${requestUrl.origin}/private/meetings?google_connected=true`);
   } catch (error) {

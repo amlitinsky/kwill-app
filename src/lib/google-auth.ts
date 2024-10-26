@@ -45,7 +45,6 @@ export async function mapHeadersAndAppendData(
 ) {
   oauth2Client.setCredentials({ access_token: accessToken });
   const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
-  console.log("in append spreadsheet function, these are the values we have: ", "spread id", spreadsheetId, "data dict", dataDict, "access token", accessToken)
 
   // If no sheet name is provided, get the first sheet's name
   if (!sheetName) {

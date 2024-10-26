@@ -29,7 +29,6 @@ export async function POST(request: Request) {
 
   try {
     const { name, spreadsheetLink, customInstructions } = await request.json();
-    console.log('Received data:', { name, spreadsheetLink, customInstructions });
 
     const newTemplate = await createTemplate(name, spreadsheetLink, customInstructions);
     return NextResponse.json(newTemplate);

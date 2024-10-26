@@ -26,7 +26,6 @@ export async function POST(request: Request) {
       const subscription = session.subscription as Stripe.Subscription;
       const previousSubscriptionId = session.metadata?.previous_subscription_id;
 
-      console.log("previous subscripiton? ", previousSubscriptionId)
 
 
       if (previousSubscriptionId) {

@@ -68,14 +68,6 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
           }`}
         >
           Analytics
-        </Link>
-        <Link
-          href="/private/templates"
-          className={`transition-colors hover:text-foreground ${
-            isLinkActive('/private/templates') ? 'text-foreground font-bold' : 'text-muted-foreground'
-          }`}
-        >
-          Templates 
         </Link> */}
         <Link
           href="/private/meetings"
@@ -84,6 +76,14 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
           }`}
         >
           Meetings 
+        </Link>
+        <Link
+          href="/private/documentation"
+          className={`transition-colors hover:text-foreground ${
+            isLinkActive('/private/documentation') ? 'text-foreground font-bold' : 'text-muted-foreground'
+          }`}
+        >
+          Documentation
         </Link>
         <Link
           href="/private/settings"
@@ -126,14 +126,6 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
               }`}
             >
               Analytics
-            </Link>
-            <Link
-              href="/private/templates"
-              className={`hover:text-foreground ${
-                isLinkActive('/private/templates') ? 'text-foreground font-bold' : 'text-muted-foreground'
-              }`}
-            >
-              Templates
             </Link> */}
             <Link
               href="/private/meetings"
@@ -144,12 +136,12 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
               Meetings
             </Link>
             <Link
-              href="/private/billing"
-              className={`hover:text-foreground ${
-                isLinkActive('/private/billing') ? 'text-foreground font-bold' : 'text-muted-foreground'
+              href="/private/documentation"
+              className={`transition-colors hover:text-foreground ${
+                isLinkActive('/private/documentation') ? 'text-foreground font-bold' : 'text-muted-foreground'
               }`}
             >
-              Billing
+              Documentation
             </Link>
             <Link
               href="/private/settings"

@@ -1,5 +1,5 @@
 import Documentation from '@/components/Documentation'
 
-export default function PrivateDocumentationPage() {
+export default function DocumentationPage() {
   return <Documentation />
 }

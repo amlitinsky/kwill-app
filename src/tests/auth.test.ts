@@ -1,6 +1,6 @@
 import { signUp, signIn, supabase, getCurrentUser, updateProfile, signOut, } from '../lib/supabase-client';
 import { deleteAccount } from '@/lib/supabase-server';
-import { confirmTestUserEmail } from '../lib/testUtils';
+import { confirmTestUserEmail } from '../lib/test-utils';
 
 describe('Auth Tests', () => {
   const testEmail = `test${Date.now()}@example.com`;
