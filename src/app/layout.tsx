@@ -22,9 +22,11 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Kwill",
   description: "AI-powered query analysis",
-  icons : {
-    icon: '/favicon.ico'
-  }
+  icons: [
+    // { url: '/favicon.ico', sizes: '32x32' },
+    { url: '/public/images/logos/kwill.png', sizes: '32x32' },
+    // { rel: 'apple-touch-icon', url: '/images/logos/kwill.png' },
+  ]
 };
 
 export default async function RootLayout({

@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { getBaseUrl } from './utils'
 
 const RECALL_API_KEY = process.env.RECALL_API_KEY
 const RECALL_API_URL = 'https://us-west-2.recall.ai/api/v1/bot'
@@ -84,7 +85,7 @@ export async function createZoomOAuthCredential(code: string) {
         oauth_app: process.env.RECALL_ZOOM_OAUTH_APP_ID,
         authorization_code: {
           code: code,
-          redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/zoom-oauth-callback`,
+          redirect_uri: `${getBaseUrl()}/api/zoom-oauth-callback`,
         },
       }),
     });
@@ -127,7 +128,7 @@ export function generateZoomAuthURL(): string {
   const baseUrl = "https://zoom.us/oauth/authorize"
   const queryParams = {
     "response_type": "code",
-    "redirect_uri": `${process.env.NEXT_PUBLIC_BASE_URL}/api/zoom-oauth-callback`,
+    "redirect_uri": `${getBaseUrl()}/api/zoom-oauth-callback`,
     "client_id": process.env.NEXT_PUBLIC_ZOOM_API_CLIENT_ID!,
   }
   const queryString = new URLSearchParams(queryParams).toString()
