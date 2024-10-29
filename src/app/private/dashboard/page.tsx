@@ -7,6 +7,7 @@ import {
   FileText,
   Users,
   Clock,
+  LucideIcon,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -29,6 +30,7 @@ import {
 import { useMeetings } from "@/hooks/use-meetings"
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
+import { cn } from "@/lib/utils"
 
 // Define the Meeting interface
 interface Meeting {
@@ -46,8 +48,18 @@ interface RecentSpreadsheet {
   instructions: string;
 }
 
-// const description =
-//   "Dashboard showing key metrics and recent meetings."
+interface IconProps {
+  icon: LucideIcon
+  className?: string
+}
+
+export function Icon({ icon: Icon, className }: IconProps) {
+  return (
+    <Icon 
+      className={cn("text-muted-foreground", className)} 
+    />
+  )
+}
 
 const LoadingCard = ({ delay = 0 }) => (
   <motion.div
@@ -114,7 +126,7 @@ export default function PrivateDashboard() {
               transition={{ delay: 0.5 }}
             >
               <div className="flex justify-center items-center mt-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" style={{ color: 'currentColor', stroke: 'currentColor' }} />
                 <span className="ml-2 text-lg text-primary">Loading dashboard...</span>
               </div>
             </motion.div>
@@ -131,7 +143,8 @@ export default function PrivateDashboard() {
                   <CardTitle className="text-sm font-medium">
                     Total Meetings
                   </CardTitle>
-                  <FileText className="h-4 w-4 text-muted-foreground" />
+                  <Icon icon={FileText} className="h-4 w-4" />
+
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalMeetings}</div>
@@ -145,7 +158,7 @@ export default function PrivateDashboard() {
                   <CardTitle className="text-sm font-medium">
                     Fields Analyzed
                   </CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
+                  <Icon icon={Users} className="h-4 w-4" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.fieldsAnalyzed}</div>
@@ -157,7 +170,7 @@ export default function PrivateDashboard() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Custom Instructions</CardTitle>
-                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <Icon icon={Clock} className="h-4 w-4" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalCustomInstructions}</div>
@@ -225,7 +238,7 @@ export default function PrivateDashboard() {
                 <CardContent className="grid gap-4">
                   {stats.recentSpreadsheets.map((spreadsheet, index) => (
                     <div key={index} className="flex items-center gap-4">
-                      <FileText className="h-9 w-9" />
+                      <Icon icon={FileText} className="h-9 w-9" />
                       <div className="grid gap-1">
                         <p className="text-sm font-medium leading-none">
                           Spreadsheet ID: {spreadsheet.id.substring(0, 8)}...

@@ -4,9 +4,9 @@ import { validateSpreadsheet } from '@/lib/google-auth';
 
 export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (authError || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const { data: credentials, error } = await supabase
       .from('google_oauth_credentials')
       .select('access_token')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .single();
 
     if (error || !credentials) {

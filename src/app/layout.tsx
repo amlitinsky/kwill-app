@@ -25,7 +25,10 @@ export const metadata: Metadata = {
     // { url: '/favicon.ico', sizes: '32x32' },
     { url: '/public/images/logos/kwill.png', sizes: '32x32' },
     // { rel: 'apple-touch-icon', url: '/images/logos/kwill.png' },
-  ]
+  ],
+  other: {
+    'darkreader-lock': '',
+  },
 };
 
 export default async function RootLayout({
@@ -41,7 +44,7 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <div className="min-h-screen flex flex-col">
             <NavbarWrapper session={!!session}/>
             <main className="flex-grow">

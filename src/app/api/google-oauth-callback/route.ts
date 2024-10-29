@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { getGoogleTokens } from '@/lib/google-auth';
-// import { updateUserProfileWithGoogleInfo } from '@/lib/supabase-server';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -12,7 +10,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'Invalid OAuth code' }, { status: 400 });
   }
 
-  const supabase = await createRouteHandlerClient({ cookies });
+  const supabase = await createServerSupabaseClient();
 
   try {
     const { data: { user} } = await supabase.auth.getUser();

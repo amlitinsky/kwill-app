@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { checkTokenValidity, refreshAccessToken } from '@/lib/google-auth';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function GET() {
-  const supabase = await createRouteHandlerClient({ cookies });
+  const supabase = await createServerSupabaseClient();
 
   try {
     const { data: { user} } = await supabase.auth.getUser();
