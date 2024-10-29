@@ -46,8 +46,8 @@ interface RecentSpreadsheet {
   instructions: string;
 }
 
-export const description =
-  "Dashboard showing key metrics and recent meetings."
+// const description =
+//   "Dashboard showing key metrics and recent meetings."
 
 const LoadingCard = ({ delay = 0 }) => (
   <motion.div
@@ -200,7 +200,11 @@ export default function PrivateDashboard() {
                             <div className="font-medium">{meeting.name}</div>
                           </TableCell>
                           <TableCell className="hidden xl:table-column">
-                            {new Date(meeting.created_at).toLocaleDateString()}
+                            {new Date(meeting.created_at).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
                           </TableCell>
                           <TableCell className="hidden xl:table-column">
                             <Badge className="text-xs" variant="outline">

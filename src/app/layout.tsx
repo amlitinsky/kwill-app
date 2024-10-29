@@ -3,10 +3,9 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { NavbarWrapper } from "@/components/NavbarWrapper";
-import { cookies } from "next/headers";
-import { createServerComponentClient } from "@supabase/auth-helpers-nextjs";
 import AuthListener from "@/components/AuthListener";
 import { Toaster } from "@/components/ui/toaster";
+import { createServerSupabaseClient } from "@/lib/supabase-server";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -34,7 +33,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = createServerComponentClient({ cookies });
+  const supabase = await createServerSupabaseClient()
   const { data: { session } } = await supabase.auth.getSession();
 
   return (

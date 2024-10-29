@@ -1,4 +1,3 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
 import { cookies } from 'next/headers';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
@@ -6,38 +5,36 @@ import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { retrieveSubscription } from './stripe';
 import { getGoogleUserInfo } from './google-auth';
-// import { CookieOptions } from '@supabase/ssr';
-
-// import { CookieOptions, createServerClient } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 
 export async function createServerSupabaseClient() {
-  return createServerComponentClient({ cookies: cookies })
+  const cookieStore = await cookies()
+
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll()
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            )
+          } catch {
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
+        },
+      },
+    }
+  )
 }
 
-// export async function createServerSupabaseClient() {
-//   return await createRouteHandlerClient({ cookies })
 
-// }
-
-// export async function createServerSupabaseClient() {
-//   return createServerComponentClient({
-//     cookies: async () => {
-//       const cookieStore = await cookies()
-//       return {
-//         get: async (name: string) => {
-//           const cookie = cookieStore.get(name)
-//           return cookie?.value
-//         },
-//         set: async (name: string, value: string, options: CookieOptions) => {
-//           cookieStore.set(name, value, options)
-//         },
-//         remove: async (name: string, options: CookieOptions) => {
-//           cookieStore.set(name, '', { ...options, maxAge: 0 })
-//         },
-//       }
-//     },
-//   })
-// }
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 

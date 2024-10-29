@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { createClient } from '@/lib/supabase-client';
 
 interface AuthListenerProps {
   initialSession: boolean;
@@ -11,7 +11,7 @@ interface AuthListenerProps {
 export default function AuthListener({ initialSession }: AuthListenerProps) {
   const [session, setSession] = useState(initialSession);
   const router = useRouter();
-  const supabase = createClientComponentClient();
+  const supabase = createClient()
 
   useEffect(() => {
     const {
