@@ -56,10 +56,10 @@ export async function POST(req: Request) {
             throw new Error('Failed to retrieve meeting details')
         }
 
-        const { user_id, spreadsheet_id, column_headers, custom_instructions, status } = meetingDetails
+        const { user_id, spreadsheet_id, column_headers, custom_instructions, status: meetingStatus} = meetingDetails
 
         // if the webhook refires for some reason
-        if (status === 'Done') {
+        if (meetingStatus === 'Done') {
           return NextResponse.json({ received: true })
         }
 
