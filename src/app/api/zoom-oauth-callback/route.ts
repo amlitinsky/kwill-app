@@ -46,8 +46,9 @@ export async function GET(request: NextRequest) {
 
     // Redirect to dashboard with success parameter
     // TODO verify this is good (also update it to base url which will naturally include https)
-    const protocol = process.env.VERCEL_ENV === 'production' ? 'https' : 'http';
-    return NextResponse.redirect(`${protocol}://${requestUrl.host}/private/settings?zoom_connected=true`)
+    // const protocol = process.env.VERCEL_ENV === 'production' ? 'https' : 'http';
+    // requestUrl.host(alternative)
+    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_BASE_URL}/private/settings?zoom_connected=true`)
 
   } catch (error) {
     console.error('Error in Zoom OAuth callback:', error)
