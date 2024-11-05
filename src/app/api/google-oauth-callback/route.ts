@@ -5,7 +5,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
-  const source = requestUrl.searchParams.get('source');
+  const source = requestUrl.searchParams.get('state');
 
   if (!code) {
     return NextResponse.json({ error: 'Invalid OAuth code' }, { status: 400 });

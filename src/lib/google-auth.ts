@@ -8,11 +8,12 @@ const oauth2Client = new OAuth2Client(
 );
 
 // Generates the Google OAuth URL for user authorization
-export function getGoogleAuthUrl() {
+export function getGoogleAuthUrl(source?: string) {
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: ['https://www.googleapis.com/auth/spreadsheets'],
-    prompt: 'consent'
+    prompt: 'consent',
+    state: source
   });
 }
 
