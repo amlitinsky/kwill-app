@@ -88,7 +88,7 @@ export async function fetchTemplates() {
   return data;
 }
 
-export async function createTemplate(name: string, spreadsheetLink: string, customInstructions: string) {
+export async function createTemplate(name: string, spreadsheetId: string, customInstructions: string, transcript: string) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
@@ -97,8 +97,9 @@ export async function createTemplate(name: string, spreadsheetLink: string, cust
     .from('templates')
     .insert([{ 
       name, 
-      spreadsheet_link: spreadsheetLink, 
+      spreadsheet_id: spreadsheetId, 
       custom_instructions: customInstructions,
+      transcript: transcript,
       user_id: user.id
     }]);
 
@@ -106,7 +107,7 @@ export async function createTemplate(name: string, spreadsheetLink: string, cust
   return data;
 }
 
-export async function updateTemplate(id: string, name: string, spreadsheetLink: string, customInstructions: string) {
+export async function updateTemplate(id: string, name: string, spreadsheetId: string, customInstructions: string) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
@@ -115,7 +116,7 @@ export async function updateTemplate(id: string, name: string, spreadsheetLink: 
     .from('templates')
     .update({ 
       name, 
-      spreadsheet_link: spreadsheetLink, 
+      spreadsheet_id: spreadsheetId, 
       custom_instructions: customInstructions 
     })
     .eq('id', id)

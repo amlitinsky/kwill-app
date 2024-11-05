@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
-import { fetchTemplates, createTemplate, updateTemplate, deleteTemplate } from '@/lib/supabase-server';
+import { fetchTemplates, createTemplate, updateTemplate, deleteTemplate, getGoogleCreds } from '@/lib/supabase-server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { processRawTranscript } from '@/lib/transcript-utils';
+import { processTranscriptWithClaude } from '@/lib/anthropic';
+import { getColumnHeaders, mapHeadersAndAppendData } from '@/lib/google-auth';
 
 export async function GET() {
   const supabase =  await createServerSupabaseClient()
@@ -20,18 +23,41 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const supabase =  await createServerSupabaseClient()
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    const { name, spreadsheetLink, customInstructions } = await request.json();
+    const { name, spreadsheetId, customInstructions, transcript } = await request.json();
+    const newTemplate = await createTemplate(name, spreadsheetId, customInstructions, transcript);
 
-    const newTemplate = await createTemplate(name, spreadsheetLink, customInstructions);
+    // Get Google credentials
+    const google_creds = await getGoogleCreds(user.id);
+
+    const headers = await getColumnHeaders(google_creds.access_token, spreadsheetId)
+
+    const processedTranscript = processRawTranscript([{
+      speaker: "Sample Speaker", 
+      words: [{text: transcript as string}]
+    }]);
+    const processed_data = await processTranscriptWithClaude(
+      processedTranscript,
+      headers,
+      customInstructions
+    );
+
+    // Append to Google Sheets
+    await mapHeadersAndAppendData(
+      spreadsheetId,
+      "",
+      processed_data,
+      google_creds.access_token
+    );
     return NextResponse.json(newTemplate);
   } catch (error) {
+    console.error('Error in template creation:', error);
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
   }
 }

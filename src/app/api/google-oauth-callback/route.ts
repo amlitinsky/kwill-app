@@ -5,6 +5,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
+  const source = requestUrl.searchParams.get('source');
 
   if (!code) {
     return NextResponse.json({ error: 'Invalid OAuth code' }, { status: 400 });
@@ -35,22 +36,12 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
-    // need to fix this
-    // Check if the user's profile needs to be updated
-    // const { data: profileData, error: profileError } = await supabase
-    //   .from('users')
-    //   .select('first_name, last_name')
-    //   .eq('id', user.id)
-    //   .single();
 
-    // if (profileError) throw profileError;
-
-    // if (!profileData.first_name || !profileData.last_name) {
-    //   // Update user profile with Google info
-    //   await updateUserProfileWithGoogleInfo(tokens.access_token!);
-    // }
-
-    return NextResponse.redirect(`${requestUrl.origin}/private/meetings?google_connected=true`);
+    if (source == 'templates'){
+      return NextResponse.redirect(`${requestUrl.origin}/private/templates?google_connected=true`);
+    } else {
+      return NextResponse.redirect(`${requestUrl.origin}/private/meetings?google_connected=true`);
+    }
   } catch (error) {
     console.error('Error in Google OAuth callback:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
