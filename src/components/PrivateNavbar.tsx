@@ -10,22 +10,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { usePathname, useRouter } from 'next/navigation'
-// import { Input } from "@/components/ui/input"
-// import { Search, CircleUser } from "lucide-react"
 import { CircleUser } from "lucide-react"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import Image from 'next/image'
+import { signOut } from '@/lib/supabase-client'
+
 
 export function PrivateNavbar({ children }: { children: React.ReactNode }) {
-  const supabase = createClientComponentClient()
   const router = useRouter()
   const pathname = usePathname()
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut()
+      await signOut()
       router.push('/') // Redirect to the public landing page
       router.refresh() // Force a refresh of the current route
     } catch (error) {

@@ -35,8 +35,40 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signOut() {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
+  try {
+    // 1. Server-side invalidation
+    await fetch('/auth/signout', {
+      method: 'POST',
+      credentials: 'include',
+    });
+
+    // Clear specific items
+    localStorage.removeItem('ally-supports-cache');
+    localStorage.removeItem('pendingMeeting');
+    localStorage.removeItem('settingsActiveTab');
+    localStorage.removeItem('zoomConnected');
+
+    // 2. Global scope logout (invalidates all sessions)
+    await supabase.auth.signOut({ scope: 'global' });
+    
+    // 3. Clear all stored data
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // 4. Clear cookies
+    document.cookie.split(";").forEach((c) => {
+      document.cookie = c
+        .replace(/^ +/, "")
+        .replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/");
+    });
+    
+  } catch (error) {
+    console.error('Error during sign out:', error);
+    throw error;
+  }
+  // Original Supabase Sign out
+  // const { error } = await supabase.auth.signOut();
+  // if (error) throw error;
 }
 
 export async function getCurrentUser() {
