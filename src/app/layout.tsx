@@ -22,8 +22,8 @@ export const metadata: Metadata = {
   title: "Kwill",
   description: "AI-powered query analysis",
   icons: [
-    // { url: '/favicon.ico', sizes: '32x32' },
-    { url: '/public/images/logos/kwill.png', sizes: '32x32' },
+    // { url: '/icon.png', sizes: '32x32' },
+    // { url: '/public/images/logos/kwill-no-bg.png', sizes: '32x32' },
     // { rel: 'apple-touch-icon', url: '/images/logos/kwill.png' },
   ],
   other: {

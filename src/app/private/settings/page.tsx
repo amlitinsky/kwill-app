@@ -10,6 +10,7 @@ import { SubscriptionManager } from '@/components/SubscriptionManager'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { ZoomConnectButton } from '@/components/ZoomConnectButton'
+import { CalendlyConnectButton } from '@/components/CalendlyConnectButton'
 
 export default function SettingsPage() {
   const [firstName, setFirstName] = useState('')
@@ -175,6 +176,9 @@ export default function SettingsPage() {
                 </CardHeader>
                 <CardContent>
                   <ZoomConnectButton />
+                </CardContent>
+                <CardContent>
+                  <CalendlyConnectButton/>
                 </CardContent>
               </Card>
             </TabsContent>

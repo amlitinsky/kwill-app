@@ -44,7 +44,7 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
         >
           <div className="relative w-12 h-12">
             <Image 
-              src="/images/logos/kwill.png" 
+              src="/images/logos/kwill-no-bg.png" 
               alt="Kwill Logo" 
               fill
               style={{ objectFit: 'contain' }}
@@ -109,7 +109,7 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
           >
             <div className="relative w-12 h-12">
               <Image 
-                src="/images/logos/kwill.png" 
+                src="/images/logos/kwill-no-bg.png" 
                 alt="Kwill Logo" 
                 fill
                 style={{ objectFit: 'contain' }}

@@ -9,7 +9,7 @@ export function PublicNavbar({ children }: { children: React.ReactNode }) {
       <Link href="/public/landing" className="flex items-center gap-2 text-lg font-semibold md:text-base">
           <div className="relative w-12 h-12">
             <Image 
-              src="/images/logos/kwill.png" 
+              src="/images/logos/kwill-no-bg.png" 
               alt="Kwill Logo" 
               fill
               style={{ objectFit: 'contain' }}
@@ -30,7 +30,7 @@ export function PublicNavbar({ children }: { children: React.ReactNode }) {
           Documentation 
         </Link>
         <Link href="/public/support" className="text-muted-foreground transition-colors hover:text-foreground">
-          Documentation 
+          Support 
         </Link>
       </nav>
 
@@ -53,7 +53,7 @@ export function PublicNavbar({ children }: { children: React.ReactNode }) {
           >
               <div className="relative w-12 h-12">
                 <Image 
-                  src="/images/logos/kwill.png" 
+                  src="/images/logos/kwill-no-bg.png" 
                   alt="Kwill Logo" 
                   fill
                   style={{ objectFit: 'contain' }}

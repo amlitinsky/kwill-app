@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getGoogleTokens } from '@/lib/google-auth';
-import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { createServerSupabaseClient, deletePendingOAuthFlow, getPendingOAuthFlow } from '@/lib/supabase-server';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
@@ -36,6 +36,13 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
+    // Check for pending Calendly flow
+    const pendingFlow = await getPendingOAuthFlow(user.id, 'calendly');
+    if (pendingFlow) {
+      const calendlyCode = pendingFlow.data;
+      await deletePendingOAuthFlow(user.id, 'calendly');
+      return NextResponse.redirect(`${requestUrl.origin}/api/calendly-oauth-callback?code=${calendlyCode}`);
+    }
 
     if (source == 'templates'){
       return NextResponse.redirect(`${requestUrl.origin}/private/templates?google_connected=true`);

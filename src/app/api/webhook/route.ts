@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { Webhook } from 'svix'
 import { analyzeMedia, getTranscript } from '@/lib/recall'
-import { getGoogleCreds, getMeetingDetails, incrementMeetingCount, updateMeetingProcessedData, updateMeetingStatus } from '@/lib/supabase-server'
+import { getMeetingDetails, getValidGoogleToken, incrementMeetingCount, updateMeetingProcessedData, updateMeetingStatus } from '@/lib/supabase-server'
 import { processTranscriptWithClaude } from '@/lib/anthropic'
 import { mapHeadersAndAppendData } from '@/lib/google-auth'
 import { ProcessedTranscriptSegment, processRawTranscript } from '@/lib/transcript-utils'
@@ -120,10 +120,13 @@ export async function POST(req: Request) {
           await updateMeetingStatus(bot_id, 'Analyzed Transcript')
 
           // get access token
-          const google_creds = await getGoogleCreds(meetingDetails.user_id)
+          // const google_creds = await getGoogleCreds(meetingDetails.user_id)
+
+          // get valid access_token
+          const access_token = await getValidGoogleToken(meetingDetails.user_id)
 
           // appned to google sheets
-          await mapHeadersAndAppendData(meetingDetails.spreadsheet_id, "", processed_data, google_creds.access_token)
+          await mapHeadersAndAppendData(meetingDetails.spreadsheet_id, "", processed_data, access_token)
 
           await updateMeetingStatus(bot_id, 'Done')
 
