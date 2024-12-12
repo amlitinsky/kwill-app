@@ -10,51 +10,53 @@ const qstash = new Client({
   token: process.env.QSTASH_TOKEN!
 })
 
-export async function scheduleMeeting(webhookData: any) {
-  const startTime = new Date(webhookData.payload.scheduled_event.start_time);
-  const meetingData = {
-    id: webhookData.payload.uri,
-    user_id: webhookData.payload.user_id,
-    event_uuid: webhookData.payload.event_uuid,
-    start_time: startTime.toISOString(),
-    canceled: false,
-    spreadsheet_url: webhookData.payload.questions_and_answers.find(
-      (qa: any) => qa.question === 'Spreadsheet URL (Required for Kwill Assistant)'
-    )?.answer
-  };
+export async function scheduleMeeting(eventUri: string, startTime: string) {
+  try {
+    const botStartTime = new Date(new Date(startTime).getTime() - 30000);
+    const delaySeconds = Math.max(0, Math.floor((botStartTime.getTime() - Date.now()) / 1000));
+    console.log("scheduling meeting via qstash and redis and these are the delay seconds: ", delaySeconds)
 
-  // Schedule the bot start
-  const botStartTime = new Date(startTime.getTime() - 60000);
-  const scheduleResponse = await qstash.schedules.create({
-    destination: `${process.env.NEXT_PUBLIC_BASE_URL}/api/start-meeting-bot`,
-    body: JSON.stringify({ meetingId: meetingData.id }),
-    notBefore: botStartTime.toISOString()
-  });
+    const scheduleResponse = await qstash.publishJSON({
+      url: `${process.env.NEXT_PUBLIC_NGROK_URL}/api/deploy-meeting-bot`, 
+      body: { eventUri },
+      delay: delaySeconds,
+      retries: 3,
+      retryDelay: 30
+    });
 
-  // Store meeting data with QStash schedule ID
-  const meetingDataWithSchedule = {
-    ...meetingData,
-    qstash_schedule_id: scheduleResponse.scheduleId
-  };
+    console.log("we should have a scheduled response: ", scheduleResponse)
 
-  await redis.set(`meeting:${meetingData.id}`, JSON.stringify(meetingDataWithSchedule));
-  return meetingDataWithSchedule;
+    // Calculate TTL: meeting start time + 2 hours (typical meeting duration) + 1 hour buffer
+    const ttlSeconds = Math.floor(
+      (new Date(startTime).getTime() + (3 * 60 * 60 * 1000) - Date.now()) / 1000
+    );
+
+    const response = await redis.set(
+      `schedule:${eventUri}`,
+      JSON.stringify({
+        qstash_message_id: scheduleResponse.messageId,
+        start_time: startTime,
+        canceled: false
+      }),
+      { 
+        ex: ttlSeconds // Set expiration in seconds
+      }
+    );
+    console.log("redist set response: ", response)
+
+    return scheduleResponse.messageId;
+  } catch (error) {
+    console.error('Error scheduling meeting:', error);
+    throw new Error('Failed to schedule meeting');
+  }
 }
 
-export async function cancelMeeting(webhookData: any) {
-  const meetingId = webhookData.payload.uri;
-  const meetingData = await redis.get(`meeting:${meetingId}`);
-  
-  if (meetingData) {
-    const parsedMeeting = JSON.parse(meetingData as string);
-    
-    // Cancel the scheduled QStash task
-    if (parsedMeeting.qstash_schedule_id) {
-      await qstash.schedules.delete(parsedMeeting.qstash_schedule_id);
-    }
-
-    // Update meeting status in Redis
-    const updatedMeeting = { ...parsedMeeting, canceled: true };
-    await redis.set(`meeting:${meetingId}`, JSON.stringify(updatedMeeting));
+export async function cancelScheduledMeeting(eventUri: string) {
+  const scheduleData = await redis.get(`schedule:${eventUri}`);
+  if (scheduleData) {
+    await redis.set(`schedule:${eventUri}`, JSON.stringify({
+      ...scheduleData,
+      canceled: true
+    }));
   }
 }

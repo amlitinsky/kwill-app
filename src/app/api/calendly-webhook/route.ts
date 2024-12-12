@@ -1,49 +1,128 @@
 import { NextResponse } from 'next/server';
-import { createCalendlyMeeting } from '@/lib/supabase-server';
-import { extractSpreadsheetId } from '@/lib/google-auth';
+import { cancelCalendlyMeeting, createCalendlyMeeting, getCalendlyConfigByUri, getCalendlyUser, getMeetingByEventUri } from '@/lib/supabase-server';
+import crypto from 'crypto';
+import { createBot, deleteBot } from '@/lib/recall';
+
+const WEBHOOK_SECRET = process.env.CALENDLY_WEBHOOK_SECRET!;
+
+function verifyWebhookSignature(payload: string, signature: string): boolean {
+  if (!WEBHOOK_SECRET) {
+    throw new Error('Calendly webhook secret not configured');
+  }
+  try {
+    const sigComponents = signature.split(',').reduce((acc: { timestamp: string, signature: string }, curr) => {
+      const [key, value] = curr.split('=');
+      if (key === 't') acc.timestamp = value;
+      if (key === 'v1') acc.signature = value;
+      return acc;
+    }, { timestamp: '', signature: '' });
+
+    if (!sigComponents.timestamp || !sigComponents.signature) {
+      return false;
+    }
+
+    const signedPayload = `${sigComponents.timestamp}.${payload}`;
+    const computedSignature = crypto
+      .createHmac('sha256', WEBHOOK_SECRET)
+      .update(signedPayload)
+      .digest('hex');
+
+    return crypto.timingSafeEqual(
+      Buffer.from(sigComponents.signature),
+      Buffer.from(computedSignature)
+    );
+  } catch (error) {
+    return false;
+  }
+}
 
 export async function POST(request: Request) {
-  const payload = await request.json();
+  const signature = request.headers.get('Calendly-Webhook-Signature');
+
+  if (!signature) {
+    return NextResponse.json({ error: 'Missing signature header' }, { status: 401 });
+  }
+
+  const rawPayload = await request.text();
 
   try {
+    const isValid = verifyWebhookSignature(rawPayload, signature);
+    
+    if (!isValid) {
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+    }
+
+    const payload = JSON.parse(rawPayload);
+
     switch (payload.event) {
       case 'invitee.created': {
         const eventData = payload.payload;
-        const zoomData = eventData.location;
-        
-        const questions = eventData.questions_and_answers;
-        const useKwill = questions.find(
-          (qa: { question: string; }) => 
-            qa.question === 'Would you like to use the Kwill Assistant for this meeting?'
-        )?.answer === 'Yes';
+        const locationData = eventData.scheduled_event.location;
 
-
-        if (useKwill) {
-          const spreadsheet_url = questions.find((qa: { question: string; }) => qa.question === 'Spreadsheet URL (Required for Kwill Assistant)')?.answer
-
-          const spreadsheetId = extractSpreadsheetId(spreadsheet_url)
-          // dealing with that null case for whatever reason but can be fixed fyi (rn its kinda poor practice)
-
-          await createCalendlyMeeting(
-            eventData.user_id,
-            eventData.event.name,
-            zoomData.join_url,
-            spreadsheetId!,
-            questions.find((qa: { question: string; }) => qa.question === 'Custom prompt for Kwill Assistant')?.answer,
-            eventData.event.uuid
-          );
+        if (!locationData?.join_url) {
+          return NextResponse.json({ 
+            message: 'Meeting skipped - no Zoom URL provided',
+            success: true 
+          });
         }
+
+        const data = await getCalendlyUser(eventData.invitee_scheduled_by)
+        const userId = data?.user_id
+
+        if (!userId) {
+            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }
+
+        const eventUri = eventData.scheduled_event.uri;
+        const eventTypeUri = eventData.scheduled_event.event_type
+        const startTime = eventData.scheduled_event.start_time;
+        const name = `${eventData.scheduled_event.name} - ${new Date(startTime).toLocaleString()}`
+
+        const config = await getCalendlyConfigByUri(eventTypeUri);
+        if (!config || !config.active || !config.spreadsheet_id) {
+          return NextResponse.json({ message: 'Event type not configured or inactive' });
+        }
+
+        const joinTime = new Date(new Date(startTime).getTime() - 30000);
+
+        const scheduledBot = await createBot(locationData.join_url, {
+          join_at: joinTime.toISOString()
+        });
+
+        await createCalendlyMeeting(
+          userId,
+          name,
+          locationData.join_url,
+          config.spreadsheet_id,
+          config.custom_instructions,
+          scheduledBot.id,
+          {
+            useAdmin: true,
+            status: "Scheduled",
+            eventUri: eventUri
+          }
+        );
         break;
       }
-      case 'invitee.cancelled': {
 
+      case 'invitee.canceled': {
+        const eventData = payload.payload;
+        const eventUri = eventData.scheduled_event.uri;
+        const meeting = await getMeetingByEventUri(eventUri);
+        
+        if (meeting?.bot_id) {
+          await deleteBot(meeting.bot_id);
+        }
+        await cancelCalendlyMeeting(eventUri);
+        break;
       }
-
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error handling webhook:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Internal Server Error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

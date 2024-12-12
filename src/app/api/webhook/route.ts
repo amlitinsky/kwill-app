@@ -55,38 +55,21 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Failed to initiate analysis' }, { status: 500 })
       }
     } else if (status.code === 'analysis_done') {
-      // console.log("Webhook Received:", {
-      //   event,
-      //   botId: bot_id,
-      //   status: status.code,
-      //   timestamp: status.created_at,
-      //   message: status.message,
-      //   recordingId: status.recording_id
-      // })
 
       try {
         // Check if already processed
         const processRecord = await getProcessRecord(bot_id)
-        // console.log("process record: ", processRecord)
         if (processRecord) {
-          // console.log('Already processed:', {
-          //   botId: bot_id,
-          //   processRecord,
-          //   currentTimestamp: status.created_at
-          // })
           return NextResponse.json({ received: true })
         }
 
         // Try to acquire lock
         const locked = await acquireLock(bot_id)
-        // console.log("locked record", locked)
         if (!locked) {
-          // console.log('Processing already in progress:', bot_id)
           return NextResponse.json({ received: true })
         }
 
         try {
-          // console.log("now we processing it")
           // Mark as processing
           await setProcessRecord(bot_id, {
             status: 'processing',
@@ -101,7 +84,6 @@ export async function POST(req: Request) {
 
           // Double-check meeting status
           if (['Done', 'Analyzed Transcript', 'Received Transcript'].includes(meetingDetails.status)) {
-            // console.log('Meeting already processed:', bot_id)
             return NextResponse.json({ received: true })
           }
 

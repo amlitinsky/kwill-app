@@ -4,14 +4,18 @@ const RECALL_API_KEY = process.env.RECALL_API_KEY
 const RECALL_API_URL = 'https://us-west-2.recall.ai/api/v1/bot'
 const RECALL_API_URL_ANALYZE = 'https://us-west-2.recall.ai/api/v2beta/bot'
 const RECALL_API_ZOOM_OAUTH_CREDENTIALS = 'https://us-west-2.recall.ai/api/v2/zoom-oauth-credentials'
+interface CreateBotOptions {
+  join_at?: string;
+}
 
-export async function createBot(meetingUrl: string) {
+export async function createBot(meetingUrl: string, options: CreateBotOptions = {}) {
   try {
     const response = await axios.post(RECALL_API_URL, {
       meeting_url: meetingUrl,
       bot_name: "Kwill Scribe",
+      ...(options.join_at && { join_at: options.join_at }),
       transcription_options: {
-        provider: 'gladia',
+        provider: 'assembly_ai',
       },
     }, {
       headers: {
@@ -56,7 +60,7 @@ export async function getBotStatus(botId: string) {
 
 export async function analyzeMedia(botId: string) {
   try {
-    const response = await axios.post(`${RECALL_API_URL_ANALYZE}/${botId}/analyze`, {gladia_async_transcription: {}}, {
+    const response = await axios.post(`${RECALL_API_URL_ANALYZE}/${botId}/analyze`, {assemblyai_async_transcription: {}}, {
       headers: {
         'Authorization': `Token ${RECALL_API_KEY}`,
         'accept': 'application/json',
@@ -132,4 +136,25 @@ export function generateZoomAuthURL(): string {
   }
   const queryString = new URLSearchParams(queryParams).toString()
   return `${baseUrl}?${queryString}`
+}
+
+export async function deleteBot(botId: string) {
+  try {
+    const response = await fetch(`${RECALL_API_URL}/${botId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Token ${RECALL_API_KEY}`,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(`Failed to delete bot: ${JSON.stringify(error)}`);
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Error deleting bot:', error);
+    throw error;
+  }
 }

@@ -4,7 +4,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 import { retrieveSubscription } from './stripe';
-import { getGoogleUserInfo, refreshAccessToken } from './google-auth';
+import { getColumnHeaders, getGoogleUserInfo, refreshAccessToken } from './google-auth';
 import { createServerClient } from '@supabase/ssr';
 import { checkCalendlyTokenValidity, refreshCalendlyToken } from './calendly';
 
@@ -712,15 +712,23 @@ export async function getValidGoogleToken(userId: string): Promise<string> {
   return credentials.access_token;
 }
 
-export async function createCalendlyMeeting(
-  userId: string,
-  name: string,
-  zoomLink: string,
-  spreadsheetId: string | undefined,
-  customInstructions: string | undefined,
-  eventUuid: string,
-) {
-  const supabase = await createServerSupabaseClient();
+interface CalendlyMeetingOptions {
+  useAdmin?: boolean;
+  status?: string;
+  eventUri?:string;
+}
+
+export async function createCalendlyMeeting(userId: string, name: string, zoomLink: string, spreadsheetId: string, customInstructions: string, botId: string, options: CalendlyMeetingOptions = {}) {
+
+  console.log("calendly meeting options: ", options)
+
+  const supabase = options.useAdmin ? supabaseAdmin : await createServerSupabaseClient();
+
+  const googleAccessToken = await getValidGoogleToken(userId)
+
+  if (!googleAccessToken) throw new Error('Google OAuth credentials not found');
+
+  const fetchedColumnHeaders = await getColumnHeaders(googleAccessToken, spreadsheetId)
 
   const { data, error } = await supabase
     .from('meetings')
@@ -729,23 +737,22 @@ export async function createCalendlyMeeting(
       name: name,
       zoom_link: zoomLink,
       spreadsheet_id: spreadsheetId,
+      column_headers: fetchedColumnHeaders,
       custom_instructions: customInstructions,
-      event_uuid: eventUuid,
+      bot_id: botId,
+      ...(options.status && { status: options.status }),
+      ...(options.eventUri && { event_uri: options.eventUri })
     });
 
-  if (error) {
-    console.error('Error creating meeting:', error);
-    throw new Error('Failed to create meeting');
-  }
-
+  if (error) throw error;
   return data;
 }
 
-export async function getCalendlyMeetingDetails(event_uuid: string) {
+export async function getCalendlyUser(uri: string) {
   const { data, error } = await supabaseAdmin
-    .from('meetings')
-    .select('zoom_link')
-    .eq('event_uuid', event_uuid)
+    .from('calendly_oauth_credentials')
+    .select('user_id')
+    .eq('uri', uri)
     .single()
 
   if (error) {
@@ -754,5 +761,213 @@ export async function getCalendlyMeetingDetails(event_uuid: string) {
   }
 
   return data
+}
+
+
+interface CalendlyConfig {
+  id: string;
+  user_id: string;
+  uri: string;
+  name: string;
+  spreadsheet_id: string | null;
+  custom_instructions: string | null;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// 1. Function to fetch existing configs
+export async function getCalendlyConfigs(userId: string) {
+  const supabase = await createServerSupabaseClient();
+  
+  const { data, error } = await supabase
+    .from('calendly_configs')
+    .select('*')
+    .eq('user_id', userId);
+
+  if (error) throw error;
+  return data as CalendlyConfig[];
+}
+
+// 2. Function to create initial configs (used in OAuth callback)
+export async function createInitialCalendlyConfigs(userId: string, eventTypes: CalendlyConfig[]) {
+  
+  const configs = eventTypes.map(eventType => ({
+    user_id: userId,
+    uri: eventType.uri,
+    name: eventType.name,
+    spreadsheet_id: null,
+    custom_instructions: null,
+    active: false
+  }));
+
+  const { error } = await supabaseAdmin
+    .from('calendly_configs')
+    .insert(configs);
+
+  if (error) throw error;
+}
+
+// 3. Function to add new event types (used when checking for updates)
+// TODO when user has deleted an event type on their calendly, we should update by deleting it too
+export async function addNewCalendlyEventTypes(userId: string, eventTypes: CalendlyConfig[]) {
+  const supabase = await createServerSupabaseClient();
+  
+  // Get existing event type URIs
+  const { data: existing } = await supabase
+    .from('calendly_configs')
+    .select('uri')
+    .eq('user_id', userId);
+
+  const existingUris = new Set(existing?.map(e => e.uri) || []);
+  
+  // Filter to only new event types
+  const newEventTypes = eventTypes.filter(et => !existingUris.has(et.uri));
+  
+  if (newEventTypes.length === 0) {
+    return { added: 0 };
+  }
+
+  const configs = newEventTypes.map(eventType => ({
+    user_id: userId,
+    uri: eventType.uri,
+    name: eventType.name,
+    spreadsheet_id: null,
+    custom_instructions: null,
+    active: false
+  }));
+
+  const { error } = await supabase
+    .from('calendly_configs')
+    .insert(configs);
+
+  if (error) throw error;
+  return { added: newEventTypes.length };
+}
+
+// 4. Function to update a single config
+export async function updateCalendlyConfig(
+  userId: string, 
+  configId: string, 
+  updates: Partial<CalendlyConfig>
+) {
+  const supabase = await createServerSupabaseClient();
+  
+  const { error } = await supabase
+    .from('calendly_configs')
+    .update({
+      ...updates,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', configId)
+    .eq('user_id', userId); // Extra safety check
+
+  if (error) throw error;
+}
+
+export async function updateMeetingBotId(meetingId: string, botId: string) {
+  const { error } = await supabaseAdmin
+    .from('meetings')
+    .update({ 
+      bot_id: botId,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', meetingId);
+
+  if (error) throw error;
+}
+
+export async function getMeetingByEventUri(eventUri: string) {
+  const { data, error } = await supabaseAdmin
+    .from('meetings')
+    .select('*')
+    .eq('event_uri', eventUri)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+export async function getCalendlyConfigByUri(eventTypeUri: string) {
+  const { data, error } = await supabaseAdmin
+    .from('calendly_configs')
+    .select('*')
+    .eq('uri', eventTypeUri)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data;
+}
+export async function cancelCalendlyMeeting(eventUri: string) {
+  const { error } = await supabaseAdmin
+    .from('meetings')
+    .delete()
+    .eq('event_uri', eventUri);
+
+  if (error) throw error;
+}
+
+export async function syncCalendlyEventTypes(userId: string, eventTypes: CalendlyConfig[]) {
+  const supabase = await createServerSupabaseClient();
+  
+  // Get existing event types with names
+  const { data: existing } = await supabase
+    .from('calendly_configs')
+    .select('uri, id, name')
+    .eq('user_id', userId);
+
+  if (!existing) return { added: 0, deleted: 0, updated: 0 };
+
+  // Create maps for efficient lookup
+  const existingMap = new Map(existing.map(e => [e.uri, e]));
+  const newMap = new Map(eventTypes.map(e => [e.uri, e]));
+
+  // Find event types to add, delete, and update
+  const toAdd = eventTypes.filter(et => !existingMap.has(et.uri));
+  const toDelete = existing.filter(et => !newMap.has(et.uri));
+  const toUpdate = eventTypes.filter(et => {
+    const existing = existingMap.get(et.uri);
+    return existing && existing.name !== et.name;
+  });
+
+  // Handle additions
+  if (toAdd.length > 0) {
+    const configs = toAdd.map(eventType => ({
+      user_id: userId,
+      uri: eventType.uri,
+      name: eventType.name,
+      spreadsheet_id: null,
+      custom_instructions: null,
+      active: false
+    }));
+
+    await supabase
+      .from('calendly_configs')
+      .insert(configs);
+  }
+
+  // Handle updates
+  if (toUpdate.length > 0) {
+    for (const eventType of toUpdate) {
+      await supabase
+        .from('calendly_configs')
+        .update({ name: eventType.name })
+        .eq('uri', eventType.uri)
+        .eq('user_id', userId);
+    }
+  }
+
+  // Handle deletions
+  if (toDelete.length > 0) {
+    await supabase
+      .from('calendly_configs')
+      .delete()
+      .in('id', toDelete.map(et => et.id));
+  }
+
+  return { 
+    added: toAdd.length,
+    updated: toUpdate.length,
+    deleted: toDelete.length
+  };
 }
 

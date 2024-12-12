@@ -1,4 +1,3 @@
-
 interface CalendlyTokens {
   access_token: string;
   refresh_token: string;
@@ -59,6 +58,7 @@ export async function getCalendlyTokens(code: string): Promise<CalendlyTokens> {
 }
 
 // Refresh access token using refresh token
+// TODO  have to test this and confirm with docs
 export async function refreshCalendlyToken(refreshToken: string): Promise<CalendlyTokens> {
   const response = await fetch('https://auth.calendly.com/oauth/token', {
     method: 'POST',
@@ -116,64 +116,24 @@ export async function getCalendlyUserInfo(accessToken: string): Promise<Calendly
 }
 
 // Get user's event types
-export async function getCalendlyEventTypes(accessToken: string) {
-  const response = await fetch('https://api.calendly.com/event_types?user=me', {
-    headers: {
-      'Authorization': `Bearer ${accessToken}`
-    }
-  });
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch Calendly event types');
-  }
-
-  const data = await response.json();
-  return data.collection;
-}
-
-export async function updateEventTypeQuestions(accessToken: string, eventTypeUri: string) {
-  return fetch(`https://api.calendly.com/event_types/${eventTypeUri}`, {
-    method: 'PATCH',
+export async function getCalendlyEventTypes(accessToken: string, userUri: string) {
+  const response = await fetch(`https://api.calendly.com/event_types?user=${userUri}`, {
+    method: 'GET',
     headers: {
       'Authorization': `Bearer ${accessToken}`,
       'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      custom_questions: [
-        {
-          name: 'Would you like to use the Kwill Assistant for this meeting?',
-          type: 'radio',
-          required: true,
-          position: 0,
-          answer_choices: ['Yes', 'No']
-        },
-        {
-          name: 'Spreadsheet URL (Required for Kwill Assistant)',
-          type: 'text',
-          required: true,
-          position: 1,
-          include_if_answer_equals: {
-            question: 'Would you like to use the Kwill Assistant for this meeting?',
-            answer: 'Yes'
-          }
-        },
-        {
-          name: 'Custom prompt for Kwill Assistant',
-          type: 'text',
-          required: false,
-          position: 2,
-          include_if_answer_equals: {
-            question: 'Would you like to use the Kwill Assistant for this meeting?',
-            answer: 'Yes'
-          }
-        }
-      ]
-    })
+    }
   });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw data;
+  }
+
+  return data.collection;
 }
 
 export async function subscribeToCalendlyWebhooks(accessToken: string, userUri: string, organization: string) {
-  console.log("url: ", `${process.env.NEXT_PUBLIC_BASE_URL}/api/calendly-webhook`)
   const response = await fetch('https://api.calendly.com/webhook_subscriptions', {
     method: 'POST',
     headers: {
@@ -181,19 +141,30 @@ export async function subscribeToCalendlyWebhooks(accessToken: string, userUri: 
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/calendly-webhook`,
-      events: [
-        'invitee.created',
-      ],
+      url: `${process.env.NEXT_PUBLIC_NGROK_URL}/api/calendly-webhook`,
+      events: ['invitee.created', 'invitee.canceled'],
       user: userUri,
       organization: organization,
-      scope: 'user'
+      scope: 'user',
+      signing_key: process.env.CALENDLY_WEBHOOK_SECRET
     })
   });
 
-  //   signing_key: process.env.CALENDLY_WEBHOOK_SECRET,
-  // TODOFUTURE user scope for now
-  // 'meeting.started',
-  // 'event_type.created'
-  return response.json();
+  const result = await response.json();
+  return result;
+}
+
+export async function getEventTypeDetails(accessToken: string, eventTypeUri: string) {
+    const response = await fetch(`${eventTypeUri}`, {
+    method: 'GET',
+    headers: {
+        'Authorization': `Bearer ${accessToken}`
+    }
+    });
+
+    if (!response.ok) {
+    throw new Error('Failed to fetch event type details');
+    }
+
+    return response.json();
 }

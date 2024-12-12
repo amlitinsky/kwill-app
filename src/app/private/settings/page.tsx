@@ -11,6 +11,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { ZoomConnectButton } from '@/components/ZoomConnectButton'
 import { CalendlyConnectButton } from '@/components/CalendlyConnectButton'
+import { CalendlyConfigs} from "@/components/CalendlyConfigs"
 
 export default function SettingsPage() {
   const [firstName, setFirstName] = useState('')
@@ -21,8 +22,7 @@ export default function SettingsPage() {
   const verificationCompleteRef = useRef(false)
   const router = useRouter()
   const { toast } = useToast()
-
-
+  const [isCalendlyConnected, setIsCalendlyConnected] = useState(false)
 
   useEffect(() => {
     // Load the active tab from localStorage
@@ -45,6 +45,20 @@ export default function SettingsPage() {
     fetchProfile()
 
   }, [])
+
+  useEffect(() => {
+    async function checkCalendlyConnection() {
+      try {
+        const response = await fetch('/api/check-calendly-connection');
+        const data = await response.json();
+        setIsCalendlyConnected(data.isConnected);
+      } catch (error) {
+        console.error('Error checking Calendly connection:', error);
+      }
+    }
+    
+    checkCalendlyConnection();
+  }, []);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value)
@@ -179,6 +193,11 @@ export default function SettingsPage() {
                 </CardContent>
                 <CardContent>
                   <CalendlyConnectButton/>
+                  {isCalendlyConnected && (
+                    <div className="mt-6">
+                      <CalendlyConfigs />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
