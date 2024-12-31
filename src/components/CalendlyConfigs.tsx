@@ -14,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { useToast } from '@/hooks/use-toast';
-import { Edit2, HelpCircle } from 'lucide-react';
+import { Edit2, HelpCircle, AlertCircle } from 'lucide-react';
 import {
   Tooltip,
   TooltipContent,
@@ -22,6 +22,7 @@ import {
   TooltipProvider,
 } from '@/components/ui/tooltip';
 import { motion } from 'framer-motion';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface CalendlyConfig {
   id: string;
@@ -64,6 +65,7 @@ export function CalendlyConfigs() {
     spreadsheet_id?: string;
     custom_instructions?: string;
   }>({});
+  const [calendlyEnabled, setCalendlyEnabled] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -77,7 +79,8 @@ export function CalendlyConfigs() {
       });
       if (!response.ok) throw new Error('Failed to sync');
       const data = await response.json();
-      setConfigs(data.configs);
+      setCalendlyEnabled(data.calendlyEnabled);
+      setConfigs(data.configs || []);
       if (data.added > 0) {
         toast({
           title: 'Success',
@@ -142,6 +145,17 @@ export function CalendlyConfigs() {
     setEditingId(null);
     setEditingValues({});
   };
+
+  if (!calendlyEnabled) {
+    return (
+      <Alert variant="destructive" className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Calendly integration is not enabled. Please purchase a plan that includes Calendly integration to access this feature.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   if (loading) {
     return (

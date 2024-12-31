@@ -14,7 +14,6 @@ export async function scheduleMeeting(eventUri: string, startTime: string) {
   try {
     const botStartTime = new Date(new Date(startTime).getTime() - 30000);
     const delaySeconds = Math.max(0, Math.floor((botStartTime.getTime() - Date.now()) / 1000));
-    console.log("scheduling meeting via qstash and redis and these are the delay seconds: ", delaySeconds)
 
     const scheduleResponse = await qstash.publishJSON({
       url: `${process.env.NEXT_PUBLIC_NGROK_URL}/api/deploy-meeting-bot`, 
@@ -24,14 +23,13 @@ export async function scheduleMeeting(eventUri: string, startTime: string) {
       retryDelay: 30
     });
 
-    console.log("we should have a scheduled response: ", scheduleResponse)
 
     // Calculate TTL: meeting start time + 2 hours (typical meeting duration) + 1 hour buffer
     const ttlSeconds = Math.floor(
       (new Date(startTime).getTime() + (3 * 60 * 60 * 1000) - Date.now()) / 1000
     );
 
-    const response = await redis.set(
+    await redis.set(
       `schedule:${eventUri}`,
       JSON.stringify({
         qstash_message_id: scheduleResponse.messageId,
@@ -42,7 +40,6 @@ export async function scheduleMeeting(eventUri: string, startTime: string) {
         ex: ttlSeconds // Set expiration in seconds
       }
     );
-    console.log("redist set response: ", response)
 
     return scheduleResponse.messageId;
   } catch (error) {

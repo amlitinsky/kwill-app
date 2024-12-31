@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 
-export async function GET() {
+export async function POST(req: Request) {
   try {
     const supabase = await createServerSupabaseClient();
     const { data: { user } } = await supabase.auth.getUser();
@@ -13,26 +13,25 @@ export async function GET() {
       );
     }
 
-    const { data: planInfo, error } = await supabase
+    const { enabled, packageHours } = await req.json();
+
+    // Update user's auto-renewal settings in Supabase
+    const { error } = await supabase
       .from('users')
-      .select(`
-        meeting_hours_remaining,
-        total_hours_purchased,
-        auto_renewal_enabled,
-        auto_renewal_package_hours,
-        calendly_access_until
-      `)
-      .eq('id', user.id)
-      .single();
+      .update({ 
+        auto_renewal_enabled: enabled,
+        auto_renewal_package_hours: packageHours
+      })
+      .eq('id', user.id);
 
     if (error) throw error;
 
-    return NextResponse.json({ planInfo });
+    return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error fetching current plan:', error);
+    console.error('Error updating auto-renewal:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch current plan' },
+      { error: 'Failed to update auto-renewal settings' },
       { status: 500 }
     );
   }
-}
+} 

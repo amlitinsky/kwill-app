@@ -6,6 +6,14 @@ const RECALL_API_URL_ANALYZE = 'https://us-west-2.recall.ai/api/v2beta/bot'
 const RECALL_API_ZOOM_OAUTH_CREDENTIALS = 'https://us-west-2.recall.ai/api/v2/zoom-oauth-credentials'
 interface CreateBotOptions {
   join_at?: string;
+  automatic_leave?: number; // Duration in seconds before bot leaves
+}
+
+interface BotEvent {
+  status: {
+    code: string;
+    created_at: string;
+  };
 }
 
 export async function createBot(meetingUrl: string, options: CreateBotOptions = {}) {
@@ -14,6 +22,7 @@ export async function createBot(meetingUrl: string, options: CreateBotOptions = 
       meeting_url: meetingUrl,
       bot_name: "Kwill Scribe",
       ...(options.join_at && { join_at: options.join_at }),
+      ...(options.automatic_leave && { automatic_leave: options.automatic_leave }),
       transcription_options: {
         provider: 'assembly_ai',
       },
@@ -156,5 +165,30 @@ export async function deleteBot(botId: string) {
   } catch (error) {
     console.error('Error deleting bot:', error);
     throw error;
+  }
+}
+
+// Add new function to calculate meeting duration
+export async function calculateMeetingDuration(botId: string): Promise<number> {
+  try {
+    const botStatus = await getBotStatus(botId);
+    const events = botStatus.events || [];
+    
+    // Find in_call_recording start and done events
+    const recordingStart = events.find((e: BotEvent) => e.status.code === 'in_call_recording');
+    const recordingEnd = events.find((e: BotEvent) => e.status.code === 'done');
+    
+    if (!recordingStart || !recordingEnd) {
+      return 0;
+    }
+    
+    const startTime = new Date(recordingStart.status.created_at);
+    const endTime = new Date(recordingEnd.status.created_at);
+    
+    // Return duration in hours
+    return (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+  } catch (error) {
+    console.error('Error calculating meeting duration:', error);
+    return 0;
   }
 }

@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server'
 import { Webhook } from 'svix'
-import { analyzeMedia, getTranscript } from '@/lib/recall'
-import { getMeetingDetails, getValidGoogleToken, incrementMeetingCount, updateMeetingProcessedData, updateMeetingStatus } from '@/lib/supabase-server'
+import { analyzeMedia, getTranscript, calculateMeetingDuration } from '@/lib/recall'
+import { getMeetingDetails, getValidGoogleToken, incrementMeetingCount, updateMeetingProcessedData, updateMeetingStatus, updateUserMeetingHours } from '@/lib/supabase-server'
 import { processTranscriptWithClaude } from '@/lib/anthropic'
 import { mapHeadersAndAppendData } from '@/lib/google-auth'
 import { ProcessedTranscriptSegment, processRawTranscript } from '@/lib/transcript-utils'
+import { scheduleAutoRenewal } from '@/lib/auto-renewal'
 import { 
   acquireLock, 
   releaseLock, 
@@ -48,11 +49,24 @@ export async function POST(req: Request) {
 
     if (status.code === 'done') {
       try {
+        // Calculate meeting duration and update user's remaining hours
+        const duration = await calculateMeetingDuration(bot_id)
+        const meetingDetails = await getMeetingDetails(bot_id)
+        
+        if (meetingDetails) {
+          const updatedHours = await updateUserMeetingHours(meetingDetails.user_id, -duration)
+          
+          // If user has auto-renewal enabled and hours are getting low, schedule a check
+          if (updatedHours.meeting_hours_remaining <= 5 && updatedHours.auto_renewal_enabled) {
+            await scheduleAutoRenewal(meetingDetails.user_id, updatedHours.auto_renewal_package_hours)
+          }
+        }
+        
         await analyzeMedia(bot_id)
         await updateMeetingStatus(bot_id, 'Recording Complete')
       } catch (error) {
-        console.error(`Error initiating analysis: Bot ${bot_id}`)
-        return NextResponse.json({ error: 'Failed to initiate analysis' }, { status: 500 })
+        console.error(`Error processing meeting completion: Bot ${bot_id}`, error)
+        return NextResponse.json({ error: 'Failed to process meeting completion' }, { status: 500 })
       }
     } else if (status.code === 'analysis_done') {
 

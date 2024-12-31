@@ -10,39 +10,51 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
-import { usePathname, useRouter } from 'next/navigation'
-import { CircleUser } from "lucide-react"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { useRouter } from 'next/navigation'
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import Image from 'next/image'
 import { signOut } from '@/lib/supabase-client'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase-client'
 
+interface UserMetadata {
+  avatar_url?: string
+  full_name?: string
+  email?: string
+}
 
 export function PrivateNavbar({ children }: { children: React.ReactNode }) {
   const router = useRouter()
-  const pathname = usePathname()
+  const [userMetadata, setUserMetadata] = useState<UserMetadata | null>(null)
+
+  useEffect(() => {
+    async function loadUserMetadata() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.user_metadata) {
+        setUserMetadata(user.user_metadata)
+      }
+    }
+    loadUserMetadata()
+  }, [])
 
   const handleSignOut = async () => {
     try {
       await signOut()
-      router.push('/') // Redirect to the public landing page
-      router.refresh() // Force a refresh of the current route
+      router.push('/')
+      router.refresh()
     } catch (error) {
       console.error('Error signing out:', error)
     }
   }
 
-  const isLinkActive = (href: string) => {
-    return pathname === href
-  }
-
   return (
-    <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 fixed z-50">
-      <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
+    <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-6 z-50">
+      <nav className="flex flex-row items-center gap-6">
         <Link
           href="/private/dashboard"
-          className="flex items-center gap-2 text-lg font-semibold md:text-base"
+          className="flex items-center gap-2"
         >
-          <div className="relative w-12 h-12">
+          <div className="relative w-10 h-10">
             <Image 
               src="/images/logos/kwill-no-bg.png" 
               alt="Kwill Logo" 
@@ -50,153 +62,49 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
               style={{ objectFit: 'contain' }}
             /> 
           </div>
-        </Link>
-        <Link
-          href="/private/dashboard"
-          className={`transition-colors hover:text-foreground ${
-            isLinkActive('/private/dashboard') ? 'text-foreground font-bold' : 'text-muted-foreground'
-          }`}
-        >
-          Dashboard
-        </Link>
-        {/* <Link
-          href="/private/analytics"
-          className={`transition-colors hover:text-foreground ${
-            isLinkActive('/private/analytics') ? 'text-foreground font-bold' : 'text-muted-foreground'
-          }`}
-        >
-          Analytics
-        </Link> */}
-        <Link
-          href="/private/meetings"
-          className={`transition-colors hover:text-foreground ${
-            isLinkActive('/private/meetings') ? 'text-foreground font-bold' : 'text-muted-foreground'
-          }`}
-        >
-          Meetings 
-        </Link>
-        <Link
-          href="/private/templates"
-          className={`transition-colors hover:text-foreground ${
-            isLinkActive('/private/templates') ? 'text-foreground font-bold' : 'text-muted-foreground'
-          }`}
-        >
-          Templates 
-        </Link>
-        <Link
-          href="/private/documentation"
-          className={`transition-colors hover:text-foreground ${
-            isLinkActive('/private/documentation') ? 'text-foreground font-bold' : 'text-muted-foreground'
-          }`}
-        >
-          Documentation
-        </Link>
-        <Link
-          href="/private/settings"
-          className={`transition-colors hover:text-foreground ${
-            isLinkActive('/private/settings') ? 'text-foreground font-bold' : 'text-muted-foreground'
-          }`}
-        >
-          Settings 
+          <span className="text-xl font-medium text-white tracking-tight">Kwill</span>
         </Link>
       </nav>
-      <Sheet>
-        <SheetTrigger asChild>
-          <Button
-            variant="outline"
-            size="icon"
-            className="shrink-0 md:hidden"
-          >
-            <div className="relative w-12 h-12">
-              <Image 
-                src="/images/logos/kwill-no-bg.png" 
-                alt="Kwill Logo" 
-                fill
-                style={{ objectFit: 'contain' }}
-              /> 
-            </div>
-            <span className="sr-only">Toggle navigation menu</span>
-          </Button>
-        </SheetTrigger>
-        <SheetContent side="left">
-          <nav className="grid gap-6 text-lg font-medium">
-            <Link href="/private/dashboard" className={`hover:text-foreground ${
-              isLinkActive('/private/dashboard') ? 'text-foreground font-bold' : 'text-muted-foreground'
-            }`}>
-              Dashboard
-            </Link>
-            {/* <Link
-              href="/private/analytics"
-              className={`hover:text-foreground ${
-                isLinkActive('/private/analytics') ? 'text-foreground font-bold' : 'text-muted-foreground'
-              }`}
-            >
-              Analytics
-            </Link> */}
-            <Link
-              href="/private/meetings"
-              className={`hover:text-foreground ${
-                isLinkActive('/private/meetings') ? 'text-foreground font-bold' : 'text-muted-foreground'
-              }`}
-            >
-              Meetings
-            </Link>
-            <Link
-              href="/private/templates"
-              className={`hover:text-foreground ${
-                isLinkActive('/private/templates') ? 'text-foreground font-bold' : 'text-muted-foreground'
-              }`}
-            >
-              Templates
-            </Link>
-            <Link
-              href="/private/documentation"
-              className={`transition-colors hover:text-foreground ${
-                isLinkActive('/private/documentation') ? 'text-foreground font-bold' : 'text-muted-foreground'
-              }`}
-            >
-              Documentation
-            </Link>
-            <Link
-              href="/private/settings"
-              className={`hover:text-foreground ${
-                isLinkActive('/private/settings') ? 'text-foreground font-bold' : 'text-muted-foreground'
-              }`}
-            >
-              Settings
-            </Link>
-          </nav>
-        </SheetContent>
-      </Sheet>
-      <div className="flex w-full items-center justify-end gap-4 md:ml-auto md:gap-2 lg:gap-4">
-        {/*  TODO: Implement search functionality
-        <form className="ml-auto flex-1 sm:flex-initial">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search..."
-              className="pl-8 sm:w-[300px] md:w-[200px] lg:w-[300px]"
-            />
-          </div>
-        </form> */}
+
+      <div className="flex items-center justify-end gap-4 ml-auto">
         {children}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="secondary" size="icon" className="rounded-full">
-              <CircleUser className="h-5 w-5" />
-              <span className="sr-only">Toggle user menu</span>
+            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+              <Avatar className="h-8 w-8">
+                <AvatarImage 
+                  src={userMetadata?.avatar_url} 
+                  alt={userMetadata?.full_name || 'User avatar'} 
+                />
+                <AvatarFallback>
+                  {userMetadata?.full_name?.[0]?.toUpperCase() || '?'}
+                </AvatarFallback>
+              </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel className="font-normal">
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">
+                  {userMetadata?.full_name}
+                </p>
+                <p className="text-xs leading-none text-muted-foreground">
+                  {userMetadata?.email}
+                </p>
+              </div>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem asChild>
               <Link href="/private/settings">Settings</Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>Support</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link href="/private/support">Support</Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleSignOut}>
+            <DropdownMenuItem 
+              onClick={handleSignOut}
+              className="text-red-600 focus:text-red-600"
+            >
               Sign out
             </DropdownMenuItem>
           </DropdownMenuContent>

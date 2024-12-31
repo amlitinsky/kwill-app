@@ -41,6 +41,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
+      <head><meta name="darkreader-lock"/></head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

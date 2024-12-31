@@ -38,3 +38,24 @@ export async function isProcessing(botId: string): Promise<boolean> {
   const lockExists = await kv.exists(`lock:${botId}`)
   return lockExists === 1
 }
+
+// Add these new functions to your redis.ts
+export async function markStripeWebhookProcessed(
+  webhookId: string,
+  eventType: string
+): Promise<void> {
+  const key = `stripe:webhook:${webhookId}`  // More specific prefix
+  await kv.set(key, {
+    status: 'completed',
+    eventType,
+    processedAt: new Date().toISOString()
+  }, { 
+    ex: 24 * 60 * 60 // 24 hour expiry
+  })
+}
+
+export async function isStripeWebhookProcessed(webhookId: string): Promise<boolean> {
+  const key = `stripe:webhook:${webhookId}`  // More specific prefix
+  const record = await kv.get(key)
+  return record !== null
+}

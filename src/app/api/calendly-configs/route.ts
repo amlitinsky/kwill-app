@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient, getCalendlyConfigs, getCalendlyCreds, getValidCalendlyToken, syncCalendlyEventTypes, updateCalendlyConfig } from '@/lib/supabase-server';
+import { createServerSupabaseClient, getCalendlyConfigs, getCalendlyCreds, getUserById, getValidCalendlyToken, syncCalendlyEventTypes, updateCalendlyConfig } from '@/lib/supabase-server';
 import { getCalendlyEventTypes } from '@/lib/calendly';
 
 export async function GET() {
@@ -12,7 +12,8 @@ export async function GET() {
     }
 
     const configs = await getCalendlyConfigs(user.id);
-    return NextResponse.json({ configs });
+    const userData = await getUserById(user.id);
+    return NextResponse.json({ configs, calendlyEnabled: userData.calendly_enabled });
   } catch (error) {
     console.error('Error fetching configs:', error);
     return NextResponse.json({ error: 'Failed to fetch configs' }, { status: 500 });

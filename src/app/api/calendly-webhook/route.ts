@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cancelCalendlyMeeting, createCalendlyMeeting, getCalendlyConfigByUri, getCalendlyUser, getMeetingByEventUri } from '@/lib/supabase-server';
+import { cancelCalendlyMeeting, createCalendlyMeeting, getCalendlyConfigByUri, getCalendlyUser, getMeetingByEventUri, supabaseAdmin } from '@/lib/supabase-server';
 import crypto from 'crypto';
 import { createBot, deleteBot } from '@/lib/recall';
 
@@ -71,6 +71,18 @@ export async function POST(request: Request) {
 
         if (!userId) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }        // Check if user has active Calendly access
+
+        const user = await supabaseAdmin
+          .from('users')
+          .select('calendly_enabled, calendly_access_until')
+          .eq('id', userId)
+          .single();
+
+        if (!user?.data?.calendly_enabled || new Date(user.data.calendly_access_until) < new Date()) {
+            return NextResponse.json({ 
+              error: 'Calendly access is disabled or expired' 
+            }, { status: 403 });
         }
 
         const eventUri = eventData.scheduled_event.uri;

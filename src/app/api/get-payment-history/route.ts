@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient, getStripeCustomerId } from '@/lib/supabase-server';
-import { getCustomerInvoices } from '@/lib/stripe';
+import { getPaymentHistory } from '@/lib/stripe';
 
 
 export async function GET() {
@@ -19,7 +19,7 @@ export async function GET() {
       return NextResponse.json({ invoices: [] });
     }
     
-    const invoices = await getCustomerInvoices(stripeCustomerId)
+    const invoices = await getPaymentHistory(stripeCustomerId)
     return NextResponse.json({ invoices });
   } catch (error) {
     console.error('Error fetching invoices:', error);

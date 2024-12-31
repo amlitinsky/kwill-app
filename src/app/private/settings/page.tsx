@@ -1,49 +1,45 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { updateProfile, getCurrentUser } from '@/lib/supabase-client'
-import { SubscriptionManager } from '@/components/SubscriptionManager'
+import { StripeManager } from '@/components/StripeManager'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useToast } from '@/hooks/use-toast'
 import { ZoomConnectButton } from '@/components/ZoomConnectButton'
 import { CalendlyConnectButton } from '@/components/CalendlyConnectButton'
 import { CalendlyConfigs} from "@/components/CalendlyConfigs"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { supabase } from '@/lib/supabase-client'
+
+interface UserMetadata {
+  avatar_url?: string
+  full_name?: string
+  email?: string
+}
 
 export default function SettingsPage() {
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState('profile')
   const searchParams = useSearchParams()
   const verificationCompleteRef = useRef(false)
   const router = useRouter()
   const { toast } = useToast()
   const [isCalendlyConnected, setIsCalendlyConnected] = useState(false)
+  const [userMetadata, setUserMetadata] = useState<UserMetadata | null>(null)
 
   useEffect(() => {
-    // Load the active tab from localStorage
     const savedTab = localStorage.getItem('settingsActiveTab')
     if (savedTab) {
       setActiveTab(savedTab)
     }
 
-    const fetchProfile = async () => {
-      try {
-        const user = await getCurrentUser()
-        if (user && user.user_metadata) {
-          setFirstName(user.user_metadata.first_name || '')
-          setLastName(user.user_metadata.last_name || '')
-        }
-      } catch (error) {
-        console.error('Error fetching user profile:', error)
+    async function loadUserMetadata() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (user?.user_metadata) {
+        setUserMetadata(user.user_metadata)
       }
     }
-    fetchProfile()
-
+    loadUserMetadata()
   }, [])
 
   useEffect(() => {
@@ -62,125 +58,103 @@ export default function SettingsPage() {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value)
-    // Save the active tab to localStorage
     localStorage.setItem('settingsActiveTab', value)
   }
 
   useEffect(() => {
-    const sessionId = searchParams.get('session_id')
+    const sessionId = searchParams.get('session_id');
+    const canceled = searchParams.get('canceled');
+    const mode = searchParams.get('mode');
     
     if (sessionId && !verificationCompleteRef.current) {
-      const verifyCheckout = async () => {
-        try {
-          verificationCompleteRef.current = true
-          const response = await fetch('/api/verify-checkout', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ sessionId }),
-          });
-          const data = await response.json();
-          if (data.success) {
-            toast({
-              title: "Success",
-              description: "Subscription updated successfully!",
-            })
-            router.replace('/private/settings');
+      verificationCompleteRef.current = true;
+      
+      if (mode === 'setup') {
+        toast({
+          title: "Card Updated",
+          description: "Your payment method has been successfully updated.",
+          duration: 5000,
+        });
+      } else {
+        toast({
+          title: "Purchase Successful",
+          description: "Your hours have been added to your account!",
+          duration: 5000,
+        });
+      }
 
-          } else {
-            toast({
-              title: "Error",
-              description: "Failed to verify subscription. Please contact support.",
-              variant: "destructive",
-            })
-          }
-        } catch (error) {
-          console.error('Error verifying checkout:', error);
-          toast({
-            title: "Error",
-            description: "An error occurred while verifying your subscription. Please contact support.",
-            variant: "destructive",
-          })
-        }
-      };
-
-      verifyCheckout();
+      // Clean up URL
+      router.replace('/private/settings');
     }
+    
+    // Handle canceled checkout
+    if (canceled && !verificationCompleteRef.current) {
+      verificationCompleteRef.current = true;
+      
+      const cancelMessage = mode === 'setup' 
+        ? "Card update was canceled. No changes were made."
+        : "Purchase was canceled. No charges were made.";
 
+      toast({
+        title: "Canceled",
+        description: cancelMessage,
+        variant: "default",
+        duration: 5000,
+      });
+
+      router.replace('/private/settings');
+    }
   }, [searchParams, router, toast]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
-    try {
-      await updateProfile(firstName, lastName)
-      toast({
-        title: "Success",
-        description: "Profile updated successfully",
-      })
-    } catch (error) {
-      console.error('Error updating profile:', error)
-      toast({
-        title: "Error",
-        description: "Error updating profile",
-        variant: "destructive",
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <div className="container py-10">
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
         <div className="flex">
-          <div className="w-48 pr-8">
+          <div className="w-48 pr-8 fixed">
             <TabsList className="flex flex-col space-y-2 w-full bg-transparent">
               <TabsTrigger value="profile" className="w-full justify-center text-center !bg-transparent">Profile</TabsTrigger>
               <TabsTrigger value="billing" className="w-full justify-center text-center !bg-transparent">Billing</TabsTrigger>
               <TabsTrigger value="integrations" className="w-full justify-center text-center !bg-transparent">Integrations</TabsTrigger>
             </TabsList>
           </div>
-          <div className="flex-grow -mt-12">
+          <div className="flex-grow -mt-12 pl-48">
             <TabsContent value="profile">
               <Card>
                 <CardHeader>
                   <CardTitle>Profile</CardTitle>
-                  <CardDescription>Manage your profile information</CardDescription>
+                  <CardDescription>Your Google Account Information</CardDescription>
                 </CardHeader>
-                <form onSubmit={handleSubmit}>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <label htmlFor="firstName" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">First Name</label>
-                      <Input
-                        id="firstName"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        placeholder="Enter your first name"
+                <CardContent>
+                  <div className="flex items-center space-x-4">
+                    <Avatar className="h-20 w-20">
+                      <AvatarImage 
+                        src={userMetadata?.avatar_url} 
+                        alt={userMetadata?.full_name} 
                       />
+                      <AvatarFallback>
+                        {userMetadata?.full_name?.[0]?.toUpperCase() || '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="space-y-1">
+                      <h3 className="text-2xl font-medium">
+                        {userMetadata?.full_name}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        {userMetadata?.email}
+                      </p>
                     </div>
-                    <div className="space-y-2">
-                      <label htmlFor="lastName" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Last Name</label>
-                      <Input
-                        id="lastName"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        placeholder="Enter your last name"
-                      />
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button type="submit" disabled={loading}>
-                      {loading ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                  </CardFooter>
-                </form>
+                  </div>
+                  <div className="mt-6 pt-6 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      Your profile information is managed through your Google account.
+                      Any changes made to your Google profile will be reflected here.
+                    </p>
+                  </div>
+                </CardContent>
               </Card>
             </TabsContent>
             <TabsContent value="billing">
-              <SubscriptionManager />
+              <StripeManager />
             </TabsContent>
             <TabsContent value="integrations">
               <Card>

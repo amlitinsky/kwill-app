@@ -27,9 +27,7 @@ export function NavbarWrapper({ session}: NavbarWrapperProps) {
 
   if (!shouldHideNavbar) {
     return (
-      <PublicNavbar>
-        <ThemeToggle />
-      </PublicNavbar>
+      <PublicNavbar />
     )
   }
 

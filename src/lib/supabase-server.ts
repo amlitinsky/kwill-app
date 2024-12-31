@@ -3,7 +3,7 @@ import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
-import { retrieveSubscription } from './stripe';
+import { createStripeCustomer } from './stripe';
 import { getColumnHeaders, getGoogleUserInfo, refreshAccessToken } from './google-auth';
 import { createServerClient } from '@supabase/ssr';
 import { checkCalendlyTokenValidity, refreshCalendlyToken } from './calendly';
@@ -343,38 +343,6 @@ export async function handleSubscriptionUpdate(subscription: Stripe.Subscription
 
   if (updateError) {
     console.error('Error updating user subscription status:', updateError);
-  }
-}
-export async function handlePaidInvoice(invoice: Stripe.Invoice) {
-  const customerId = invoice.customer as string;
-  const subscriptionId = invoice.subscription as string;
-
-  const subscription = await retrieveSubscription(subscriptionId);
-
-  const { data: userData, error } = await supabaseAdmin
-    .from('users')
-    .select('id')
-    .eq('stripe_customer_id', customerId)
-    .single();
-
-  if (error || !userData) {
-    console.error('Error fetching user:', error);
-    return;
-  }
-
-  const { error: updateError } = await supabaseAdmin
-    .from('users')
-    .update({ 
-      meetings_used: 0,
-      payment_status: 'paid',
-      subscription_status: subscription.status,
-      payment_plan: subscription.items.data[0]?.price.nickname || 'Pro',
-      subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString()
-    })
-    .eq('id', userData.id);
-
-  if (updateError) {
-    console.error('Error updating user after paid invoice:', updateError);
   }
 }
 
@@ -720,8 +688,6 @@ interface CalendlyMeetingOptions {
 
 export async function createCalendlyMeeting(userId: string, name: string, zoomLink: string, spreadsheetId: string, customInstructions: string, botId: string, options: CalendlyMeetingOptions = {}) {
 
-  console.log("calendly meeting options: ", options)
-
   const supabase = options.useAdmin ? supabaseAdmin : await createServerSupabaseClient();
 
   const googleAccessToken = await getValidGoogleToken(userId)
@@ -971,3 +937,128 @@ export async function syncCalendlyEventTypes(userId: string, eventTypes: Calendl
   };
 }
 
+export async function getUserById(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('users')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching user:', error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function updateUserMeetingHours(userId: string, hours: number) {
+  const { data: user } = await supabaseAdmin
+    .from('users')
+    .select('meeting_hours_remaining, total_hours_purchased, auto_renewal_package_hours, auto_renewal_enabled')
+    .eq('id', userId)
+    .single();
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+
+  console.log('Updating user meeting hours:', { userId, hours });
+  console.log('Current user state:', { 
+    currentHours: user.meeting_hours_remaining,
+    currentTotalHours: user.total_hours_purchased 
+  });
+
+  const currentHours = user.meeting_hours_remaining || 0;
+  const currentTotalHours = user.total_hours_purchased || 0;
+  const newHours = currentHours + hours;
+  const newTotalHours = currentTotalHours + (hours > 0 ? hours : 0);
+
+  console.log('Calculated new values:', {
+    newHours,
+    newTotalHours,
+    hoursChange: hours
+  });
+
+  const { error } = await supabaseAdmin
+    .from('users')
+    .update({ 
+      meeting_hours_remaining: newHours,
+      total_hours_purchased: newTotalHours
+    })
+    .eq('id', userId);
+
+  if (error) {
+    console.error('Error updating user meeting hours:', error);
+    throw error;
+  }
+
+  console.log('Successfully updated user hours:', {
+    userId,
+    newHours,
+    newTotalHours
+  });
+
+  return { 
+    meeting_hours_remaining: newHours,
+    total_hours_purchased: newTotalHours,
+    auto_renewal_package_hours: user.auto_renewal_package_hours,
+    auto_renewal_enabled: user.auto_renewal_enabled
+  };
+}
+
+export async function enableUserCalendlyAccess(userId: string, expiryDate: string) {
+  const { error } = await supabaseAdmin
+    .from('users')
+    .update({ calendly_access_until: expiryDate, calendly_enabled: true })
+    .eq('id', userId);
+
+  if (error) {
+    console.error('Error updating user Calendly access:', error);
+    throw error;
+  }
+}
+
+export async function getUserByStripeCustomerId(stripeCustomerId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('users')
+    .select('*')
+    .eq('stripe_customer_id', stripeCustomerId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching user by Stripe customer ID:', error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function getOrCreateStripeCustomerId(userId: string, email: string) {
+  try {
+    // First try to get existing customer ID
+    const { data: userData } = await supabaseAdmin
+      .from('users')
+      .select('stripe_customer_id')
+      .eq('id', userId)
+      .maybeSingle();
+
+    if (userData?.stripe_customer_id) {
+      return userData.stripe_customer_id;
+    }
+
+    // If no customer ID exists, create one using existing function
+    const customer = await createStripeCustomer(email);
+
+    // Update user with new Stripe customer ID
+    await supabaseAdmin
+      .from('users')
+      .update({ stripe_customer_id: customer.id })
+      .eq('id', userId);
+
+    return customer.id;
+  } catch (error) {
+    console.error('Error in getOrCreateStripeCustomerId:', error);
+    throw error;
+  }
+}
