@@ -30,7 +30,7 @@ export function PublicNavbar({ children }: { children: React.ReactNode }) {
           Documentation 
         </Link>
         <Link href="/public/support" className="text-muted-foreground transition-colors hover:text-foreground">
-          Documentation 
+          Support 
         </Link>
       </nav>
 
