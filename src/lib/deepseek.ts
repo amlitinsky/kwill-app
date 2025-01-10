@@ -1,9 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { deepseek } from '@ai-sdk/deepseek';
+import { generateText } from 'ai';
 import { ProcessedTranscriptSegment } from './transcript-utils';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const model = deepseek('deepseek-chat');
 
 export async function processTranscriptWithClaude(
   transcript: ProcessedTranscriptSegment[], 
@@ -34,21 +33,12 @@ export async function processTranscriptWithClaude(
     6. Ensure the output is a valid JSON object.
   `;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-3-sonnet-20240229',
-    max_tokens: 1000,
-    messages: [
-      { role: 'user', content: prompt }
-    ]
+  const { text } = await generateText({
+    model,
+    prompt
   });
 
-
-  const result = response.content
-  .filter(block => block.type === 'text')
-  .map(block => (block as { text: string }).text)
-  .join('\n');
-
-  return JSON.parse(result);
+  return JSON.parse(text);
 }
 
 export async function generateMeetingSummary(transcript: ProcessedTranscriptSegment[]): Promise<string> {
@@ -70,18 +60,12 @@ export async function generateMeetingSummary(transcript: ProcessedTranscriptSegm
   5. Keep the summary under 300 words
   `;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-3-sonnet-20240229',
-    max_tokens: 1000,
-    messages: [
-      { role: 'user', content: prompt }
-    ]
+  const { text } = await generateText({
+    model,
+    prompt
   });
 
-  return response.content
-    .filter(block => block.type === 'text')
-    .map(block => (block as { text: string }).text)
-    .join('\n');
+  return text;
 }
 
 export async function extractKeyPoints(transcript: ProcessedTranscriptSegment[]): Promise<string[]> {
@@ -104,20 +88,12 @@ export async function extractKeyPoints(transcript: ProcessedTranscriptSegment[])
   6. Return as a valid JSON array of strings
   `;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-3-sonnet-20240229',
-    max_tokens: 1000,
-    messages: [
-      { role: 'user', content: prompt }
-    ]
+  const { text } = await generateText({
+    model,
+    prompt
   });
 
-  const result = response.content
-    .filter(block => block.type === 'text')
-    .map(block => (block as { text: string }).text)
-    .join('\n');
-
-  return JSON.parse(result);
+  return JSON.parse(text);
 }
 
 export async function extractActionItems(transcript: ProcessedTranscriptSegment[]): Promise<string[]> {
@@ -139,20 +115,12 @@ export async function extractActionItems(transcript: ProcessedTranscriptSegment[
   5. Return as a valid JSON array of strings
   `;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-3-sonnet-20240229',
-    max_tokens: 1000,
-    messages: [
-      { role: 'user', content: prompt }
-    ]
+  const { text } = await generateText({
+    model,
+    prompt
   });
 
-  const result = response.content
-    .filter(block => block.type === 'text')
-    .map(block => (block as { text: string }).text)
-    .join('\n');
-
-  return JSON.parse(result);
+  return JSON.parse(text);
 }
 
 export async function generateTimeStampedHighlights(
@@ -176,20 +144,12 @@ export async function generateTimeStampedHighlights(
   6. Return as a valid JSON array of objects with 'timestamp' and 'text' properties
   `;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-3-sonnet-20240229',
-    max_tokens: 1000,
-    messages: [
-      { role: 'user', content: prompt }
-    ]
+  const { text } = await generateText({
+    model,
+    prompt
   });
 
-  const result = response.content
-    .filter(block => block.type === 'text')
-    .map(block => (block as { text: string }).text)
-    .join('\n');
-
-  return JSON.parse(result);
+  return JSON.parse(text);
 }
 
 export async function analyzeTopicDistribution(
@@ -214,20 +174,12 @@ export async function analyzeTopicDistribution(
   6. Ensure percentages sum to 100
   `;
 
-  const response = await anthropic.messages.create({
-    model: 'claude-3-sonnet-20240229',
-    max_tokens: 1000,
-    messages: [
-      { role: 'user', content: prompt }
-    ]
+  const { text } = await generateText({
+    model,
+    prompt
   });
 
-  const result = response.content
-    .filter(block => block.type === 'text')
-    .map(block => (block as { text: string }).text)
-    .join('\n');
-
-  return JSON.parse(result);
+  return JSON.parse(text);
 }
 
 export async function calculateSuccessRate(
@@ -237,4 +189,4 @@ export async function calculateSuccessRate(
   // Count how many fields we successfully extracted values for
   const filledFields = Object.values(processedData).filter(value => value && value.trim() !== '').length;
   return filledFields / columnHeaders.length;
-}
+} 

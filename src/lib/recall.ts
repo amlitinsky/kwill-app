@@ -1,4 +1,3 @@
-import axios from 'axios'
 
 const RECALL_API_KEY = process.env.RECALL_API_KEY
 const RECALL_API_URL = 'https://us-west-2.recall.ai/api/v1/bot'
@@ -18,21 +17,28 @@ interface BotEvent {
 
 export async function createBot(meetingUrl: string, options: CreateBotOptions = {}) {
   try {
-    const response = await axios.post(RECALL_API_URL, {
-      meeting_url: meetingUrl,
-      bot_name: "Kwill Scribe",
-      ...(options.join_at && { join_at: options.join_at }),
-      ...(options.automatic_leave && { automatic_leave: options.automatic_leave }),
-      transcription_options: {
-        provider: 'assembly_ai',
-      },
-    }, {
+    const response = await fetch(RECALL_API_URL, {
+      method: 'POST',
       headers: {
         'Authorization': `Token ${RECALL_API_KEY}`,
         'Content-Type': 'application/json',
       },
-    })
-    return response.data
+      body: JSON.stringify({
+        meeting_url: meetingUrl,
+        bot_name: "Kwill Scribe",
+        ...(options.join_at && { join_at: options.join_at }),
+        ...(options.automatic_leave && { automatic_leave: options.automatic_leave }),
+        transcription_options: {
+          provider: 'assembly_ai',
+        },
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
   } catch (error) {
     console.error('Error creating bot:', error)
     throw error
@@ -41,12 +47,18 @@ export async function createBot(meetingUrl: string, options: CreateBotOptions = 
 
 export async function getTranscript(botId: string) {
   try {
-    const response = await axios.get(`${RECALL_API_URL}/${botId}/transcript`, {
+    const response = await fetch(`${RECALL_API_URL}/${botId}/transcript`, {
+      method: 'GET',
       headers: {
         'Authorization': `Token ${RECALL_API_KEY}`,
       },
-    })
-    return response.data
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
   } catch (error) {
     console.error('Error fetching transcript:', error)
     throw error
@@ -55,12 +67,18 @@ export async function getTranscript(botId: string) {
 
 export async function getBotStatus(botId: string) {
   try {
-    const response = await axios.get(`${RECALL_API_URL}/${botId}`, {
+    const response = await fetch(`${RECALL_API_URL}/${botId}`, {
+      method: 'GET',
       headers: {
         'Authorization': `Token ${RECALL_API_KEY}`,
       },
-    })
-    return response.data
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
   } catch (error) {
     console.error('Error fetching bot status:', error)
     throw error
@@ -69,14 +87,23 @@ export async function getBotStatus(botId: string) {
 
 export async function analyzeMedia(botId: string) {
   try {
-    const response = await axios.post(`${RECALL_API_URL_ANALYZE}/${botId}/analyze`, {assemblyai_async_transcription: {}}, {
+    const response = await fetch(`${RECALL_API_URL_ANALYZE}/${botId}/analyze`, {
+      method: 'POST',
       headers: {
         'Authorization': `Token ${RECALL_API_KEY}`,
         'accept': 'application/json',
         'content-type': 'application/json'
       },
-    })
-    return response.data
+      body: JSON.stringify({
+        assemblyai_async_transcription: {}
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
   } catch (error) {
     console.error('Error fetching bot analysis')
     throw error

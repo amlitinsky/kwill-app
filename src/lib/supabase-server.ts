@@ -1,8 +1,5 @@
 import { cookies } from 'next/headers';
-import { google } from 'googleapis';
-import { OAuth2Client } from 'google-auth-library';
 import { createClient } from '@supabase/supabase-js';
-import Stripe from 'stripe';
 import { createStripeCustomer } from './stripe';
 import { getColumnHeaders, getGoogleUserInfo, refreshAccessToken } from './google-auth';
 import { createServerClient } from '@supabase/ssr';
@@ -40,21 +37,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
-
-// Add function for updating user's payment plan
-export async function updatePaymentPlan(userId: string, plan: string, stripeCustomerId: string) {
-  const supabase = await createServerSupabaseClient()
-  const { data, error } = await supabase
-    .from('users')
-    .update({ 
-      payment_plan: plan, 
-      stripe_customer_id: stripeCustomerId 
-    })
-    .match({ id: userId });
-
-  if (error) throw error;
-  return data;
-}
 
 
 export async function deleteAccount() {
@@ -141,64 +123,6 @@ export async function deleteTemplate(id: string) {
   if (error) throw error;
 }
 // MEETINGS
-
-// creating a initial meeting, updating other columns later
-export async function createMeeting(name: string, zoomLink: string, spreadsheetId: string, customInstructions: string, botId: string) {
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('No user logged in');
-
-  // Get Google OAuth credentials
-  const { data: googleCreds, error: googleCredsError } = await supabase
-    .from('google_oauth_credentials')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
-
-
-  if (googleCredsError || !googleCreds) throw new Error('Google OAuth credentials not found');
-
-  // Validate spreadsheet and get headers
-  const auth = new OAuth2Client();
-  auth.setCredentials({
-    access_token: googleCreds.access_token,
-    refresh_token: googleCreds.refresh_token,
-    expiry_date: googleCreds.expiry_date
-  });
-
-
-  // TODO we need to replace this with the new column headers function
-  const sheets = google.sheets({ version: 'v4', auth });
-
-  let response;
-  try {
-    response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: 'A1:ZZ1',
-    });
-  } catch (error) {
-    console.error('Error fetching spreadsheet headers:', error);
-    throw new Error('Failed to fetch spreadsheet headers');
-  }
-
-  const fetchedColumnHeaders = response.data.values?.[0] || [];
-
-
-  const { data, error } = await supabase
-    .from('meetings')
-    .insert({
-      user_id: user.id,
-      name: name,
-      zoom_link: zoomLink,
-      spreadsheet_id: spreadsheetId,
-      column_headers: fetchedColumnHeaders,
-      custom_instructions: customInstructions,
-      bot_id: botId
-    });
-
-  if (error) throw error;
-  return data;
-}
 
 export async function fetchMeetings() {
   const supabase = await createServerSupabaseClient()
@@ -291,88 +215,6 @@ export async function deleteMeeting(id: string) {
 }
 
 
-export async function handleFailedPayment(invoice: Stripe.Invoice) {
-  const customerId = invoice.customer as string;
-
-  const { data: userData, error } = await supabaseAdmin
-    .from('users')
-    .select('id')
-    .eq('stripe_customer_id', customerId)
-    .single();
-
-  if (error || !userData) {
-    console.error('Error fetching user:', error);
-    return;
-  }
-
-  const { error: updateError } = await supabaseAdmin
-    .from('users')
-    .update({ 
-      payment_status: 'failed',
-      subscription_status: 'inactive',
-      payment_plan: 'Free'
-    })
-    .eq('id', userData.id);
-
-  if (updateError) {
-    console.error('Error updating user payment status:', updateError);
-  }
-
-  // TODO: Implement email sending logic here
-}
-
-export async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
-  const customerId = subscription.customer;
-  const status = subscription.status;
-
-  const { data: userData, error } = await supabaseAdmin
-    .from('users')
-    .select('id')
-    .eq('stripe_customer_id', customerId)
-    .single();
-
-  if (error || !userData) {
-    console.error('Error fetching user:', error);
-    return;
-  }
-
-  const { error: updateError } = await supabaseAdmin
-    .from('users')
-    .update({ subscription_status: status })
-    .eq('id', userData.id);
-
-  if (updateError) {
-    console.error('Error updating user subscription status:', updateError);
-  }
-}
-
-export async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  const customerId = subscription.customer as string;
-
-  const { data: userData, error } = await supabaseAdmin
-    .from('users')
-    .select('id')
-    .eq('stripe_customer_id', customerId)
-    .single();
-
-  if (error || !userData) {
-    console.error('Error fetching user:', error);
-    return;
-  }
-
-  const { error: updateError } = await supabaseAdmin
-    .from('users')
-    .update({ 
-      subscription_status: 'canceled',
-      stripe_subscription_id: null,
-      subscription_end_date: new Date(subscription.current_period_end * 1000).toISOString()
-    })
-    .eq('id', userData.id);
-
-  if (updateError) {
-    console.error('Error updating user after subscription deletion:', updateError);
-  }
-}
 
 export async function incrementMeetingCount(userId: string) {
   // First, get the current meetings_used count
@@ -680,13 +522,13 @@ export async function getValidGoogleToken(userId: string): Promise<string> {
   return credentials.access_token;
 }
 
-interface CalendlyMeetingOptions {
+interface MeetingOptions {
   useAdmin?: boolean;
   status?: string;
   eventUri?:string;
 }
 
-export async function createCalendlyMeeting(userId: string, name: string, zoomLink: string, spreadsheetId: string, customInstructions: string, botId: string, options: CalendlyMeetingOptions = {}) {
+export async function createMeeting(userId: string, name: string, spreadsheetId: string, customInstructions: string, zoomLink: string, botId: string, options: MeetingOptions = {}) {
 
   const supabase = options.useAdmin ? supabaseAdmin : await createServerSupabaseClient();
 
@@ -701,14 +543,16 @@ export async function createCalendlyMeeting(userId: string, name: string, zoomLi
     .insert({
       user_id: userId,
       name: name,
-      zoom_link: zoomLink,
       spreadsheet_id: spreadsheetId,
       column_headers: fetchedColumnHeaders,
       custom_instructions: customInstructions,
+      zoom_link: zoomLink,
       bot_id: botId,
       ...(options.status && { status: options.status }),
       ...(options.eventUri && { event_uri: options.eventUri })
-    });
+    })
+    .select('id')
+    .single();
 
   if (error) throw error;
   return data;
@@ -1061,4 +905,135 @@ export async function getOrCreateStripeCustomerId(userId: string, email: string)
     console.error('Error in getOrCreateStripeCustomerId:', error);
     throw error;
   }
+}
+
+export interface Meeting {
+  id: string
+  user_id: string
+  name: string
+  date: Date
+  duration: number
+  status: 'scheduled' | 'in-progress' | 'processing' | 'completed' | 'failed'
+  fields_analyzed: number
+  custom_instructions: string
+  spreadsheet_id: string
+  spreadsheet_name: string
+  zoom_link: string
+  bot_id: string
+  transcript: string
+  processed_data: Record<string, unknown>
+  column_headers: string[]
+  event_uri?: string
+  metrics: {
+    duration: number
+    fields_analyzed: number
+    success_rate: number
+    processing_duration: number
+    speaker_participation: Record<string, number>
+    topic_distribution: Record<string, number>
+  }
+  ai_insights: {
+    summary: string
+    key_points: string[]
+    action_items: string[]
+    highlights: Array<{
+      timestamp: number
+      text: string
+    }>
+  }
+  created_at: Date
+  updated_at: Date
+}
+
+export async function updateMeetingMetrics(botId: string, metrics: Meeting['metrics']) {
+  const { data, error } = await supabaseAdmin
+    .from('meetings')
+    .update({ metrics })
+    .eq('bot_id', botId);
+
+  if (error) throw error;
+  return data;
+}
+
+export async function updateMeetingAIInsights(botId: string, aiInsights: Meeting['ai_insights']) {
+  const { data, error } = await supabaseAdmin
+    .from('meetings')
+    .update({ ai_insights: aiInsights })
+    .eq('bot_id', botId);
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getMeetingWithDetails(meetingId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('meetings')
+    .select('*, users(first_name, last_name)')
+    .eq('id', meetingId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getMeetingsWithFilters(
+  userId: string,
+  filters: {
+    status?: Meeting['status'][]
+    dateRange?: { start: Date; end: Date }
+    hasCustomInstructions?: boolean
+  },
+  sort: {
+    field: keyof Meeting
+    direction: 'asc' | 'desc'
+  } = { field: 'created_at', direction: 'desc' }
+) {
+  let query = supabaseAdmin
+    .from('meetings')
+    .select('*')
+    .eq('user_id', userId);
+
+  if (filters.status?.length) {
+    query = query.in('status', filters.status);
+  }
+
+  if (filters.dateRange) {
+    query = query
+      .gte('date', filters.dateRange.start.toISOString())
+      .lte('date', filters.dateRange.end.toISOString());
+  }
+
+  if (filters.hasCustomInstructions !== undefined) {
+    if (filters.hasCustomInstructions) {
+      query = query.not('custom_instructions', 'eq', '');
+    } else {
+      query = query.eq('custom_instructions', '');
+    }
+  }
+
+  query = query.order(sort.field, { ascending: sort.direction === 'asc' });
+
+  const { data, error } = await query;
+
+  if (error) throw error;
+  return data;
+}
+
+export async function getUser() {
+  const supabase = await createServerSupabaseClient();
+  const { data: { user }, error } = await supabase.auth.getUser();
+  
+  if (error || !user) {
+    throw new Error('Not authenticated');
+  }
+
+  const { data: userDetails } = await supabase
+    .from('users')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  return {
+    ...userDetails
+  };
 }

@@ -33,7 +33,7 @@ Feature Epic Specification v1.0
 ### 1. Meetings List View
 
 #### Layout & Design
-- Implementation: Grid-based card layout OR simple list (based on your recommendation based on PRD)
+- Implementation: simple list card layout (based on your recommendation based on PRD) (should be a single row with name, date, fields analyzed, status, and maybe custom instructions)
 - Responsive design: 1 column mobile, 2 columns tablet, 3 columns desktop
 - Sort options: Date, Status, Duration
 - Filter options: Status, Date range, Custom instructions
@@ -206,3 +206,462 @@ interface MeetingState {
 3. Batch processing
 4. Export functionality
 5. Team collaboration features
+
+The above is a high-level overivew, and I've implemented the majority of the components in v0.
+Additionally, I've made UI/UX sketches in v0, please refer and use them when executing this epic. Please also let me know which columns I should add to add to my supabase meetings table to refer to system metrics and analytics.
+The following is the directory structure of the v0 file:
+
+app/
+  meetings/
+    [id]/
+      page.tsx
+  page.tsx
+  components/
+    AIInsights.tsx
+    CustomInstructions.tsx
+    MeetingCard.tsx
+    MeetingChart.tsx
+    MeetingList.tsx
+    Transcript.tsx
+  lib/
+    dummy-data.ts
+  
+File Contents:
+meetings/[id]/page.tsx
+import { dummyMeetings } from "@/lib/dummy-data"
+import { MeetingDetails } from "@/components/MeetingDetails"
+import { notFound } from "next/navigation"
+
+export default function MeetingPage({ params }: { params: { id: string } }) {
+  const meeting = dummyMeetings.find(m => m.id === params.id)
+
+  if (!meeting) {
+    notFound()
+  }
+
+  return (
+    <main className="container mx-auto py-10">
+      <h1 className="text-3xl font-bold mb-6">Meeting Details</h1>
+      <MeetingDetails meeting={meeting} />
+    </main>
+  )
+}
+
+
+meetings/page.tsx
+import { dummyMeetings } from "@/lib/dummy-data"
+import { MeetingList } from "@/components/MeetingList"
+
+export default function Home() {
+  return (
+    <main className="container mx-auto py-10">
+      <h1 className="text-3xl font-bold mb-6">Meetings</h1>
+      <MeetingList meetings={dummyMeetings} />
+    </main>
+  )
+}
+
+
+components/AIInsights.tsx
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+
+interface AiInsightsProps {
+  insights: string
+  summary: string
+}
+
+export function AiInsights({ insights, summary }: AiInsightsProps) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>AI Analysis</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <h3 className="font-semibold mb-1">Insights</h3>
+            <p className="text-sm">{insights}</p>
+          </div>
+          <div>
+            <h3 className="font-semibold mb-1">Summary</h3>
+            <p className="text-sm">{summary}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+
+components/CustomInstructions.tsx
+'use client'
+
+import { useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+
+interface CustomInstructionsProps {
+  instructions: string
+  onSave: (newInstructions: string) => void
+}
+
+export function CustomInstructions({ instructions, onSave }: CustomInstructionsProps) {
+  const [editing, setEditing] = useState(false)
+  const [editedInstructions, setEditedInstructions] = useState(instructions)
+
+  const handleSave = () => {
+    onSave(editedInstructions)
+    setEditing(false)
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Custom Instructions</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {editing ? (
+          <>
+            <Textarea
+              value={editedInstructions}
+              onChange={(e) => setEditedInstructions(e.target.value)}
+              className="mb-4"
+            />
+            <div className="flex space-x-2">
+              <Button onClick={handleSave}>Save</Button>
+              <Button variant="outline" onClick={() => setEditing(false)}>Cancel</Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="mb-4">{instructions}</p>
+            <Button onClick={() => setEditing(true)}>Edit</Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+
+components/MeetingCard.tsx
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { CalendarIcon, ClipboardIcon } from 'lucide-react'
+import { Meeting } from "@/lib/dummy-data"
+import Link from "next/link"
+
+export function MeetingCard({ meeting }: { meeting: Meeting }) {
+  const statusColors = {
+    scheduled: "bg-gray-500",
+    "in-progress": "bg-blue-500",
+    processing: "bg-yellow-500",
+    completed: "bg-green-500",
+    failed: "bg-red-500"
+  }
+
+  return (
+    <Link href={`/meetings/${meeting.id}`}>
+      <Card className="hover:shadow-md transition-shadow">
+        <CardHeader>
+          <CardTitle>{meeting.title}</CardTitle>
+          <Badge className={`${statusColors[meeting.status]} text-white`}>
+            {meeting.status}
+          </Badge>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center space-x-2 text-sm text-gray-500">
+            <CalendarIcon className="w-4 h-4" />
+            <span>{new Date(meeting.date).toLocaleString()}</span>
+          </div>
+          <div className="flex items-center space-x-2 text-sm text-gray-500 mt-2">
+            <ClipboardIcon className="w-4 h-4" />
+            <span>{meeting.spreadsheetInfo.name}</span>
+          </div>
+          <div className="mt-4">
+            <span className="text-sm font-medium">Fields Analyzed: </span>
+            <span className="text-sm">{meeting.fieldsAnalyzed}</span>
+          </div>
+        </CardContent>
+      </Card>
+    </Link>
+  )
+}
+
+
+components/MeetingChart.tsx
+'use client'
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Legend, LineChart, Line } from "recharts"
+
+interface MeetingChartsProps {
+  metrics: {
+    duration: number
+    fields_analyzed: number
+    success_rate: number
+    processing_duration: number
+  }
+}
+
+export function MeetingCharts({ metrics }: MeetingChartsProps) {
+  const barChartData = [
+    { name: 'Duration (min)', value: metrics.duration },
+    { name: 'Fields Analyzed', value: metrics.fields_analyzed },
+    { name: 'Processing Time (s)', value: metrics.processing_duration },
+  ]
+
+  const lineChartData = [
+    { name: 'Start', value: 0 },
+    { name: 'Middle', value: metrics.success_rate * 50 },
+    { name: 'End', value: metrics.success_rate * 100 },
+  ]
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Meeting Metrics</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div>
+          <h3 className="text-sm font-semibold mb-2">Key Metrics</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <BarChart data={barChartData}>
+              <XAxis dataKey="name" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="value" fill="#8884d8" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <div>
+          <h3 className="text-sm font-semibold mb-2">Success Rate</h3>
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={lineChartData}>
+              <XAxis dataKey="name" />
+              <YAxis domain={[0, 100]} />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="value" stroke="#82ca9d" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+
+components/MeetingList.tsx
+import { Meeting } from "@/lib/dummy-data"
+import Link from "next/link"
+import { Badge } from "@/components/ui/badge"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+
+export function MeetingList({ meetings }: { meetings: Meeting[] }) {
+  const statusColors = {
+    scheduled: "bg-gray-500",
+    "in-progress": "bg-blue-500",
+    processing: "bg-yellow-500",
+    completed: "bg-green-500",
+    failed: "bg-red-500"
+  }
+
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Name</TableHead>
+          <TableHead>Date</TableHead>
+          <TableHead>Spreadsheet</TableHead>
+          <TableHead>Fields Analyzed</TableHead>
+          <TableHead>Status</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {meetings.map((meeting) => (
+          <TableRow key={meeting.id}>
+            <TableCell>
+              <Link href={`/meetings/${meeting.id}`} className="hover:underline">
+                {meeting.title}
+              </Link>
+            </TableCell>
+            <TableCell>{new Date(meeting.date).toLocaleString()}</TableCell>
+            <TableCell>{meeting.spreadsheetInfo.name}</TableCell>
+            <TableCell>{meeting.fieldsAnalyzed}</TableCell>
+            <TableCell>
+              <Badge className={`${statusColors[meeting.status]} text-white`}>
+                {meeting.status}
+              </Badge>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )
+}
+
+
+components/Transcript.tsx
+'use client'
+
+import { useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
+
+interface TranscriptProps {
+  snippet: string
+  fullTranscript: string
+}
+
+export function Transcript({ snippet, fullTranscript }: TranscriptProps) {
+  const [isOpen, setIsOpen] = useState(false)
+
+  const handleSave = () => {
+    // In a real application, this would trigger a download or save action
+    console.log('Saving transcript:', fullTranscript)
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Transcript Snippet</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="mb-4">{snippet}</p>
+        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+          <DialogTrigger asChild>
+            <Button>View Full Transcript</Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle>Full Transcript</DialogTitle>
+            </DialogHeader>
+            <div className="mt-4 max-h-96 overflow-y-auto">
+              <p>{fullTranscript}</p>
+            </div>
+            <div className="mt-4 flex justify-end space-x-2">
+              <Button onClick={handleSave}>Save Transcript</Button>
+              <Button variant="outline" onClick={() => setIsOpen(false)}>Close</Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </CardContent>
+    </Card>
+  )
+}
+
+
+lib/dummy-data.ts
+import { BasicMeetingMetrics } from './types'
+
+export interface Meeting {
+  id: string
+  title: string
+  date: string
+  duration: number
+  status: 'scheduled' | 'in-progress' | 'processing' | 'completed' | 'failed'
+  fieldsAnalyzed: number
+  customInstructions: string
+  spreadsheetInfo: {
+    id: string
+    name: string
+  }
+  metrics?: BasicMeetingMetrics
+  aiInsights: string
+  aiSummary: string
+  transcriptSnippet: string
+  fullTranscript: string
+}
+
+export const dummyMeetings: Meeting[] = [
+  {
+    id: '1',
+    title: 'Project Kickoff',
+    date: '2024-01-05T10:00:00Z',
+    duration: 60,
+    status: 'completed',
+    fieldsAnalyzed: 15,
+    customInstructions: 'Focus on project milestones and team assignments',
+    spreadsheetInfo: {
+      id: 'sheet1',
+      name: 'Project Tasks'
+    },
+    metrics: {
+      duration: 58,
+      fields_analyzed: 15,
+      success_rate: 0.93,
+      processing_duration: 120
+    },
+    aiInsights: 'Team seems enthusiastic about the new project. Key focus areas identified: user research, prototype development, and marketing strategy.',
+    aiSummary: 'The project kickoff meeting was productive, with clear goals set for the next quarter. Team roles were assigned, and a timeline was established for the first phase of development.',
+    transcriptSnippet: "John: Let's start by discussing our main objectives for this quarter...",
+    fullTranscript: "John: Let's start by discussing our main objectives for this quarter. Sarah: I think we should prioritize user research. Tom: Agreed, and we need to set a timeline for the prototype. Sarah: How about we aim for a prototype by the end of next month? John: Sounds good. Let's also discuss our marketing strategy..."
+  },
+  {
+    id: '2',
+    title: 'Weekly Standup',
+    date: '2024-01-12T09:00:00Z',
+    duration: 30,
+    status: 'scheduled',
+    fieldsAnalyzed: 0,
+    customInstructions: 'Track progress on individual tasks and identify blockers',
+    spreadsheetInfo: {
+      id: 'sheet2',
+      name: 'Team Progress'
+    },
+    aiInsights: 'Meeting not yet conducted',
+    aiSummary: 'Meeting not yet conducted',
+    transcriptSnippet: 'Meeting not yet conducted',
+    fullTranscript: 'Meeting not yet conducted'
+  },
+  {
+    id: '3',
+    title: 'Client Presentation',
+    date: '2024-01-08T14:00:00Z',
+    duration: 90,
+    status: 'failed',
+    fieldsAnalyzed: 8,
+    customInstructions: 'Highlight key features and gather client feedback',
+    spreadsheetInfo: {
+      id: 'sheet3',
+      name: 'Client Feedback'
+    },
+    metrics: {
+      duration: 87,
+      fields_analyzed: 8,
+      success_rate: 0.5,
+      processing_duration: 180
+    },
+    aiInsights: 'Client expressed concerns about the timeline. Positive feedback received on the user interface design.',
+    aiSummary: 'The client presentation covered the main features of the product. While the client liked the UI, they requested changes to the project timeline. Action items were created to address their concerns.',
+    transcriptSnippet: "Client: The interface looks great, but I'm worried about the delivery date...",
+    fullTranscript: "Client: The interface looks great, but I'm worried about the delivery date. Can we discuss the timeline? Presenter: Certainly, we understand your concern. Let's go through the project phases and see where we can optimize. Client: That would be helpful. I also wanted to ask about the new features you mentioned..."
+  }
+]
+-- END FILE CONTENTS --
+Please make sure to provide the necessary supabase columns for the meetings table as well as following best practices. I want the core functionality to be the same as we have but with these new meeting epic requirements.
+I also forgot to mention but we still want to have that create meeting modal with the google auth checks as well to ensure the user can create a meeting successfully. Also we probably have to modify the check-meeting-limit to a more appropiate name and instead of checking meetings we should check the meeting_hours_remaining column in the users table.
+
+Please let me know if you have any questions or need any clarification.
+
+
+
+NEXT PROMPT:
+Before we move onto the next portion of the frontend, a couple of things, when we render the meetings, list we should only render relevant information, not something like zoom link, we should show the name, the date it was created, status, etc, feel free to judge what is important from a ui/ux along as it aligns with @prd.md @meeting-epic.md Also, one more thing to mention, you basically followed the pattern from v0 right? That file structure and components implemented make sense? Also, when we click meeting, is calling it view analytics and appropiate name? Because we also want to view summary, AI insights, actions, etc. Also, I'm not sure if you incorporated this already, but if a meeting is processing, I want a unique intuitive loading screen as well as toasts to remind users of meeting updates. If the meeting has been completed, then the user should be able to click into it and all of the useful summaries, analytics and insights are there.

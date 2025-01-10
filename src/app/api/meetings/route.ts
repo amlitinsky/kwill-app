@@ -30,6 +30,8 @@ export async function POST(request: Request) {
   try {
     // Get user details to check meeting hours
     const userDetails = await getUserById(user.id);
+
+    // TODO: Impleement subscription logic
     
     if (!userDetails || userDetails.meeting_hours_remaining <= 0) {
       return NextResponse.json({ 
@@ -37,24 +39,25 @@ export async function POST(request: Request) {
       }, { status: 403 });
     }
 
-    const { name, zoomLink, spreadsheetId, customInstructions, estimatedDuration } = await request.json();
-    
-    // If estimated duration is provided and exceeds remaining hours
-    if (estimatedDuration && estimatedDuration > userDetails.meeting_hours_remaining) {
-      return NextResponse.json({ 
-        error: 'Estimated meeting duration exceeds remaining hours. Please purchase more hours.' 
-      }, { status: 403 });
-    }
+    const { 
+      name,
+      zoomLink,
+      spreadsheetId, 
+      customInstructions
+    } = await request.json();
 
-    // Create bot with automatic leave if less than 2 hours remaining
-    // TODO: is less than 2 hours remaining a good threshold?
-    // TODO: we have to do this for calendly as well
-    const automaticLeave = userDetails.meeting_hours_remaining < 2 
-      ? Math.floor(userDetails.meeting_hours_remaining * 3600) // Convert hours to seconds
-      : undefined;
+    const botId = await createBot(zoomLink)
 
-    const bot = await createBot(zoomLink, { automatic_leave: automaticLeave })
-    const newMeeting = await createMeeting(name, zoomLink, spreadsheetId, customInstructions, bot.id);
+    // Create meeting with recording status
+    const newMeeting = await createMeeting(
+      user.id,
+      name,
+      spreadsheetId,
+      customInstructions,
+      zoomLink,
+      botId,
+      { status: 'Recording' }
+    );
     
     return NextResponse.json(newMeeting);
   } catch (error) {

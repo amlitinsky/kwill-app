@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server'
 import { Webhook } from 'svix'
 import { analyzeMedia, getTranscript, calculateMeetingDuration } from '@/lib/recall'
-import { getMeetingDetails, getValidGoogleToken, incrementMeetingCount, updateMeetingProcessedData, updateMeetingStatus, updateUserMeetingHours } from '@/lib/supabase-server'
-import { processTranscriptWithClaude } from '@/lib/anthropic'
+import { getMeetingDetails, getValidGoogleToken, updateMeetingMetrics,updateMeetingAIInsights, updateMeetingProcessedData, updateMeetingStatus, updateUserMeetingHours } from '@/lib/supabase-server'
+import { processTranscriptWithClaude, generateMeetingSummary, extractKeyPoints, extractActionItems, generateTimeStampedHighlights, analyzeTopicDistribution, calculateSuccessRate } from '@/lib/anthropic'
 import { mapHeadersAndAppendData } from '@/lib/google-auth'
 import { ProcessedTranscriptSegment, processRawTranscript } from '@/lib/transcript-utils'
 import { scheduleAutoRenewal } from '@/lib/auto-renewal'
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Failed to process meeting completion' }, { status: 500 })
       }
     } else if (status.code === 'analysis_done') {
-
+      const duration = await calculateMeetingDuration(bot_id)
       try {
         // Check if already processed
         const processRecord = await getProcessRecord(bot_id)
@@ -96,37 +96,59 @@ export async function POST(req: Request) {
             throw new Error('Failed to retrieve meeting details')
           }
 
-          // Double-check meeting status
-          if (['Done', 'Analyzed Transcript', 'Received Transcript'].includes(meetingDetails.status)) {
-            return NextResponse.json({ received: true })
-          }
-
           // retrieving and processing the transcript
           const raw_transcript = await getTranscript(bot_id)
           const transcript: ProcessedTranscriptSegment[] = processRawTranscript(raw_transcript)
           await updateMeetingStatus(bot_id, 'Received Transcript')
           
           // call claude API (with the transcript)
-          const processed_data = await processTranscriptWithClaude(transcript, meetingDetails.column_headers, meetingDetails.custom_instructions)
+          const processed_data = await processTranscriptWithClaude(
+            transcript, 
+            meetingDetails.column_headers, 
+            meetingDetails.custom_instructions
+          )
 
-          // update supabase
+          // Calculate success rate after processing data
+          const success_rate = await calculateSuccessRate(processed_data, meetingDetails.column_headers)
+
+          // Calculate meeting metrics
+          const metrics = {
+            duration: duration,
+            fields_analyzed: meetingDetails.column_headers.length,
+            success_rate: success_rate,
+            processing_duration: Date.now() - new Date(status.created_at).getTime(),
+            speaker_participation: calculateSpeakerParticipation(transcript),
+            topic_distribution: await analyzeTopicDistribution(transcript)
+          }
+          await updateMeetingMetrics(bot_id, metrics)
+
+          // Generate AI insights
+          const aiInsights = {
+            summary: await generateMeetingSummary(transcript),
+            key_points: await extractKeyPoints(transcript),
+            action_items: await extractActionItems(transcript),
+            highlights: await generateTimeStampedHighlights(transcript)
+          }
+          await updateMeetingAIInsights(bot_id, aiInsights)
+
+          // update supabase with processed data
           await updateMeetingProcessedData(bot_id, processed_data)
 
           // analyze transcript
           await updateMeetingStatus(bot_id, 'Analyzed Transcript')
 
-          // get access token
-          // const google_creds = await getGoogleCreds(meetingDetails.user_id)
-
           // get valid access_token
           const access_token = await getValidGoogleToken(meetingDetails.user_id)
 
-          // appned to google sheets
-          await mapHeadersAndAppendData(meetingDetails.spreadsheet_id, "", processed_data, access_token)
+          // append to google sheets
+          await mapHeadersAndAppendData(
+            meetingDetails.spreadsheet_id, 
+            "", 
+            processed_data, 
+            access_token
+          )
 
           await updateMeetingStatus(bot_id, 'Done')
-
-          await incrementMeetingCount(meetingDetails.user_id)
 
           // Mark as completed
           await setProcessRecord(bot_id, {
@@ -152,4 +174,23 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ received: true })
+}
+
+// Helper functions for transcript analysis
+function calculateSpeakerParticipation(transcript: ProcessedTranscriptSegment[]): Record<string, number> {
+  const speakerDurations: Record<string, number> = {};
+  let totalDuration = 0;
+
+  transcript.forEach(segment => {
+    const duration = segment.end_time - segment.start_time;
+    speakerDurations[segment.speaker] = (speakerDurations[segment.speaker] || 0) + duration;
+    totalDuration += duration;
+  });
+
+  // Convert to percentages
+  Object.keys(speakerDurations).forEach(speaker => {
+    speakerDurations[speaker] = (speakerDurations[speaker] / totalDuration) * 100;
+  });
+
+  return speakerDurations;
 }

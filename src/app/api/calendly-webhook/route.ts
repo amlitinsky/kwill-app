@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cancelCalendlyMeeting, createCalendlyMeeting, getCalendlyConfigByUri, getCalendlyUser, getMeetingByEventUri, supabaseAdmin } from '@/lib/supabase-server';
+import { cancelCalendlyMeeting, createMeeting, getCalendlyConfigByUri, getCalendlyUser, getMeetingByEventUri, supabaseAdmin } from '@/lib/supabase-server';
 import crypto from 'crypto';
 import { createBot, deleteBot } from '@/lib/recall';
 
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
 
         const user = await supabaseAdmin
           .from('users')
-          .select('calendly_enabled, calendly_access_until')
+          .select('calendly_enabled, calendly_access_until, meeting_hours_remaining')
           .eq('id', userId)
           .single();
 
@@ -96,12 +96,13 @@ export async function POST(request: Request) {
         }
 
         const joinTime = new Date(new Date(startTime).getTime() - 30000);
-
+        const automaticLeave = Math.floor(user.data.meeting_hours_remaining * 3600)
         const scheduledBot = await createBot(locationData.join_url, {
-          join_at: joinTime.toISOString()
+          join_at: joinTime.toISOString(),
+          automatic_leave: automaticLeave
         });
 
-        await createCalendlyMeeting(
+        await createMeeting(
           userId,
           name,
           locationData.join_url,
