@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       customInstructions
     } = await request.json();
 
-    const botId = await createBot(zoomLink)
+    const botId = await createBot(zoomLink, { automatic_leave: userDetails.meeting_hours_remaining * 3600})
 
     // Create meeting with recording status
     const newMeeting = await createMeeting(
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
       customInstructions,
       zoomLink,
       botId,
-      { status: 'Recording' }
+      { status: 'created' }
     );
     
     return NextResponse.json(newMeeting);

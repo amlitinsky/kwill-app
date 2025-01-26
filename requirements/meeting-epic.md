@@ -567,6 +567,106 @@ export function Transcript({ snippet, fullTranscript }: TranscriptProps) {
   )
 }
 
+components/meetings/MeetingDetails.tsx
+```tsx
+'use client'
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { CalendarIcon, ClipboardIcon, ClockIcon, BarChart2Icon, FileTextIcon } from 'lucide-react'
+import { Meeting } from "@/lib/dummy-data"
+import { AiInsights } from "./AiInsights"
+import { CustomInstructions } from "./CustomInstructions"
+import { Transcript } from "./Transcript"
+import { MeetingCharts } from "./MeetingCharts"
+
+export function MeetingDetails({ meeting }: { meeting: Meeting }) {
+  const statusColors = {
+    scheduled: "bg-gray-500",
+    "in-progress": "bg-blue-500",
+    processing: "bg-yellow-500",
+    completed: "bg-green-500",
+    failed: "bg-red-500"
+  }
+
+  const handleSaveInstructions = (newInstructions: string) => {
+    console.log('Saving new instructions:', newInstructions)
+    // In a real application, this would update the meeting data
+  }
+
+  const handleRequestQuery = () => {
+    console.log('Requesting query again for meeting:', meeting.id)
+    // In a real application, this would trigger a new query
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <CardTitle>{meeting.title}</CardTitle>
+              <Badge className={`${statusColors[meeting.status]} text-white`}>
+                {meeting.status}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <CalendarIcon className="w-4 h-4" />
+                <span>{new Date(meeting.date).toLocaleString()}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <ClockIcon className="w-4 h-4" />
+                <span>{meeting.duration} minutes</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <ClipboardIcon className="w-4 h-4" />
+                <span>{meeting.spreadsheetInfo.name}</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-500">
+                <BarChart2Icon className="w-4 h-4" />
+                <span>Fields Analyzed: {meeting.fieldsAnalyzed}</span>
+              </div>
+              {meeting.metrics && (
+                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <FileTextIcon className="w-4 h-4" />
+                  <span>Success Rate: {(meeting.metrics.success_rate * 100).toFixed(1)}%</span>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        <AiInsights insights={meeting.aiInsights} summary={meeting.aiSummary} />
+
+        <CustomInstructions
+          instructions={meeting.customInstructions}
+          onSave={handleSaveInstructions}
+        />
+      </div>
+
+      <div className="space-y-6">
+        <Transcript
+          snippet={meeting.transcriptSnippet}
+          fullTranscript={meeting.fullTranscript}
+        />
+
+        {meeting.metrics && <MeetingCharts metrics={meeting.metrics} />}
+
+        <div className="flex justify-end">
+          <Button onClick={handleRequestQuery}>Request Query Again</Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+
+
 
 lib/dummy-data.ts
 import { BasicMeetingMetrics } from './types'

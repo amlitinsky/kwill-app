@@ -1,4 +1,3 @@
-// import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { createBrowserClient } from '@supabase/ssr';
 
 
@@ -109,12 +108,11 @@ export async function signInWithGoogle() {
     provider: 'google',
     options: {
       redirectTo: `${window.location.origin}/auth/callback`,
-      ...(process.env.VERCEL_ENV === 'production' && {
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        }
-      })
+      scopes: 'https://www.googleapis.com/auth/spreadsheets',
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
+      }
     },
   });
 

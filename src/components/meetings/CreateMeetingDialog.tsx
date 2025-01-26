@@ -32,34 +32,15 @@ export function CreateMeetingDialog({ open, onOpenChange }: CreateMeetingDialogP
     try {
       setIsLoading(true)
 
-      // Check Google OAuth first
-      const authCheckResponse = await fetch('/api/check-google-oauth')
-      const authCheckData = await authCheckResponse.json()
-
+      // TODO move google integration to integrations tab
       // Extract spreadsheet ID from the link
       const extractedSpreadsheetId = extractSpreadsheetId(spreadsheetId)
       if (!extractedSpreadsheetId) {
         throw new Error('Invalid spreadsheet link')
       }
 
-      if (!authCheckData.isAuthorized) {
-        // Store pending meeting data
-        localStorage.setItem('pendingMeeting', JSON.stringify({
-          name,
-          zoomLink,
-          spreadsheetId: extractedSpreadsheetId,
-          customInstructions
-        }))
-
-        // Get OAuth URL and redirect
-        const authUrlResponse = await fetch('/api/get-google-auth-url')
-        const { url } = await authUrlResponse.json()
-        window.location.href = url
-        return
-      }
-
       // Validate spreadsheet
-      const validateResponse = await fetch('/api/validate-spreadsheet', {
+      const validateResponse = await fetch('/api/google/validate-spreadsheet', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ spreadsheetId: extractedSpreadsheetId })

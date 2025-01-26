@@ -11,7 +11,6 @@ export async function createCheckoutSession(
   returnUrl: string = `${process.env.NEXT_PUBLIC_BASE_URL}/private/settings`
 ) {
   try {
-
     // Get the price details to access metadata
     const price = await stripe.prices.retrieve(priceId);
     const product = await stripe.products.retrieve(price.product as string);
@@ -53,8 +52,10 @@ export async function getPlans() {
     return prices.data
       .filter(price => {
         const product = price.product as Stripe.Product;
-        // Double-check both price and product active status
-        return price.active === true && product.active === true;
+        // Only include active web-based plans
+        return price.active === true && 
+               product.active === true &&
+               product.metadata.web === 'true';
       })
       .map(price => {
         const product = price.product as Stripe.Product;
@@ -65,7 +66,8 @@ export async function getPlans() {
           description: product.description,
           hours: parseInt(product.metadata.hours || '0'),
           calendlyEnabled: product.metadata.calendly_enabled === 'true',
-          order: parseInt(product.metadata.order || '0')
+          order: parseInt(product.metadata.order || '0'),
+          features: product.metadata.features ? JSON.parse(product.metadata.features) : []
         };
       })
       .sort((a, b) => a.order - b.order);
@@ -75,20 +77,23 @@ export async function getPlans() {
   }
 }
 
-export async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
+export async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   try {
-    const customerId = session.customer as string;
-    const hours = parseInt(session.metadata?.hours || '0');
-    const calendlyEnabled = session.metadata?.calendly_enabled === 'true';
+    const customerId = subscription.customer as string;
+    const hours = parseInt(subscription.metadata?.hours || '0');
+    const calendlyEnabled = subscription.metadata?.calendly_enabled === 'true';
 
     // Return the processed information
     return {
       customerId,
       hours,
-      calendlyEnabled
+      calendlyEnabled,
+      status: subscription.status,
+      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      subscriptionId: subscription.id
     };
   } catch (error) {
-    console.error('Error handling checkout completion:', error);
+    console.error('Error handling subscription update:', error);
     throw error;
   }
 }
@@ -100,7 +105,6 @@ export async function createStripeCustomer(email: string) {
   return customer;
 }
 
-
 export async function listStripeCustomer(email: string): Promise<string | null> {
   try {
     const { data } = await stripe.customers.list({ email, limit: 1 });
@@ -111,32 +115,47 @@ export async function listStripeCustomer(email: string): Promise<string | null> 
   }
 }
 
-export async function getPaymentHistory(customerId: string) {
+export async function getSubscriptionHistory(customerId: string) {
   try {
-    const paymentIntents = await stripe.paymentIntents.list({
+    const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       limit: 10,
+      expand: ['data.default_payment_method']
     });
 
-    return paymentIntents.data.map(pi => ({
-      id: pi.id,
-      date: new Date(pi.created * 1000).toLocaleDateString(),
-      total: `$${(pi.amount / 100).toFixed(2)}`,
-      status: pi.status,
-      hours: pi.metadata.hours || '0',
+    return subscriptions.data.map(sub => ({
+      id: sub.id,
+      status: sub.status,
+      currentPeriodEnd: new Date(sub.current_period_end * 1000).toLocaleDateString(),
+      amount: `$${(sub.items.data[0].price.unit_amount! / 100).toFixed(2)}`,
+      interval: sub.items.data[0].price.recurring?.interval || 'month',
+      hours: sub.metadata.hours || '0',
+      paymentMethod: sub.default_payment_method ? {
+        brand: (sub.default_payment_method as Stripe.PaymentMethod).card?.brand,
+        last4: (sub.default_payment_method as Stripe.PaymentMethod).card?.last4,
+      } : null
     }));
   } catch (error) {
-    console.error('Error fetching payment history:', error);
+    console.error('Error fetching subscription history:', error);
     throw error;
   }
 }
 
 export async function createCustomerPortalSession(stripeCustomerId: string) {
+  const session = await stripe.billingPortal.sessions.create({
+    customer: stripeCustomerId,
+    return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/private/settings`,
+  });
 
-    const session = await stripe.billingPortal.sessions.create({
-      customer: stripeCustomerId,
-      return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/private/settings`,
-    });
+  return session;
+}
 
-    return session
+export async function cancelSubscription(subscriptionId: string) {
+  try {
+    const subscription = await stripe.subscriptions.cancel(subscriptionId);
+    return subscription;
+  } catch (error) {
+    console.error('Error canceling subscription:', error);
+    throw error;
+  }
 }

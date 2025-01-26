@@ -12,10 +12,11 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import Image from 'next/image'
+// import Image from 'next/image'
 import { signOut } from '@/lib/supabase-client'
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase-client'
+import { Logo } from './Logo'
 
 interface UserMetadata {
   avatar_url?: string
@@ -54,15 +55,16 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
           href="/private/dashboard"
           className="flex items-center gap-2"
         >
-          <div className="relative w-10 h-10">
+          {/* <div className="relative w-10 h-10">
             <Image 
               src="/images/logos/kwill-no-bg.png" 
               alt="Kwill Logo" 
               fill
               style={{ objectFit: 'contain' }}
             /> 
-          </div>
-          <span className="text-xl font-medium text-white tracking-tight">Kwill</span>
+          </div> */}
+          <Logo />
+          <span className="text-xl font-medium tracking-tight">Kwill</span>
         </Link>
       </nav>
 

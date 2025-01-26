@@ -33,6 +33,10 @@ interface CalendlyConfig {
   active: boolean;
 }
 
+interface CalendlyConfigsProps {
+  initialConfigs?: CalendlyConfig | null;
+}
+
 // Helper function to extract spreadsheet ID from URL
 function extractedSpreadsheetId(url: string): string | null {
   try {
@@ -57,9 +61,9 @@ const LoadingRow = ({ delay = 0 }) => (
   </motion.tr>
 );
 
-export function CalendlyConfigs() {
-  const [configs, setConfigs] = useState<CalendlyConfig[]>([]);
-  const [loading, setLoading] = useState(true);
+export function CalendlyConfigs({ initialConfigs = null }: CalendlyConfigsProps) {
+  const [configs, setConfigs] = useState<CalendlyConfig[]>(initialConfigs ? [initialConfigs] : []);
+  const [loading, setLoading] = useState(!initialConfigs);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValues, setEditingValues] = useState<{
     spreadsheet_id?: string;
@@ -69,12 +73,14 @@ export function CalendlyConfigs() {
   const { toast } = useToast();
 
   useEffect(() => {
-    syncConfigs();
-  }, []);
+    if (!initialConfigs) {
+      syncConfigs();
+    }
+  }, [initialConfigs]);
 
   async function syncConfigs() {
     try {
-      const response = await fetch('/api/calendly-configs', {
+      const response = await fetch('/api/calendly/templates', {
         method: 'POST'
       });
       if (!response.ok) throw new Error('Failed to sync');
@@ -114,7 +120,7 @@ export function CalendlyConfigs() {
         updates.spreadsheet_id = spreadsheetId;
       }
 
-      const response = await fetch('/api/calendly-configs', {
+      const response = await fetch('/api/calendly/templates', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, ...updates }),

@@ -51,8 +51,8 @@ Kwill is an AI-powered meeting assistant that automatically captures, analyzes, 
 
 ### 3.3 Data Processing Pipeline
 1. Meeting Recording (Recall.ai)
-2. Transcription (AssemblyAI)
-3. Analysis (Claude.ai)
+2. Transcription (Deepgram or Meeting Captions)
+3. Analysis (Deepseek)
 4. Data Extraction
 5. Spreadsheet Update (Google Sheets API)
 
@@ -74,8 +74,8 @@ Kwill is an AI-powered meeting assistant that automatically captures, analyzes, 
 ## 4. Business Logic
 
 ### 4.1 Pricing Model
-- Pay-as-you-go system based on meeting hours
-- Automatic renewal option
+- Subscription based model (5, 10, 20 hours priced at $20, $30, $40)
+- If user uses all hours by the end of the month, they can purchase more hours at an overage rate of $3.5 per hour
 - Bot auto-disconnection on exceeding purchased hours
 - Transparent API cost management
 

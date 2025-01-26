@@ -17,7 +17,7 @@ interface CalendlyUserInfo {
 // Generate the Calendly OAuth URL for user authorization
 export function getCalendlyAuthUrl(source?: string) {
   const clientId = process.env.NEXT_PUBLIC_CALENDLY_API_CLIENT_ID;
-  const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/api/calendly-oauth-callback`;
+  const redirectUri = `${process.env.NEXT_PUBLIC_BASE_URL}/api/callback/calendly`;
   
   const params = new URLSearchParams({
     client_id: clientId!,
@@ -41,7 +41,7 @@ export async function getCalendlyTokens(code: string): Promise<CalendlyTokens> {
       code,
       client_id: process.env.NEXT_PUBLIC_CALENDLY_API_CLIENT_ID!,
       client_secret: process.env.CALENDLY_API_CLIENT_SECRET!,
-      redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/calendly-oauth-callback`
+      redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/callback/calendly`
     })
   });
 
@@ -141,7 +141,7 @@ export async function subscribeToCalendlyWebhooks(accessToken: string, userUri: 
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      url: `${process.env.NEXT_PUBLIC_NGROK_URL}/api/calendly-webhook`,
+      url: `${process.env.NEXT_PUBLIC_NGROK_URL}/api/webhook/calendly`,
       events: ['invitee.created', 'invitee.canceled'],
       user: userUri,
       organization: organization,

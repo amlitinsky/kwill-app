@@ -1,9 +1,10 @@
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { createStripeCustomer } from './stripe';
-import { getColumnHeaders, getGoogleUserInfo, refreshAccessToken } from './google-auth';
+import { findNextEmptyRow, getColumnHeaders, getGoogleUserInfo, refreshAccessToken } from './google-auth';
 import { createServerClient } from '@supabase/ssr';
 import { checkCalendlyTokenValidity, refreshCalendlyToken } from './calendly';
+import { ProcessedTranscriptSegment } from './transcript-utils';
 
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies()
@@ -149,7 +150,7 @@ export async function updateMeetingStatus(botId: string, status: string) {
   return data;
 }
 
-export async function updateMeetingTranscript(botId: string, transcript: string) {
+export async function updateMeetingTranscript(botId: string, transcript: ProcessedTranscriptSegment[]) {
   const { data, error } = await supabaseAdmin
     .from('meetings')
     .update({ transcript: transcript })
@@ -173,7 +174,7 @@ export async function updateMeetingProcessedData(botId: string, processedData: R
 export async function getMeetingDetails(botId: string) {
   const { data, error } = await supabaseAdmin
     .from('meetings')
-    .select('user_id, spreadsheet_id, column_headers, custom_instructions, status')
+    .select('user_id, spreadsheet_id, column_headers, custom_instructions, status, spreadsheet_row_number')
     .eq('bot_id', botId)
     .single()
 
@@ -250,9 +251,9 @@ export async function incrementMeetingCount(userId: string) {
 
 export async function getStripeCustomerId(userId: string) {
   const { data, error } = await supabaseAdmin
-    .from('users')
+    .from('subscriptions')
     .select('stripe_customer_id')
-    .eq('id', userId)
+    .eq('user_id', userId)
     .single();
 
   if (error) {
@@ -538,12 +539,15 @@ export async function createMeeting(userId: string, name: string, spreadsheetId:
 
   const fetchedColumnHeaders = await getColumnHeaders(googleAccessToken, spreadsheetId)
 
+  const newRow = await findNextEmptyRow(googleAccessToken, spreadsheetId, '')
+
   const { data, error } = await supabase
     .from('meetings')
     .insert({
       user_id: userId,
       name: name,
       spreadsheet_id: spreadsheetId,
+      spreadsheet_row_number: newRow,
       column_headers: fetchedColumnHeaders,
       custom_instructions: customInstructions,
       zoom_link: zoomLink,
@@ -865,7 +869,7 @@ export async function enableUserCalendlyAccess(userId: string, expiryDate: strin
 
 export async function getUserByStripeCustomerId(stripeCustomerId: string) {
   const { data, error } = await supabaseAdmin
-    .from('users')
+    .from('subscriptions')
     .select('*')
     .eq('stripe_customer_id', stripeCustomerId)
     .single();
@@ -911,17 +915,15 @@ export interface Meeting {
   id: string
   user_id: string
   name: string
-  date: Date
-  duration: number
-  status: 'scheduled' | 'in-progress' | 'processing' | 'completed' | 'failed'
-  fields_analyzed: number
-  custom_instructions: string
+  status: 'scheduled'| 'created' | 'in-progress' | 'processing' | 'completed' | 'failed'
   spreadsheet_id: string
   spreadsheet_name: string
+  spreadsheet_row_number?: number
   zoom_link: string
   bot_id: string
-  transcript: string
-  processed_data: Record<string, unknown>
+  custom_instructions: string
+  transcript: string | null
+  processed_data: Record<string, unknown> | null
   column_headers: string[]
   event_uri?: string
   metrics: {
@@ -929,9 +931,10 @@ export interface Meeting {
     fields_analyzed: number
     success_rate: number
     processing_duration: number
+    progress?: number // 0-100 percentage of processing completion
     speaker_participation: Record<string, number>
     topic_distribution: Record<string, number>
-  }
+  } | null
   ai_insights: {
     summary: string
     key_points: string[]
@@ -940,7 +943,7 @@ export interface Meeting {
       timestamp: number
       text: string
     }>
-  }
+  } | null
   created_at: Date
   updated_at: Date
 }
@@ -1036,4 +1039,38 @@ export async function getUser() {
   return {
     ...userDetails
   };
+}
+
+export async function getZoomCreds(userId: string) {
+  const { data, error } = await supabaseAdmin
+    .from('zoom_oauth_credentials')
+    .select('*')
+    .eq('user_id', userId)
+    .single();
+
+  if (error) {
+    console.error('Error fetching Zoom credentials:', error);
+    return null;
+  }
+
+  return data;
+}
+export async function getSubscription() {
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) throw new Error('Not authenticated');
+
+  const { data: subscription, error } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('user_id', user.id)
+    .single();
+
+  if (error) {
+    console.error('Error fetching subscription:', error);
+    return null;
+  }
+
+  return subscription;
 }

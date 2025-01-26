@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
-import Image from 'next/image'
+import { Logo } from './Logo'
 
 export function PublicNavbar() {
   return (
@@ -8,14 +8,7 @@ export function PublicNavbar() {
       <div className="container flex items-center justify-between max-w-screen-xl mx-auto px-4">
         {/* Logo Section */}
         <Link href="/public/landing" className="flex items-center gap-2">
-          <div className="relative w-8 h-8">
-            <Image 
-              src="/images/logos/kwill-no-bg.png" 
-              alt="Kwill Logo" 
-              fill
-              style={{ objectFit: 'contain' }}
-            /> 
-          </div>
+          <Logo />
           <span className="text-lg font-semibold tracking-tight">Kwill</span>
         </Link>
 

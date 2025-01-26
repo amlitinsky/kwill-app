@@ -1,10 +1,10 @@
 import { OAuth2Client } from 'google-auth-library';
-import { google, sheets_v4 } from 'googleapis';
+import { google } from 'googleapis';
 
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_API_CLIENT_ID,
   process.env.GOOGLE_API_CLIENT_SECRET,
-  `${process.env.NEXT_PUBLIC_BASE_URL}/api/google-oauth-callback`
+  `${process.env.NEXT_PUBLIC_BASE_URL}/api/callback/google`
 );
 
 // Generates the Google OAuth URL for user authorization
@@ -24,7 +24,16 @@ export async function getGoogleTokens(code: string) {
 }
 
 // Appends a new row to a Google Spreadsheet
-async function findNextEmptyRow(sheets: sheets_v4.Sheets, spreadsheetId: string, sheetName: string): Promise<number> {
+export async function findNextEmptyRow(accessToken: string, spreadsheetId: string, sheetName: string): Promise<number> {
+
+  oauth2Client.setCredentials({ access_token: accessToken });
+  const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
+
+  if (!sheetName) {
+    const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId });
+    sheetName = spreadsheet.data.sheets?.[0].properties?.title || 'Sheet1';
+  }
+
   const range = `${sheetName}!A:A`;
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId,
@@ -42,7 +51,9 @@ export async function mapHeadersAndAppendData(
   spreadsheetId: string, 
   sheetName: string | null, 
   dataDict: Record<string, string>, 
-  accessToken: string
+  accessToken: string,
+  rowNumber?: number,
+  overWrite?: boolean // Optional row number for overwriting
 ) {
   oauth2Client.setCredentials({ access_token: accessToken });
   const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
@@ -62,21 +73,35 @@ export async function mapHeadersAndAppendData(
 
   const rowData = headers.map(header => dataDict[header] || null);
 
-  // Append the mapped data to the spreadsheet
-  const nextEmptyRow = await findNextEmptyRow(sheets, spreadsheetId, sheetName);
-  const appendRange = `${sheetName}!A${nextEmptyRow}`;
+  if (overWrite) {
+    // Update existing row
+    const updateRange = `${sheetName}!A${rowNumber}`;
+    await sheets.spreadsheets.values.update({
+      spreadsheetId,
+      range: updateRange,
+      valueInputOption: 'USER_ENTERED',
+      requestBody: {
+        values: [rowData],
+      },
+    });
+    return { rowNumber: null };
+  } else {
+    // Find next empty row and append
+    const nextEmptyRow = await findNextEmptyRow(accessToken, spreadsheetId, sheetName);
+    const appendRange = `${sheetName}!A${nextEmptyRow}`;
 
-  const appendResponse = await sheets.spreadsheets.values.append({
-    spreadsheetId,
-    range: appendRange,
-    valueInputOption: 'USER_ENTERED',
-    insertDataOption: 'INSERT_ROWS',
-    requestBody: {
-      values: [rowData],
-    },
-  });
+    await sheets.spreadsheets.values.append({
+      spreadsheetId,
+      range: appendRange,
+      valueInputOption: 'USER_ENTERED',
+      insertDataOption: 'INSERT_ROWS',
+      requestBody: {
+        values: [rowData],
+      },
+    });
 
-  return appendResponse.data;
+    return { rowNumber: nextEmptyRow };
+  }
 }
 
 export async function validateSpreadsheet(spreadsheetId: string, accessToken: string) {

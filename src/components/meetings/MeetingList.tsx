@@ -4,14 +4,14 @@ import { useState, useEffect } from 'react'
 import { Meeting } from '@/lib/supabase-server'
 import { Card, CardContent } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { MoreHorizontal, FileText, Clock, Loader2 } from "lucide-react"
+import { Calendar, Clock, FileText, Loader2 } from "lucide-react"
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/hooks/use-toast"
+import { Progress } from "@/components/ui/progress"
+import { cn } from "@/lib/utils"
 
 interface MeetingListProps {
   initialMeetings: Meeting[]
@@ -20,16 +20,18 @@ interface MeetingListProps {
 const statusColors = {
   scheduled: "bg-gray-500",
   'in-progress': "bg-blue-500 animate-pulse",
+  created: "bg-sky-500",
   processing: "bg-yellow-500 animate-pulse",
   completed: "bg-green-500",
   failed: "bg-red-500"
 } as const
 
 const statusMessages = {
-  'in-progress': "Meeting is currently being recorded",
-  processing: "Processing meeting transcript and insights",
+  'in-progress': "Recording in progress...",
+  processing: "Analyzing meeting transcript and generating insights...",
+  created: "Meeting created",
   completed: "Meeting analysis complete",
-  failed: "Meeting processing failed"
+  failed: "Failed to process meeting"
 }
 
 export function MeetingList({ initialMeetings }: MeetingListProps) {
@@ -48,7 +50,7 @@ export function MeetingList({ initialMeetings }: MeetingListProps) {
     if (processingMeetings.length > 0) {
       processingMeetings.forEach(meeting => {
         toast({
-          title: `Meeting: ${meeting.name}`,
+          title: meeting.name,
           description: statusMessages[meeting.status as keyof typeof statusMessages],
           duration: 5000
         })
@@ -62,10 +64,27 @@ export function MeetingList({ initialMeetings }: MeetingListProps) {
     setSortDirection(direction)
 
     const sorted = [...meetings].sort((a, b) => {
-      if (direction === 'asc') {
-        return (a[field] ?? 0) > (b[field] ?? 0) ? 1 : -1
+      const aValue = a[field]
+      const bValue = b[field]
+
+      // Handle null/undefined values
+      if (!aValue && !bValue) return 0
+      if (!aValue) return 1
+      if (!bValue) return -1
+
+      // Sort by date for created_at
+      if (field === 'created_at') {
+        const aDate = new Date(aValue as string).getTime()
+        const bDate = new Date(bValue as string).getTime()
+        return direction === 'asc' 
+          ? aDate - bDate
+          : bDate - aDate
       }
-      return (a[field] ?? 0) < (b[field] ?? 0) ? 1 : -1
+
+      // Sort by string comparison for other fields
+      return direction === 'asc'
+        ? String(aValue).localeCompare(String(bValue))
+        : String(bValue).localeCompare(String(aValue))
     })
 
     setMeetings(sorted)
@@ -80,8 +99,16 @@ export function MeetingList({ initialMeetings }: MeetingListProps) {
     }
   }
 
-  const handleViewMeeting = (meetingId: string) => {
-    router.push(`/private/meetings/${meetingId}`)
+  const handleViewMeeting = (meeting: Meeting) => {
+    if (meeting.status === 'processing' || meeting.status === 'in-progress') {
+      toast({
+        title: "Meeting is still processing",
+        description: "Please wait until processing is complete to view details.",
+        duration: 3000
+      })
+      return
+    }
+    router.push(`/private/meetings/${meeting.id}`)
   }
 
   return (
@@ -102,36 +129,54 @@ export function MeetingList({ initialMeetings }: MeetingListProps) {
             </SelectContent>
           </Select>
         </div>
+
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('name')}>
+              <TableHead 
+                className="cursor-pointer" 
+                onClick={() => handleSort('name')}
+              >
                 Name {sortField === 'name' && (sortDirection === 'asc' ? '↑' : '↓')}
               </TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('created_at')}>
+              <TableHead 
+                className="cursor-pointer"
+                onClick={() => handleSort('created_at')}
+              >
                 Date {sortField === 'created_at' && (sortDirection === 'asc' ? '↑' : '↓')}
               </TableHead>
               <TableHead>Duration</TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort('status')}>
+              <TableHead 
+                className="cursor-pointer"
+                onClick={() => handleSort('status')}
+              >
                 Status {sortField === 'status' && (sortDirection === 'asc' ? '↑' : '↓')}
               </TableHead>
-              <TableHead>Progress</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>Fields</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {meetings.map((meeting) => (
               <TableRow 
                 key={meeting.id}
-                className={meeting.status === 'processing' ? 'bg-yellow-50' : ''}
+                className={cn(
+                  meeting.status === 'processing' ? 'bg-yellow-500/10 dark:bg-yellow-500/5' : '',
+                  'cursor-pointer hover:bg-muted/50 transition-colors'
+                )}
+                onClick={() => handleViewMeeting(meeting)}
               >
                 <TableCell className="font-medium">{meeting.name}</TableCell>
-                <TableCell>{format(new Date(meeting.created_at), 'MMM d, yyyy')}</TableCell>
                 <TableCell>
-                  {meeting.duration ? (
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      {Math.round(meeting.duration)} min
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    {format(new Date(meeting.created_at), 'MMM d, yyyy')}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {meeting.metrics?.duration ? (
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-muted-foreground" />
+                      {Math.round(meeting.metrics.duration / 60)} min
                     </div>
                   ) : '-'}
                 </TableCell>
@@ -144,46 +189,18 @@ export function MeetingList({ initialMeetings }: MeetingListProps) {
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {meeting.status === 'completed' && (
+                  {meeting.status === 'completed' && meeting.metrics && (
                     <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      {meeting.fields_analyzed} fields
+                      <FileText className="h-4 w-4 text-muted-foreground" />
+                      {meeting.metrics.fields_analyzed} fields
                     </div>
                   )}
                   {meeting.status === 'processing' && (
-                    <div className="flex items-center gap-2">
-                      <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-yellow-500 transition-all duration-500"
-                          style={{ width: '50%' }}
-                        />
-                      </div>
-                    </div>
+                    <Progress 
+                      value={meeting.metrics?.progress ?? 0} 
+                      className="w-[60px]" 
+                    />
                   )}
-                </TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => handleViewMeeting(meeting.id)}>
-                        View Meeting Details
-                      </DropdownMenuItem>
-                      {meeting.status === 'completed' && (
-                        <>
-                          <DropdownMenuItem onClick={() => handleViewMeeting(meeting.id)}>
-                            View Insights & Summary
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleViewMeeting(meeting.id)}>
-                            View Analytics
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))}

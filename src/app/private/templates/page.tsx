@@ -100,14 +100,14 @@ export default function TemplatesPage() {
       }));
 
       // Get auth URL with source parameter
-      const authUrlResponse = await fetch('/api/get-google-auth-url?source=templates');
+      const authUrlResponse = await fetch('/api/google/get-auth-url?source=templates');
       const { url } = await authUrlResponse.json();
       window.location.href = url;
       return;
     }
 
     // If authorized, validate spreadsheet
-    const validateResponse = await fetch('/api/validate-spreadsheet', {
+    const validateResponse = await fetch('/api/google/validate-spreadsheet', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ spreadsheetId: extractedSpreadsheetId }),

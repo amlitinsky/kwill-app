@@ -1,19 +1,13 @@
+import { base64Image } from "./base64Image";
 
 const RECALL_API_KEY = process.env.RECALL_API_KEY
 const RECALL_API_URL = 'https://us-west-2.recall.ai/api/v1/bot'
-const RECALL_API_URL_ANALYZE = 'https://us-west-2.recall.ai/api/v2beta/bot'
 const RECALL_API_ZOOM_OAUTH_CREDENTIALS = 'https://us-west-2.recall.ai/api/v2/zoom-oauth-credentials'
 interface CreateBotOptions {
   join_at?: string;
   automatic_leave?: number; // Duration in seconds before bot leaves
 }
 
-interface BotEvent {
-  status: {
-    code: string;
-    created_at: string;
-  };
-}
 
 export async function createBot(meetingUrl: string, options: CreateBotOptions = {}) {
   try {
@@ -27,14 +21,50 @@ export async function createBot(meetingUrl: string, options: CreateBotOptions = 
         meeting_url: meetingUrl,
         bot_name: "Kwill Scribe",
         ...(options.join_at && { join_at: options.join_at }),
-        ...(options.automatic_leave && { automatic_leave: options.automatic_leave }),
-        transcription_options: {
-          provider: 'assembly_ai',
+        ...(options.automatic_leave && { automatic_leave: { in_call_recording_timeout: options.automatic_leave } }),
+        recording_config: {
+          transcript: {
+            provider: {
+              meeting_captions: {}
+            }
+          },
         },
+        automatic_video_output: {
+          in_call_recording: {
+            kind: 'jpeg',
+            b64_data: base64Image
+          }
+        },
+        chat: {
+          on_bot_join : {
+            send_to: "everyone",
+            message: "Hello, I'm Kwill Scribe. Please turn on meeting recording and closed captions so I can transcribe this meeting."
+          }
+        },
+        metadata: {
+          environment: process.env.NODE_ENV,
+        }
       })
     });
 
+    //TODO add realtime_endpoints
+    // realtime_endpoints: [
+    //   {
+    //     type: 'webhook',
+    //     url: `${process.env.NEXT_PUBLIC_NGROK_URL}/api/webhook`,
+    //     events: ['transcript.data']
+    //   }
+    // ]
     if (!response.ok) {
+      // Get the error details from the response
+      const errorData = await response.json().catch(() => null);
+      
+      console.error('Bot creation failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData,
+        url: RECALL_API_URL
+      });
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
@@ -45,20 +75,29 @@ export async function createBot(meetingUrl: string, options: CreateBotOptions = 
   }
 }
 
-export async function getTranscript(botId: string) {
+export async function retrieveBotTranscript(botId: string) {
   try {
-    const response = await fetch(`${RECALL_API_URL}/${botId}/transcript`, {
+    // Use existing getBotStatus function instead of duplicating fetch logic
+    const botData = await getBotStatus(botId);
+    const transcript = botData.recordings?.[0]?.media_shortcuts?.transcript;
+    
+    if (!transcript?.data?.download_url) {
+      throw new Error('No transcript download URL available');
+    }
+
+    // Fetch the actual transcript
+    const transcriptResponse = await fetch(transcript.data.download_url, {
       method: 'GET',
       headers: {
         'Authorization': `Token ${RECALL_API_KEY}`,
       },
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+    if (!transcriptResponse.ok) {
+      throw new Error(`Failed to fetch transcript: ${transcriptResponse.status}`);
     }
 
-    return await response.json();
+    return await transcriptResponse.json();
   } catch (error) {
     console.error('Error fetching transcript:', error)
     throw error
@@ -85,30 +124,6 @@ export async function getBotStatus(botId: string) {
   }
 }
 
-export async function analyzeMedia(botId: string) {
-  try {
-    const response = await fetch(`${RECALL_API_URL_ANALYZE}/${botId}/analyze`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Token ${RECALL_API_KEY}`,
-        'accept': 'application/json',
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        assemblyai_async_transcription: {}
-      })
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error fetching bot analysis')
-    throw error
-  }
-}
 
 export async function createZoomOAuthCredential(code: string) {
   try {
@@ -124,7 +139,7 @@ export async function createZoomOAuthCredential(code: string) {
         oauth_app: process.env.RECALL_ZOOM_OAUTH_APP_ID,
         authorization_code: {
           code: code,
-          redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/zoom-oauth-callback`,
+          redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/callback/zoom`,
         },
       }),
     });
@@ -167,7 +182,7 @@ export function generateZoomAuthURL(): string {
   const baseUrl = "https://zoom.us/oauth/authorize"
   const queryParams = {
     "response_type": "code",
-    "redirect_uri": `${process.env.NEXT_PUBLIC_BASE_URL}/api/zoom-oauth-callback`,
+    "redirect_uri": `${process.env.NEXT_PUBLIC_BASE_URL}/api/callback/zoom`,
     "client_id": process.env.NEXT_PUBLIC_ZOOM_API_CLIENT_ID!,
   }
   const queryString = new URLSearchParams(queryParams).toString()
@@ -199,21 +214,17 @@ export async function deleteBot(botId: string) {
 export async function calculateMeetingDuration(botId: string): Promise<number> {
   try {
     const botStatus = await getBotStatus(botId);
-    const events = botStatus.events || [];
+    const recording = botStatus.recordings?.[0]; // Get first recording
     
-    // Find in_call_recording start and done events
-    const recordingStart = events.find((e: BotEvent) => e.status.code === 'in_call_recording');
-    const recordingEnd = events.find((e: BotEvent) => e.status.code === 'done');
-    
-    if (!recordingStart || !recordingEnd) {
+    if (!recording?.started_at || !recording?.completed_at) {
       return 0;
     }
     
-    const startTime = new Date(recordingStart.status.created_at);
-    const endTime = new Date(recordingEnd.status.created_at);
+    const startTime = new Date(recording.started_at);
+    const endTime = new Date(recording.completed_at);
     
-    // Return duration in hours
-    return (endTime.getTime() - startTime.getTime()) / (1000 * 60 * 60);
+    // Return duration in minutes
+    return (endTime.getTime() - startTime.getTime()) / (1000 * 60);
   } catch (error) {
     console.error('Error calculating meeting duration:', error);
     return 0;
