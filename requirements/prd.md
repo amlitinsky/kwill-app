@@ -23,7 +23,7 @@ Kwill is an AI-powered meeting assistant that automatically captures, analyzes, 
 - APIs:
   - Recall.ai: Zoom meeting bot and recording
   - AssemblyAI: Speech transcription
-  - Claude.ai: Transcript analysis and data extraction
+  - Deepseek: Transcript analysis and data extraction
   - Google Sheets: Data storage
   - Stripe: Payment processing
   - Calendly: Meeting scheduling integration
@@ -46,7 +46,7 @@ Kwill is an AI-powered meeting assistant that automatically captures, analyzes, 
 - Create new meeting queries
 - Zoom bot integration
 - Calendly integration for automated scheduling
-- Real-time meeting status tracking
+- Real-time meeting status tracking (supabase realtime websockets maybe)
 - Historical meeting access
 
 ### 3.3 Data Processing Pipeline
@@ -66,7 +66,7 @@ Kwill is an AI-powered meeting assistant that automatically captures, analyzes, 
 
 #### Authenticated Pages
 - Dashboard (meeting overview)
-- Create Query interface
+- Create Meeting interface
 - Settings management
 - Analytics dashboard
 - Billing management

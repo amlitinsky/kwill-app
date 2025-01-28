@@ -37,6 +37,9 @@ export async function POST(req: Request) {
     try {
       // Handle different webhook events
       switch (event.type) {
+        case 'checkout.session.completed':
+          await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
+          break;
         case 'invoice.paid':
           await handleInvoicePaid(event.data.object as Stripe.Invoice);
           break;
@@ -77,31 +80,17 @@ export async function POST(req: Request) {
 
 // Helper function to handle invoice payment success
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  const customerId = invoice.customer as string;
-  
-  // Get the subscription to access metadata
   const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
-  const hours = parseInt(subscription.metadata?.hours || '0');
-  const calendlyEnabled = subscription.metadata?.calendly_enabled === 'true';
   
-  const user = await getUserByStripeCustomerId(customerId);
-  if (!user) {
-    throw new Error(`No user found for Stripe customer: ${customerId}`);
-  }
-
-  // Update subscription info in Supabase
-  await supabaseAdmin
-    .from('subscriptions')
-    .upsert({
-      user_id: user.id,
-      stripe_customer_id: customerId,
-      stripe_subscription_id: subscription.id,
-      status: subscription.status,
-      current_period_start: new Date(subscription.current_period_start * 1000),
-      current_period_end: new Date(subscription.current_period_end * 1000),
-      hours: hours,
-      calendly_enabled: calendlyEnabled
-    });
+  await upsertSubscription({
+    customerId: invoice.customer as string,
+    subscriptionId: subscription.id,
+    status: subscription.status,
+    periodStart: new Date(subscription.current_period_start * 1000),
+    periodEnd: new Date(subscription.current_period_end * 1000),
+    hours: parseInt(subscription.metadata.hours || '0'),
+    calendlyEnabled: subscription.metadata.calendly_enabled === 'true'
+  });
 }
 
 // Helper function to handle invoice payment failure
@@ -139,4 +128,57 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       current_period_end: new Date(subscription.current_period_end * 1000)
     })
     .eq('user_id', user.id);
+}
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+  const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
+  
+  await upsertSubscription({
+    customerId: session.customer as string,
+    subscriptionId: subscription.id,
+    status: subscription.status,
+    periodStart: new Date(subscription.current_period_start * 1000),
+    periodEnd: new Date(subscription.current_period_end * 1000),
+    hours: parseInt(subscription.metadata.hours || '0'),
+    calendlyEnabled: subscription.metadata.calendly_enabled === 'true'
+  })
+}
+
+async function upsertSubscription({
+  customerId,
+  subscriptionId,
+  status,
+  periodStart,
+  periodEnd,
+  hours,
+  calendlyEnabled
+}: {
+  customerId: string
+  subscriptionId: string
+  status: string
+  periodStart: Date
+  periodEnd: Date
+  hours: number
+  calendlyEnabled: boolean
+}) {
+  const { error } = await supabaseAdmin
+    .from('subscriptions')
+    .upsert(
+      {
+        stripe_customer_id: customerId,
+        stripe_subscription_id: subscriptionId,
+        status,
+        current_period_start: periodStart,
+        current_period_end: periodEnd,
+        hours,
+        calendly_enabled: calendlyEnabled,
+        last_reset: new Date() // Only set on initial creation
+      },
+      {
+        onConflict: 'stripe_subscription_id',
+        ignoreDuplicates: false
+      }
+    )
+    .select()
+
+  if (error) throw error
 }
