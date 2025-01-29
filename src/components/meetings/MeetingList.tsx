@@ -58,6 +58,11 @@ export function MeetingList({ initialMeetings }: MeetingListProps) {
     }
   }, [meetings, toast])
 
+  // Add this useEffect at the top of the component
+  useEffect(() => {
+    setMeetings(initialMeetings);
+  }, [initialMeetings]); // This syncs client state with server props
+
   const handleSort = (field: keyof Meeting) => {
     const direction = field === sortField && sortDirection === 'asc' ? 'desc' : 'asc'
     setSortField(field)

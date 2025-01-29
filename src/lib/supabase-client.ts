@@ -119,3 +119,45 @@ export async function signInWithGoogle() {
 
   return data;
 }
+
+export async function deleteUser(userId: string) {
+  const { error: dbError } = await supabase
+    .from('users')
+    .delete()
+    .eq('id', userId);
+
+  if (dbError) throw dbError
+
+  // Delete user's meetings
+  const { error: meetingsError } = await supabase
+    .from('meetings')
+    .delete()
+    .eq('user_id', userId);
+
+  if (meetingsError) throw meetingsError;
+
+  const { error: subscriptionsError } = await supabase
+    .from('subscriptions')
+    .delete()
+    .eq('user_id', userId);
+
+  if (subscriptionsError) throw subscriptionsError;
+
+  const { error: templatesError } = await supabase
+    .from('templates')
+    .delete()
+    .eq('user_id', userId);
+
+  if (templatesError) throw templatesError;
+
+  const { error: oauthError } = await supabase
+    .from('google_oauth_credentials')
+    .delete()
+    .eq('user_id', userId);
+
+  if (oauthError) throw oauthError;
+
+  const { data, error } = await supabase.auth.admin.deleteUser(userId);
+  if (error) throw error;
+  return data;
+}

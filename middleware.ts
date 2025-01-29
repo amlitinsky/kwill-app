@@ -1,12 +1,12 @@
 import { type NextRequest } from 'next/server'
 import { updateSession } from '@/utils/supabase/middleware'
-import { createMiddlewareClient } from '@supabase/auth-helpers-nextjs'
+import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 
 
 export async function middleware(request: NextRequest) {
   const response = await updateSession(request)
-  const supabase = createMiddlewareClient({ req: request, res: response })
+  const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   const protectedPaths = ['/dashboard', '/meetings', '/settings', '/integrations']
