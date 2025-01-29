@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeProvider } from "@/components/ThemeProvider";
-import { NavbarWrapper } from "@/components/NavbarWrapper";
+import { NavbarWrapper } from "@/components/nav/NavbarWrapper";
 import AuthListener from "@/components/AuthListener";
 import { Toaster } from "@/components/ui/toaster";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
@@ -28,7 +28,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const supabase = await createServerSupabaseClient()
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser()
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -38,14 +38,14 @@ export default async function RootLayout({
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <div className="min-h-screen flex flex-col">
-            <NavbarWrapper session={!!session}/>
+            <NavbarWrapper user={user}/>
             <main className="flex-grow">
               {children}
               <Toaster />
             </main>
           </div>
         </ThemeProvider>
-        <AuthListener initialSession={!!session} />
+        <AuthListener initialUser={user} />
       </body>
     </html>
   );

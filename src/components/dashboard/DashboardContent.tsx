@@ -217,7 +217,7 @@ export function DashboardContent({ initialMeetings }: DashboardContentProps) {
                 <CardDescription>Your most recent meetings</CardDescription>
               </div>
               <Button asChild variant="outline" size="sm" className="border-zinc-800 bg-zinc-950">
-                <Link href="/private/meetings">
+                <Link href="/meetings">
                   View All Meetings
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
@@ -258,7 +258,7 @@ export function DashboardContent({ initialMeetings }: DashboardContentProps) {
               </div>
               <div className="space-x-4">
                 <Button variant="outline" size="sm" className="border-zinc-800 bg-zinc-950" asChild>
-                  <Link href="/private/integrations">
+                  <Link href="/integrations">
                     Manage Integrations
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>

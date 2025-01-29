@@ -21,9 +21,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient()
-  const { data: { user }, error } = await supabase.auth.getUser()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-  if (error || !user) {
+  if (authError || !user) {
+    console.error('Auth error:', authError)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -31,8 +32,6 @@ export async function POST(request: Request) {
     // Get user details to check meeting hours
     const userDetails = await getUserById(user.id);
 
-    // TODO: Impleement subscription logic
-    
     if (!userDetails || userDetails.meeting_hours_remaining <= 0) {
       return NextResponse.json({ 
         error: 'Insufficient meeting hours. Please purchase more hours to continue.' 
@@ -46,7 +45,7 @@ export async function POST(request: Request) {
       customInstructions
     } = await request.json();
 
-    const botId = await createBot(zoomLink, { automatic_leave: userDetails.meeting_hours_remaining * 3600})
+    const botMeetingData = await createBot(zoomLink, { automatic_leave: userDetails.meeting_hours_remaining * 3600})
 
     // Create meeting with recording status
     const newMeeting = await createMeeting(
@@ -55,13 +54,17 @@ export async function POST(request: Request) {
       spreadsheetId,
       customInstructions,
       zoomLink,
-      botId,
+      botMeetingData.id,
       { status: 'created' }
     );
     
     return NextResponse.json(newMeeting);
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    console.error('Error in POST /api/meetings:', error)
+    return NextResponse.json({ 
+      error: `Failed to create meeting: ${(error as Error).message}`,
+      stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
+    }, { status: 500 });
   }
 }
 

@@ -552,6 +552,8 @@ export async function createMeeting(userId: string, name: string, spreadsheetId:
       custom_instructions: customInstructions,
       zoom_link: zoomLink,
       bot_id: botId,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
       ...(options.status && { status: options.status }),
       ...(options.eventUri && { event_uri: options.eventUri })
     })

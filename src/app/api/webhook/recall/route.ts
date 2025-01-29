@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { Webhook } from 'svix'
 import { calculateMeetingDuration, retrieveBotTranscript } from '@/lib/recall'
 import { getMeetingDetails, getValidGoogleToken, updateMeetingMetrics,updateMeetingAIInsights, updateMeetingProcessedData, updateMeetingStatus, updateMeetingTranscript, supabaseAdmin } from '@/lib/supabase-server'
-import { analyzeTranscript, generateMeetingSummary, extractKeyPoints, extractActionItems, generateTimeStampedHighlights, analyzeTopicDistribution, calculateSuccessRate } from '@/lib/deepseek'
+import { analyzeTranscript, generateMeetingSummary, extractKeyPoints, extractActionItems, generateTimeStampedHighlights, analyzeTopicDistribution, calculateSuccessRate } from '@/lib/meeting-ai-service'
 import { mapHeadersAndAppendData } from '@/lib/google-auth'
 import { ProcessedTranscriptSegment, processRawTranscript } from '@/lib/transcript-utils'
 import { 

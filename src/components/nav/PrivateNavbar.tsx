@@ -10,33 +10,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-// import Image from 'next/image'
 import { signOut } from '@/lib/supabase-client'
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase-client'
-import { Logo } from './Logo'
+import { Logo } from '../Logo'
+import { User } from '@supabase/supabase-js'
 
-interface UserMetadata {
-  avatar_url?: string
-  full_name?: string
-  email?: string
+interface PrivateNavbarProps {
+  children: React.ReactNode
+  user: User | null
 }
 
-export function PrivateNavbar({ children }: { children: React.ReactNode }) {
+export function PrivateNavbar({ children, user }: PrivateNavbarProps) {
   const router = useRouter()
-  const [userMetadata, setUserMetadata] = useState<UserMetadata | null>(null)
-
-  useEffect(() => {
-    async function loadUserMetadata() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user?.user_metadata) {
-        setUserMetadata(user.user_metadata)
-      }
-    }
-    loadUserMetadata()
-  }, [])
+  const pathname = usePathname()
+  const userMetadata = user?.user_metadata || null
+  const tabs = [
+    { name: 'Meetings', href: '/meetings' },
+    { name: 'Templates', href: '/templates' },
+    { name: 'Integrations', href: '/integrations' },
+  ]
 
   const handleSignOut = async () => {
     try {
@@ -52,20 +45,26 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
     <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-6 z-50">
       <nav className="flex flex-row items-center gap-6">
         <Link
-          href="/private/dashboard"
+          href="/dashboard"
           className="flex items-center gap-2"
         >
-          {/* <div className="relative w-10 h-10">
-            <Image 
-              src="/images/logos/kwill-no-bg.png" 
-              alt="Kwill Logo" 
-              fill
-              style={{ objectFit: 'contain' }}
-            /> 
-          </div> */}
           <Logo />
           <span className="text-xl font-medium tracking-tight">Kwill</span>
         </Link>
+        {/* Navigation Tabs */}
+        <div className="flex items-center gap-4 ml-6">
+          {tabs.map((tab) => (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                pathname === tab.href ? 'text-foreground' : 'text-muted-foreground'
+              }`}
+            >
+              {tab.name}
+            </Link>
+          ))}
+        </div>
       </nav>
 
       <div className="flex items-center justify-end gap-4 ml-auto">
@@ -97,10 +96,10 @@ export function PrivateNavbar({ children }: { children: React.ReactNode }) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-              <Link href="/private/settings">Settings</Link>
+              <Link href="/settings">Settings</Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href="/private/support">Support</Link>
+              <Link href="/support">Support</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 

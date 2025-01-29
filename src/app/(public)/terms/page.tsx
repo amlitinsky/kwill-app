@@ -15,7 +15,7 @@ export default function TermsOfService() {
         <p>Users are responsible for maintaining the confidentiality of their account information and for all activities that occur under their account. Users must ensure they have the necessary rights and permissions to share and analyze meeting content.</p>
 
         <h2>4. Privacy and Data Handling</h2>
-        <p>Your use of Kwill&apos;s services is governed by our <Link href="/public/privacy" className="text-blue-600 hover:underline">Privacy Policy</Link>. We handle meeting transcripts and processed data with utmost care. Users retain ownership of their data, and we only use it to provide and improve our services.</p>
+        <p>Your use of Kwill&apos;s services is governed by our <Link href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</Link>. We handle meeting transcripts and processed data with utmost care. Users retain ownership of their data, and we only use it to provide and improve our services.</p>
 
         <h2>5. Third-Party Services</h2>
         <p>Our service integrates with third-party platforms such as Zoom and Google Sheets. Users are responsible for complying with the terms of service of these platforms when using them in conjunction with Kwill.</p>

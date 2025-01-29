@@ -1,12 +1,12 @@
 import { Suspense } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { StripeManager } from '@/components/StripeManager'
+import { StripeManager } from '@/components/stripe/StripeManager'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { getSubscription } from '@/lib/supabase-server'
 import { getPlans } from '@/lib/stripe'
-import { ClientSettingsWrapper } from '@/app/private/settings/ClientSettingsWrapper'
+import { ClientSettingsWrapper } from './ClientSettingsWrapper'
 import { TooltipProvider } from "@/components/ui/tooltip"
 
 export default async function SettingsPage() {

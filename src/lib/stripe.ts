@@ -8,7 +8,7 @@ export async function createCheckoutSession(
   priceId: string,
   customerId: string,
   mode: 'payment' | 'setup',
-  returnUrl: string = `${process.env.NEXT_PUBLIC_BASE_URL}/private/settings`
+  returnUrl: string = `${process.env.NEXT_PUBLIC_BASE_URL}/settings`
 ) {
   try {
     // Get the price details to access metadata
@@ -144,7 +144,7 @@ export async function getSubscriptionHistory(customerId: string) {
 export async function createCustomerPortalSession(stripeCustomerId: string) {
   const session = await stripe.billingPortal.sessions.create({
     customer: stripeCustomerId,
-    return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/private/settings`,
+    return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/settings`,
   });
 
   return session;

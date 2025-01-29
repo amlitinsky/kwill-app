@@ -1,14 +1,18 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server'
-import { IntegrationsContent } from '@/components/IntegrationsContent'
+import { IntegrationsContent } from '@/components/integrations/IntegrationsContent'
+import { getGoogleAuthUrl } from '@/lib/google-auth'
+
 
 export default async function IntegrationsPage() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
 
+  const googleAuthUrl = getGoogleAuthUrl('integrations')
+
   // Fetch all OAuth credentials
-  const { data: zoomCreds } = await supabase
-    .from('zoom_oauth_credentials')
+  const { data: recallOauthAppCreds } = await supabase
+    .from('recall_oauth_app_credentials')
     .select('*')
     .eq('user_id', user.id)
     .single()
@@ -34,10 +38,11 @@ export default async function IntegrationsPage() {
   return (
     <div className="container py-10">
       <IntegrationsContent 
-        zoomCredentials={zoomCreds}
+        recallOauthAppCredentials={recallOauthAppCreds}
         calendlyCredentials={calendlyCreds}
         googleCredentials={googleCreds}
         calendlyConfigs={calendlyConfigs}
+        googleAuthUrl={googleAuthUrl}
       />
     </div>
   )

@@ -1,19 +1,25 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { ConnectButton } from '@/components/ConnectButton'
-import { CalendlyConfigs } from "@/components/CalendlyConfigs"
+import { Card, CardDescription, CardTitle } from "@/components/ui/card"
+import { ConnectButton } from '@/components/integrations/ConnectButton'
+import { CalendlyConfigs } from "@/components/integrations/CalendlyConfigs"
 import { useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { generateZoomAuthURL } from '@/lib/recall'
 import { getCalendlyAuthUrl } from '@/lib/calendly'
-import { getGoogleAuthUrl } from "@/lib/google-auth"
 
 interface OAuthCredentials {
   access_token: string;
   refresh_token: string;
   expires_at: number;
+}
+
+interface RecallOauthAppCredentials {
+  recall_id: string;
+  recall_oauth_app: string;
+  recall_user_id: string;
+  created_at: string;
 }
 
 interface CalendlyConfig {
@@ -26,22 +32,24 @@ interface CalendlyConfig {
 }
 
 interface IntegrationsContentProps {
-  zoomCredentials: OAuthCredentials | null;
+  recallOauthAppCredentials: RecallOauthAppCredentials | null;
   calendlyCredentials: OAuthCredentials | null;
   googleCredentials: OAuthCredentials | null;
   calendlyConfigs: CalendlyConfig | null;
+  googleAuthUrl: string;
 }
 
 export function IntegrationsContent({
-  zoomCredentials,
+  recallOauthAppCredentials,
   calendlyCredentials,
   googleCredentials,
-  calendlyConfigs
+  calendlyConfigs,
+  googleAuthUrl
 }: IntegrationsContentProps) {
   const searchParams = useSearchParams()
   const { toast } = useToast()
   const [isGoogleConnected, setIsGoogleConnected] = useState(!!googleCredentials)
-  const [isZoomConnected, setIsZoomConnected] = useState(!!zoomCredentials)
+  const [isZoomConnected, setIsZoomConnected] = useState(!!recallOauthAppCredentials)
   const [isCalendlyConnected, setIsCalendlyConnected] = useState(!!calendlyCredentials)
 
   useEffect(() => {
@@ -79,8 +87,7 @@ export function IntegrationsContent({
 
   const handleGoogleConnect = () => {
     if (!isGoogleConnected) {
-      const authUrl = getGoogleAuthUrl()
-      window.location.href = authUrl
+      window.location.href = googleAuthUrl
     }
   }
 
@@ -99,58 +106,54 @@ export function IntegrationsContent({
   }
 
   return (
-    <>
+    <div className="container mx-auto px-8 py-6">
       <h1 className="text-3xl font-bold mb-6">Integrations</h1>
       <div className="space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Google</CardTitle>
-            <CardDescription>Connect your Google account to enable spreadsheet integration</CardDescription>
-          </CardHeader>
-          <CardContent>
+          <div className="flex justify-between items-center p-6">
+            <div>
+              <CardTitle>Google</CardTitle>
+              <CardDescription>Connect your Google account to enable spreadsheet integration</CardDescription>
+            </div>
             <ConnectButton 
               provider="Google"
               isConnected={isGoogleConnected}
               onConnect={handleGoogleConnect}
             />
-          </CardContent>
+          </div>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Zoom</CardTitle>
-            <CardDescription>Connect your Zoom account to enable meeting recordings</CardDescription>
-          </CardHeader>
-          <CardContent>
+          <div className="flex justify-between items-center p-6">
+            <div>
+              <CardTitle>Zoom</CardTitle>
+              <CardDescription>Connect your Zoom account to enable meeting recordings</CardDescription>
+            </div>
             <ConnectButton 
               provider="Zoom"
               isConnected={isZoomConnected}
               onConnect={handleZoomConnect}
             />
-          </CardContent>
+          </div>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Calendly</CardTitle>
-            <CardDescription>Connect your Calendly account to automate meeting scheduling</CardDescription>
-          </CardHeader>
-          <CardContent>
+          <div className="flex justify-between items-center p-6">
+            <div>
+              <CardTitle>Calendly</CardTitle>
+              <CardDescription>Connect your Calendly account to automate meeting scheduling</CardDescription>
+            </div>
             <ConnectButton 
               provider="Calendly"
               isConnected={isCalendlyConnected}
               onConnect={handleCalendlyConnect}
             />
-            {calendlyCredentials && (
-              <div className="mt-6">
-                <CalendlyConfigs 
-                  initialConfigs={calendlyConfigs}
-                />
-              </div>
-            )}
-          </CardContent>
+          </div>
+          {isCalendlyConnected && calendlyConfigs && (
+            <CalendlyConfigs initialConfigs={calendlyConfigs} />
+          )}
         </Card>
       </div>
-    </>
+    </div>
   )
 } 

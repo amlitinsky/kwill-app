@@ -5,7 +5,7 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);
   const code = requestUrl.searchParams.get('code');
-  const source = requestUrl.searchParams.get('state');
+  const state = requestUrl.searchParams.get('state');
 
   if (!code) {
     return NextResponse.json({ error: 'Invalid OAuth code' }, { status: 400 });
@@ -36,12 +36,8 @@ export async function GET(request: Request) {
 
     if (error) throw error;
 
+    return NextResponse.redirect(`${requestUrl.origin}/${state}`);
 
-    if (source == 'templates'){
-      return NextResponse.redirect(`${requestUrl.origin}/private/templates?google_connected=true`);
-    } else {
-      return NextResponse.redirect(`${requestUrl.origin}/private/integrations?google_connected=true`);
-    }
   } catch (error) {
     console.error('Error in Google OAuth callback:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

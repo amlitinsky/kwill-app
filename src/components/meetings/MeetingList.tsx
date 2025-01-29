@@ -108,7 +108,7 @@ export function MeetingList({ initialMeetings }: MeetingListProps) {
       })
       return
     }
-    router.push(`/private/meetings/${meeting.id}`)
+    router.push(`/meetings/${meeting.id}`)
   }
 
   return (

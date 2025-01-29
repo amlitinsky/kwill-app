@@ -1,3 +1,4 @@
+
 import Link from 'next/link'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -16,7 +17,7 @@ export default function LandingPage() {
             Kwill transforms your Zoom meetings into structured data, saving you time and enhancing your insights.
           </p>
           <Button size="lg" asChild>
-            <Link href="/public/login">Try Kwill Now</Link>
+            <Link href="/signin">Try Kwill Now</Link>
           </Button>
         </section>
 
@@ -75,7 +76,7 @@ export default function LandingPage() {
             Join thousands of professionals who are saving time and gaining deeper insights with Kwill.
           </p>
           <Button size="lg" variant="secondary" asChild>
-            <Link href="/public/login">Try Kwill Now</Link>
+            <Link href="/signin">Try Kwill Now</Link>
           </Button>
         </section>
       </main>
@@ -89,10 +90,10 @@ export default function LandingPage() {
             <div>
               <h3 className="font-semibold mb-3">Product</h3>
               <div className="space-y-2">
-                <Link href="/public/pricing" className="block text-sm text-muted-foreground hover:text-foreground">
+                <Link href="/pricing" className="block text-sm text-muted-foreground hover:text-foreground">
                   Pricing
                 </Link>
-                <Link href="/public/documentation" className="block text-sm text-muted-foreground hover:text-foreground">
+                <Link href="/docs" className="block text-sm text-muted-foreground hover:text-foreground">
                   Documentation
                 </Link>
               </div>
@@ -102,7 +103,7 @@ export default function LandingPage() {
             <div>
               <h3 className="font-semibold mb-3">Support</h3>
               <div className="space-y-2">
-                <Link href="/public/support" className="block text-sm text-muted-foreground hover:text-foreground">
+                <Link href="/support" className="block text-sm text-muted-foreground hover:text-foreground">
                   Help Center
                 </Link>
                 <a href="mailto:support@kwill.app" className="block text-sm text-muted-foreground hover:text-foreground">
@@ -115,10 +116,10 @@ export default function LandingPage() {
             <div>
               <h3 className="font-semibold mb-3">Legal</h3>
               <div className="space-y-2">
-                <Link href="/public/terms" className="block text-sm text-muted-foreground hover:text-foreground">
+                <Link href="/terms" className="block text-sm text-muted-foreground hover:text-foreground">
                   Terms of Service
                 </Link>
-                <Link href="/public/privacy" className="block text-sm text-muted-foreground hover:text-foreground">
+                <Link href="/privacy" className="block text-sm text-muted-foreground hover:text-foreground">
                   Privacy Policy
                 </Link>
               </div>

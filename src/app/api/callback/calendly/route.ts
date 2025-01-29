@@ -60,7 +60,7 @@ export async function GET(request: Request) {
 
 
 
-    return NextResponse.redirect(`${requestUrl.origin}/private/integrations?calendly_connected=true`);
+    return NextResponse.redirect(`${requestUrl.origin}/integrations?calendly_connected=true`);
 
   } catch (error) {
     console.error('Error in Calendly OAuth callback:', error);

@@ -65,7 +65,7 @@ export default function PrivacyPolicy() {
         <p>If you have any questions about this privacy policy, please contact us at privacy@kwill.app.</p>
 
         <h2>9. Terms of Service</h2>
-        <p>Please also read our <Link href="/public/terms" className="text-blue-600 hover:underline">Terms of Service</Link>, which outlines the terms governing the use of our service.</p>
+        <p>Please also read our <Link href="/terms" className="text-blue-600 hover:underline">Terms of Service</Link>, which outlines the terms governing the use of our service.</p>
       </div>
     </div>
   )

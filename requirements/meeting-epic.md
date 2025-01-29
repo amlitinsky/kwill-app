@@ -11,14 +11,14 @@ Feature Epic Specification v1.0
 
 ### Current Implementation Files
 ```
-~/src/app/private/meetings/page.tsx        # Main meetings list view
+~/src/app/meetings/page.tsx        # Main meetings list view
 ~/src/app/api/webhook/route.ts             # Webhook handler for meeting updates
 ~/src/lib/supabase-server.ts               # Database interactions
 ```
 
 ### Additional Required Files
 ```
-~/src/app/private/meetings/[id]/page.tsx   # Individual meeting view
+~/src/app/meetings/[id]/page.tsx   # Individual meeting view
 ~/src/components/meetings/                 # Meeting-related components
   |- MeetingList.tsx                      # List component
   |- MeetingCard.tsx                      # Individual meeting row/card

@@ -10,7 +10,7 @@ export default function NotFound() {
           The meeting you&apos;re looking for doesn&apos;t exist or you don&apos;t have access to it.
         </p>
         <Button asChild>
-          <Link href="/private/meetings">Back to Meetings</Link>
+          <Link href="/meetings">Back to Meetings</Link>
         </Button>
       </div>
     </div>

@@ -3,34 +3,30 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase-client';
+import { User } from '@supabase/supabase-js'
 
 interface AuthListenerProps {
-  initialSession: boolean;
+  initialUser: User | null;
 }
 
-export default function AuthListener({ initialSession }: AuthListenerProps) {
-  const [session, setSession] = useState(initialSession);
+export default function AuthListener({ initialUser }: AuthListenerProps) {
+  const [, setUser] = useState(initialUser);
   const router = useRouter();
   const supabase = createClient()
 
   useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
-        setSession(!!session);
-        router.refresh();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async () => {
+      // Verify user with getUser instead of using session directly
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      
+      if (!!initialUser !== !!user) {
+        router.refresh()
       }
-    });
+    })
 
-    return () => subscription.unsubscribe();
-  }, [supabase, router]);
+    return () => subscription?.unsubscribe()
+  }, [supabase, router, initialUser])
 
-  useEffect(() => {
-    if (session !== initialSession) {
-      router.refresh();
-    }
-  }, [session, initialSession, router]);
-
-  return null;
+  return null
 }

@@ -1,6 +1,10 @@
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 
+if (typeof window !== 'undefined') {
+  throw new Error('This module can only be used on the server')
+}
+
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_API_CLIENT_ID,
   process.env.GOOGLE_API_CLIENT_SECRET,
@@ -8,14 +12,18 @@ const oauth2Client = new OAuth2Client(
 );
 
 // Generates the Google OAuth URL for user authorization
-export function getGoogleAuthUrl(source?: string) {
+
+export function getGoogleAuthUrl(state: string) {
   return oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: ['https://www.googleapis.com/auth/spreadsheets'],
     prompt: 'consent',
-    state: source
+    state: state
   });
 }
+
+
+// TODO maybe include state validation in the future
 
 // Exchanges the authorization code for tokens
 export async function getGoogleTokens(code: string) {

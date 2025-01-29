@@ -47,7 +47,7 @@ export function ClientSettingsWrapper({ children, defaultTab }: ClientSettingsWr
       }
 
       // Clean up URL
-      router.replace('/private/settings');
+      router.replace('/settings');
     }
     
     // Handle canceled checkout
@@ -65,7 +65,7 @@ export function ClientSettingsWrapper({ children, defaultTab }: ClientSettingsWr
         duration: 5000,
       });
 
-      router.replace('/private/settings');
+      router.replace('/settings');
     }
   }, [searchParams, router, toast]);
 

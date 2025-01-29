@@ -1,14 +1,14 @@
-import LandingPage from "./public/landing/page";
-import PrivateDashboard from "./private/dashboard/page";
+import LandingPage from "@/components/LandingPage";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { redirect } from "next/navigation";
 
 export default async function Home() {
   const supabase = await createServerSupabaseClient();
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  return (
-    <>
-      {session ? <PrivateDashboard /> : <LandingPage />}
-    </>
-  );
+  if (user) {
+    redirect("/dashboard");
+  }
+
+  return <LandingPage />;
 }
