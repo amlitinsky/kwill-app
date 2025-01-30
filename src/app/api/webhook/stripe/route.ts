@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe';
 import { 
-  getUserByStripeCustomerId,
+  getUserSubscriptionByStripeCustomerId,
   supabaseAdmin,
 } from '@/lib/supabase-server';
 import Stripe from 'stripe';
@@ -9,7 +9,7 @@ import { isStripeWebhookProcessed, markStripeWebhookProcessed } from '@/lib/redi
 
 export async function POST(req: Request) {
   const payload = await req.text();
-  const sig = req.headers.get('stripe-signature');
+  const sig = req.headers.get('Stripe-Signature');
   console.log("received a stripe webhook event")
   
   if (!sig) {
@@ -38,18 +38,12 @@ export async function POST(req: Request) {
       // Handle different webhook events
       switch (event.type) {
         case 'checkout.session.completed':
-          await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
-          break;
         case 'invoice.paid':
-          await handleInvoicePaid(event.data.object as Stripe.Invoice);
-          break;
-
         case 'invoice.payment_failed':
-          await handleInvoicePaymentFailed(event.data.object as Stripe.Invoice);
-          break;
-
         case 'customer.subscription.deleted':
-          await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        case 'customer.subscription.updated':
+          const customerId = event.data.object.customer as string;
+          await syncStripeSubscription(customerId, event.type);
           break;
 
         // Add more cases as needed
@@ -78,107 +72,75 @@ export async function POST(req: Request) {
   }
 }
 
-// Helper function to handle invoice payment success
-async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  const subscription = await stripe.subscriptions.retrieve(invoice.subscription as string);
-  
-  await upsertSubscription({
-    customerId: invoice.customer as string,
-    subscriptionId: subscription.id,
-    status: subscription.status,
-    periodStart: new Date(subscription.current_period_start * 1000),
-    periodEnd: new Date(subscription.current_period_end * 1000),
-    hours: parseInt(subscription.metadata.hours || '0'),
-    calendlyEnabled: subscription.metadata.calendly_enabled === 'true'
-  });
-}
 
-// Helper function to handle invoice payment failure
-async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
-  const customerId = invoice.customer as string;
-  
-  const user = await getUserByStripeCustomerId(customerId);
-  if (!user) {
-    throw new Error(`No user found for Stripe customer: ${customerId}`);
-  }
+export async function syncStripeSubscription(customerId: string, eventType: Stripe.Event['type']) {
+  try {
+    // Get latest subscription from Stripe
+    const subscriptions = await stripe.subscriptions.list({
+      customer: customerId,
+      limit: 1,
+      status: 'all',
+      expand: ['data.default_payment_method'],
+    });
 
-  // Update subscription status to past_due
-  await supabaseAdmin
-    .from('subscriptions')
-    .update({ 
-      status: 'past_due',
-    })
-    .eq('user_id', user.id);
-}
+    const subscription = subscriptions.data[0];
+    
+    let hours: number | undefined;
+    let calendlyEnabled: boolean | undefined;
 
-// Helper function to handle subscription deletion
-async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-  const customerId = subscription.customer as string;
-  
-  const user = await getUserByStripeCustomerId(customerId);
-  if (!user) {
-    throw new Error(`No user found for Stripe customer: ${customerId}`);
-  }
+    if (eventType === 'invoice.paid' || eventType === 'checkout.session.completed') {
+      const price = subscription.items.data[0].price;
+      const product = await stripe.products.retrieve(
+        typeof price.product === 'string' ? price.product : price.product.id
+      );
 
-  // Update subscription status to canceled
-  await supabaseAdmin
-    .from('subscriptions')
-    .update({ 
-      status: 'canceled',
-      current_period_end: new Date(subscription.current_period_end * 1000)
-    })
-    .eq('user_id', user.id);
-}
-async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-  const subscription = await stripe.subscriptions.retrieve(session.subscription as string)
-  
-  await upsertSubscription({
-    customerId: session.customer as string,
-    subscriptionId: subscription.id,
-    status: subscription.status,
-    periodStart: new Date(subscription.current_period_start * 1000),
-    periodEnd: new Date(subscription.current_period_end * 1000),
-    hours: parseInt(subscription.metadata.hours || '0'),
-    calendlyEnabled: subscription.metadata.calendly_enabled === 'true'
-  })
-}
+      hours = product.metadata.hours 
+        ? parseInt(product.metadata.hours)
+        : 0;
 
-async function upsertSubscription({
-  customerId,
-  subscriptionId,
-  status,
-  periodStart,
-  periodEnd,
-  hours,
-  calendlyEnabled
-}: {
-  customerId: string
-  subscriptionId: string
-  status: string
-  periodStart: Date
-  periodEnd: Date
-  hours: number
-  calendlyEnabled: boolean
-}) {
-  const { error } = await supabaseAdmin
-    .from('subscriptions')
-    .upsert(
-      {
+      calendlyEnabled = product.metadata.calendly_enabled === 'true';
+    }
+    // Get associated user
+    const userSubscription = await getUserSubscriptionByStripeCustomerId(customerId);
+    if (!userSubscription) throw new Error('User not found');
+
+    // Base update payload
+    const updatePayload = {
+      status: subscription?.status || 'none',
+      current_period_end: new Date(subscription.current_period_end * 1000),
+      current_period_start: new Date(subscription.current_period_start * 1000),
+      cancel_at_period_end: subscription?.cancel_at_period_end || false,
+      price_id: subscription?.items.data[0].price.id || null,
+      payment_method: subscription?.default_payment_method
+        ? {
+            brand: (subscription.default_payment_method as Stripe.PaymentMethod).card?.brand,
+            last4: (subscription.default_payment_method as Stripe.PaymentMethod).card?.last4,
+          }
+        : null,
+      ...(hours !== undefined && { hours: hours }),
+      ...(calendlyEnabled !== undefined && { calendly_enabled: calendlyEnabled })
+    };
+
+    // Upsert to Supabase
+    const { data, error } = await supabaseAdmin
+      .from('subscriptions')
+      .upsert({
+        user_id: userSubscription.user_id,
         stripe_customer_id: customerId,
-        stripe_subscription_id: subscriptionId,
-        status,
-        current_period_start: periodStart,
-        current_period_end: periodEnd,
-        hours,
-        calendly_enabled: calendlyEnabled,
-        last_reset: new Date() // Only set on initial creation
-      },
-      {
-        onConflict: 'stripe_subscription_id',
+        stripe_subscription_id: subscription?.id,
+        ...updatePayload
+      }, {
+        onConflict: 'stripe_customer_id',
         ignoreDuplicates: false
-      }
-    )
-    .select()
+      })
+      .select()
+      .single();
 
-  if (error) throw error
+    if (error) throw error;
+    return data;
+
+  } catch (error) {
+    console.error('Failed to sync Stripe data:', error);
+    throw new Error('Subscription sync failed');
+  }
 }

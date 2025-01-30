@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { Webhook } from 'svix'
 import { calculateMeetingDuration, retrieveBotTranscript } from '@/lib/recall'
 import { getMeetingDetails, getValidGoogleToken, updateMeetingMetrics,updateMeetingAIInsights, updateMeetingProcessedData, updateMeetingStatus, updateMeetingTranscript, supabaseAdmin } from '@/lib/supabase-server'
-import { analyzeTranscript, generateMeetingSummary, extractKeyPoints, extractActionItems, generateTimeStampedHighlights, analyzeTopicDistribution, calculateSuccessRate } from '@/lib/meeting-ai-service'
+import { analyzeTranscript, generateMeetingSummary, extractKeyPoints, extractActionItems, generateTimeStampedHighlights, analyzeTopicDistribution, calculateSuccessRate } from '@/lib/ai'
 import { mapHeadersAndAppendData } from '@/lib/google-auth'
 import { ProcessedTranscriptSegment, processRawTranscript } from '@/lib/transcript-utils'
 import { 
@@ -201,6 +201,9 @@ async function processCompletedMeeting(botId: string) {
             meetingDetails.custom_instructions
           )
 
+          // update supabase with processed data
+          await updateMeetingProcessedData(botId, processed_data)
+
           // Calculate success rate after processing data
           const success_rate = await calculateSuccessRate(processed_data, meetingDetails.column_headers)
 
@@ -224,8 +227,6 @@ async function processCompletedMeeting(botId: string) {
           }
           await updateMeetingAIInsights(botId, aiInsights)
 
-          // update supabase with processed data
-          await updateMeetingProcessedData(botId, processed_data)
 
           // get valid access_token
           const access_token = await getValidGoogleToken(meetingDetails.user_id)

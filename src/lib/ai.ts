@@ -1,8 +1,10 @@
 import { deepseek } from '@ai-sdk/deepseek';
+import { anthropic } from '@ai-sdk/anthropic';
 import { generateText } from 'ai';
 import { ProcessedTranscriptSegment } from './transcript-utils';
 
-const model = deepseek('deepseek-chat');
+// const model = deepseek('deepseek-chat');
+const model = anthropic('claude-3-5-sonnet-20241022');
 
 export async function analyzeTranscript(
   transcript: ProcessedTranscriptSegment[], 
@@ -70,6 +72,8 @@ export async function generateMeetingSummary(
   const prompt = `
   You are an expert meeting analyst specializing in executive summaries. Your task is to provide a clear, structured summary of this meeting transcript.
 
+  If the transcript does not contain business-related content, respond with a brief summary of the meeting following the guidelines below NOT the Required Summary Components.
+
   Required Summary Components:
   1. Meeting Overview (1-2 sentences)
   2. Key Discussion Points (3-5 bullet points)
@@ -100,6 +104,7 @@ export async function generateMeetingSummary(
     temperature: 0.3,
     maxTokens: 1000
   });
+  console.log("summary", text)
 
   return text;
 }
@@ -110,6 +115,8 @@ export async function extractKeyPoints(
 ): Promise<string[]> {
   const prompt = `
   You are an expert meeting analyst specializing in identifying critical information. Extract the most important points from this meeting transcript.
+
+  If the transcript does not contain business-related content or doesn't contain any relevant key points, respond with an empty array or generic key points sticking to the format below.
 
   Requirements:
   - Return ONLY a JSON array of strings
@@ -146,7 +153,7 @@ export async function extractKeyPoints(
     temperature: 0.2,
     maxTokens: 1000
   });
-
+  console.log("key points", text)
   return JSON.parse(text);
 }
 
@@ -156,6 +163,21 @@ export async function extractActionItems(
 ): Promise<string[]> {
   const prompt = `
   You are an expert project manager specializing in action item extraction. Identify all concrete tasks and commitments from this meeting transcript.
+
+  Required Output Format:
+  ONLY return a JSON array of strings. Example:
+  [
+    "John to submit report by 2024-02-15",
+    "Team to review proposal by EOD"
+  ]
+
+  If no action items exist, return: ["No action items found"]
+
+  Strict Rules:
+  - No nested objects
+  - No additional properties
+  - No enclosing object
+  - Array must be top-level
 
   Requirements:
   - Return ONLY a JSON array of action items
@@ -190,6 +212,7 @@ export async function extractActionItems(
     temperature: 0.1,
     maxTokens: 1000
   });
+  console.log("action items", text)
 
   return JSON.parse(text);
 }
@@ -202,13 +225,19 @@ export async function generateTimeStampedHighlights(
   You are an expert meeting analyst specializing in identifying pivotal moments in discussions. Create a timeline of key moments from this transcript.
 
   Output Format:
-  Return a JSON array of objects with exact structure:
+  Return ONLY a JSON array of objects with exact structure:
   [
     {
       "timestamp": number (seconds),
       "text": "Description of key moment"
     }
   ]
+  Strict Rules:
+  - DO NOT include any text outside the JSON array 
+  - DO NOT add comments or notes 
+  - If transcript is too short/brief, return empty array 
+  - Ensure timestamps exist in the transcript 
+  - Maintain pure JSON format without markdown
 
   Highlight Selection Criteria:
   1. Critical decisions or agreements
@@ -241,6 +270,7 @@ export async function generateTimeStampedHighlights(
     temperature: 0.2,
     maxTokens: 1500
   });
+  console.log("highlights", text)
 
   return JSON.parse(text);
 }
@@ -251,11 +281,11 @@ export async function analyzeTopicDistribution(
   const prompt = `
   You are an expert conversation analyst specializing in topic analysis. Calculate the distribution of discussion topics in this meeting transcript.
 
-  Output Format:
-  Return a JSON object where:
-  - Keys are clear, concise topic names
-  - Values are percentages (numbers 0-100)
+  Output Format Requirements:
+  - Return ONLY raw JSON without any formatting or markdown
+  - JSON structure: { "topic1": percentage, "topic2": percentage }
   - Percentages must sum to exactly 100
+  - Do not include any explanations or text outside the JSON
 
   Analysis Requirements:
   1. Identify main topics and subtopics
@@ -289,6 +319,7 @@ export async function analyzeTopicDistribution(
     temperature: 0.1,
     maxTokens: 1000
   });
+  console.log("topic distribution", text)
 
   return JSON.parse(text);
 }
@@ -297,7 +328,18 @@ export async function calculateSuccessRate(
   processedData: Record<string, string>,
   columnHeaders: string[]
 ): Promise<number> {
-  // Count how many fields we successfully extracted values for
-  const filledFields = Object.values(processedData).filter(value => value && value.trim() !== '').length;
-  return filledFields / columnHeaders.length;
+  // Validate inputs
+  if (!columnHeaders?.length) return 0;
+
+  // Count filled fields only from column headers
+  const filledFields = columnHeaders.filter(header => {
+    const value = processedData[header]?.trim() || '';
+    return value.length > 0 && value !== 'N/A' && value !== '-';
+  }).length;
+
+  // Calculate percentage with rounding
+  const successRate = (filledFields / columnHeaders.length) * 100;
+  
+  // Return rounded value between 0-100
+  return Math.min(100, Math.max(0, Math.round(successRate * 100) / 100));
 } 

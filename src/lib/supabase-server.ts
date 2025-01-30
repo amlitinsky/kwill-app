@@ -869,7 +869,7 @@ export async function enableUserCalendlyAccess(userId: string, expiryDate: strin
   }
 }
 
-export async function getUserByStripeCustomerId(stripeCustomerId: string) {
+export async function getUserSubscriptionByStripeCustomerId(stripeCustomerId: string) {
   const { data, error } = await supabaseAdmin
     .from('subscriptions')
     .select('*')

@@ -79,7 +79,9 @@ export async function POST(request: Request) {
           .eq('id', userId)
           .single();
 
-        if (!user?.data?.calendly_enabled || new Date(user.data.calendly_access_until) < new Date()) {
+          // TODO prob should check subscriptions table here actually
+
+        if (!user?.data?.calendly_enabled) {
             return NextResponse.json({ 
               error: 'Calendly access is disabled or expired' 
             }, { status: 403 });

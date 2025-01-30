@@ -7,7 +7,6 @@ export const stripe = new Stripe(process.env.STRIPE_API_SECRET_KEY!, {
 export async function createCheckoutSession(
   priceId: string,
   customerId: string,
-  mode: 'payment' | 'setup',
   returnUrl: string = `${process.env.NEXT_PUBLIC_BASE_URL}/settings`
 ) {
   try {
@@ -24,9 +23,9 @@ export async function createCheckoutSession(
           quantity: 1,
         },
       ],
-      mode: mode,
-      success_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${returnUrl}?canceled=true`,
+      mode: 'subscription',
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/settings?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/settings?canceled=true`,
       metadata: {
         hours: product.metadata.hours,
         calendly_enabled: product.metadata.calendly_enabled,

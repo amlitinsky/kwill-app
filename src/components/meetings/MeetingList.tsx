@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast"
 import { Progress } from "@/components/ui/progress"
 import { cn } from "@/lib/utils"
+import { supabase } from '@/lib/supabase-client'
 
 interface MeetingListProps {
   initialMeetings: Meeting[]
@@ -41,22 +42,41 @@ export function MeetingList({ initialMeetings }: MeetingListProps) {
   const router = useRouter()
   const { toast } = useToast()
 
-  // Monitor processing meetings and show toast updates
+  // Real-time updates with user filtering
   useEffect(() => {
-    const processingMeetings = meetings.filter(m => 
-      m.status === 'processing' || m.status === 'in-progress'
-    )
-
-    if (processingMeetings.length > 0) {
-      processingMeetings.forEach(meeting => {
-        toast({
-          title: meeting.name,
-          description: statusMessages[meeting.status as keyof typeof statusMessages],
-          duration: 5000
-        })
+    const channel = supabase
+      .channel('meeting-changes')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'meetings',
+      }, (payload) => {
+        setMeetings(prev => prev.map(m => 
+          m.id === payload.new.id ? { ...m, ...payload.new } : m
+        ))
       })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
     }
-  }, [meetings, toast])
+  }, [])
+
+  // Status monitoring with delta detection
+  useEffect(() => {
+    const newStatuses = meetings.filter(newMeeting => {
+      const initialMeeting = initialMeetings.find(m => m.id === newMeeting.id)
+      return initialMeeting?.status !== newMeeting.status
+    })
+
+    newStatuses.forEach(meeting => {
+      toast({
+        title: meeting.name,
+        description: statusMessages[meeting.status as keyof typeof statusMessages],
+        duration: 5000
+      })
+    })
+  }, [meetings, initialMeetings, toast])
 
   // Add this useEffect at the top of the component
   useEffect(() => {
