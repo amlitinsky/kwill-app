@@ -91,7 +91,7 @@ export async function generateMeetingSummary(
   - Keep the total summary under 300 words
   - Use objective, factual tone
 
-  Custom Instructions:
+  Custom Prompt:
   ${prompt || ''}
 
   Transcript (with speaker names and timestamps):
@@ -134,7 +134,7 @@ export async function extractKeyPoints(
   6. Resource allocations or requirements
   7. Critical dependencies
 
-  Custom Instructions:
+  Custom Prompt:
   ${prompt || ''}
 
   Format Guidelines:
@@ -192,7 +192,7 @@ export async function extractActionItems(
   4. Must include any mentioned deadlines or conditions
   5. Must preserve original context and intent
 
-  Custom Instructions:
+  Custom Prompt:
   ${prompt || ''}
 
   Extraction Rules:
@@ -248,7 +248,7 @@ export async function generateTimeStampedHighlights(
   6. Strategic direction changes
   7. Risk or opportunity identification
 
-  Custom Instructions:
+  Custom Prompt:
   ${prompt || ''}
 
   Guidelines:
