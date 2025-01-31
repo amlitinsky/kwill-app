@@ -54,7 +54,7 @@ export async function fetchTemplates() {
   return data;
 }
 
-export async function createTemplate(name: string, spreadsheetId: string, prompt: string, transcript: string) {
+export async function createTemplate(name: string, spreadsheetId: string, prompt: string, meetingLink: string) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
@@ -65,7 +65,7 @@ export async function createTemplate(name: string, spreadsheetId: string, prompt
       name, 
       spreadsheet_id: spreadsheetId, 
       prompt: prompt,
-      transcript: transcript,
+      meeting_link: meetingLink,
       user_id: user.id
     }]);
 
@@ -73,7 +73,7 @@ export async function createTemplate(name: string, spreadsheetId: string, prompt
   return data;
 }
 
-export async function updateTemplate(id: string, name: string, spreadsheetId: string, prompt: string) {
+export async function updateTemplate(id: string, name: string, spreadsheetId: string, prompt: string, meetingLink: string) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
@@ -83,7 +83,8 @@ export async function updateTemplate(id: string, name: string, spreadsheetId: st
     .update({ 
       name, 
       spreadsheet_id: spreadsheetId, 
-      prompt: prompt 
+      prompt: prompt,
+      meeting_link: meetingLink
     })
     .eq('id', id)
     .eq('user_id', user.id);

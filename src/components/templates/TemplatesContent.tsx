@@ -18,7 +18,7 @@ interface Template {
   name: string
   spreadsheet_id: string
   prompt: string
-  transcript: string
+  meeting_link: string
 }
 
 interface TemplatesContentProps {
@@ -38,7 +38,7 @@ export default function TemplatesContent({ initialTemplates }: TemplatesContentP
   const [name, setName] = useState('')
   const [spreadsheetId, setSpreadsheetId] = useState('')
   const [prompt, setPrompt] = useState('')
-  const [transcript, setTranscript] = useState('')
+  const [meetingLink, setMeetingLink] = useState('')
   const { toast } = useToast()
   const router = useRouter()
 
@@ -75,7 +75,7 @@ export default function TemplatesContent({ initialTemplates }: TemplatesContentP
           name, 
           spreadsheetId: extractedSpreadsheetId, 
           prompt, 
-          transcript 
+          meeting_link: meetingLink 
         }),
       })
 
@@ -109,7 +109,7 @@ export default function TemplatesContent({ initialTemplates }: TemplatesContentP
           name, 
           spreadsheetId, 
           prompt, 
-          transcript 
+          meeting_link: meetingLink 
         }),
       })
 
@@ -162,7 +162,7 @@ export default function TemplatesContent({ initialTemplates }: TemplatesContentP
     setName(template.name)
     setSpreadsheetId(template.spreadsheet_id)
     setPrompt(template.prompt)
-    setTranscript(template.transcript)
+    setMeetingLink(template.meeting_link)
     setIsEditOpen(true)
   }
 
@@ -193,8 +193,14 @@ export default function TemplatesContent({ initialTemplates }: TemplatesContentP
                   <Textarea id="instructions" value={prompt} onChange={(e) => setPrompt(e.target.value)} className="col-span-3" />
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="transcript" className="text-right">Enter Transcript</Label>
-                  <Textarea id="transcript" value={transcript} onChange={(e) => setTranscript(e.target.value)} className="col-span-3" />
+                  <Label htmlFor="meeting-link" className="text-right">Meeting Link</Label>
+                  <Input 
+                    id="meeting-link" 
+                    value={meetingLink} 
+                    onChange={(e) => setMeetingLink(e.target.value)} 
+                    className="col-span-3"
+                    placeholder="Enter meeting link (e.g., Zoom, Google Meet)" 
+                  />
                 </div>
               </div>
               <Button onClick={handleCreateTemplate}>Create Template</Button>
@@ -211,7 +217,7 @@ export default function TemplatesContent({ initialTemplates }: TemplatesContentP
                   <TableHead>Name</TableHead>
                   <TableHead>Spreadsheet Link</TableHead>
                   <TableHead>Prompt</TableHead>
-                  <TableHead>Transcript</TableHead>
+                  <TableHead>Meeting Link</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -221,7 +227,7 @@ export default function TemplatesContent({ initialTemplates }: TemplatesContentP
                     <TableCell className="font-medium">{template.name}</TableCell>
                     <TableCell>{template.spreadsheet_id}</TableCell>
                     <TableCell>{template.prompt.length > 50 ? `${template.prompt.substring(0, 50)}...` : template.prompt}</TableCell>
-                    <TableCell>{template.transcript.length > 50 ? `${template.transcript.substring(0, 50)}...` : template.transcript}</TableCell>
+                    <TableCell>{template.meeting_link}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -262,8 +268,14 @@ export default function TemplatesContent({ initialTemplates }: TemplatesContentP
               <Textarea id="edit-instructions" value={prompt} onChange={(e) => setPrompt(e.target.value)} className="col-span-3" />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-transcript" className="text-right">Transcript</Label>
-              <Textarea id="edit-transcript" value={transcript} onChange={(e) => setTranscript(e.target.value)} className="col-span-3" />
+              <Label htmlFor="edit-meeting-link" className="text-right">Meeting Link</Label>
+              <Input 
+                id="edit-meeting-link" 
+                value={meetingLink} 
+                onChange={(e) => setMeetingLink(e.target.value)} 
+                className="col-span-3"
+                placeholder="Enter meeting link (e.g., Zoom, Google Meet)" 
+              />
             </div>
           </div>
           <Button onClick={handleUpdateTemplate}>Update Template</Button>

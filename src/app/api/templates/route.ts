@@ -4,9 +4,9 @@ import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function GET() {
   const supabase =  await createServerSupabaseClient()
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -27,8 +27,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { name, spreadsheetId, prompt, transcript } = await request.json();
-    const newTemplate = await createTemplate(name, spreadsheetId, prompt, transcript);
+    const { name, spreadsheetId, prompt, meetingLink } = await request.json();
+    const newTemplate = await createTemplate(name, spreadsheetId, prompt, meetingLink);
 
     return NextResponse.json(newTemplate);
   } catch (error) {
@@ -39,15 +39,15 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   const supabase =  await createServerSupabaseClient()
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    const { id, name, spreadsheetLink, prompt } = await request.json();
-    const updatedTemplate = await updateTemplate(id, name, spreadsheetLink, prompt);
+    const { id, name, spreadsheetLink, prompt, meetingLink } = await request.json();
+    const updatedTemplate = await updateTemplate(id, name, spreadsheetLink, prompt, meetingLink);
     return NextResponse.json(updatedTemplate);
   } catch (error) {
     return NextResponse.json({ error: (error as Error).message }, { status: 500 });
@@ -56,9 +56,9 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   const supabase =  await createServerSupabaseClient()
-  const { data: { session } } = await supabase.auth.getSession();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

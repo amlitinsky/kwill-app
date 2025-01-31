@@ -4,22 +4,39 @@ import { Logo } from '../Logo'
 
 export function PublicNavbar() {
   return (
-    <header className="sticky top-0 flex h-16 items-center border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex items-center justify-between max-w-screen-xl mx-auto px-4">
-        {/* Logo Section */}
-        <Link href="/" className="flex items-center gap-2">
-          <Logo />
-          <span className="text-lg font-semibold tracking-tight">Kwill</span>
-        </Link>
+    <header className="sticky top-0 z-50">
+      {/* Semi-transparent backdrop */}
+      <div className="absolute inset-0 bg-background/80 backdrop-blur-sm border-b" />
+      
+      {/* Content layer */}
+      <div className="relative h-16">
+        <div className="container flex items-center justify-between h-full max-w-screen-xl mx-auto px-4">
+          {/* Logo Section */}
+          <Link href="/" className="flex items-center gap-2 relative">
+            <Logo />
+            <span className="text-lg font-semibold tracking-tight text-foreground">Kwill</span>
+          </Link>
 
-        {/* Auth Buttons - will be pushed to the far right due to justify-between */}
-        <div className="flex items-center gap-4">
-          <Link href="/signin">
-            <Button variant="ghost" size="sm">Sign In</Button>
-          </Link>
-          <Link href="/signin">
-            <Button size="sm" className="bg-primary">Sign Up</Button>
-          </Link>
+          {/* Auth Buttons */}
+          <div className="flex items-center gap-4">
+            <Link href="/signin">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                className="font-medium hover:bg-background/90"
+              >
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/signin">
+              <Button 
+                size="sm" 
+                className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-medium"
+              >
+                Sign Up
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     </header>

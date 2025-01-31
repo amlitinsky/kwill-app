@@ -34,16 +34,24 @@ export function PrivateNavbar({ children, user }: PrivateNavbarProps) {
 
   const handleSignOut = async () => {
     try {
-      await fetch('/auth/signout', { method: 'POST' });
-      
-      // 2. Force full client reset
+      // First, make the sign-out request
+      const response = await fetch('/auth/signout', { 
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to sign out');
+      }
+
+      // Clear any client-side state
       localStorage.clear();
       sessionStorage.clear();
-      
-      // 3. Hard redirect with cache busting
-      router.refresh()
-      window.location.href = `/?t=${Date.now()}`;
 
+      // Use router.replace with the root path
+      router.replace('/');
     } catch (error) {
       console.error('Error signing out:', error);
       toast({
