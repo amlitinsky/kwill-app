@@ -210,7 +210,7 @@ export default function TemplatesContent({ initialTemplates }: TemplatesContentP
                 <TableRow>
                   <TableHead>Name</TableHead>
                   <TableHead>Spreadsheet Link</TableHead>
-                  <TableHead>Custom Instructions</TableHead>
+                  <TableHead>Prompt</TableHead>
                   <TableHead>Transcript</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
