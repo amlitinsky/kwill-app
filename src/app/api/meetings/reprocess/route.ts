@@ -25,11 +25,11 @@ export async function POST(request: Request) {
 
     // Analyze with Deepseek
     const [processedData, summary, keyPoints, actionItems, highlights, topicDistribution] = await Promise.all([
-      analyzeTranscript(meeting.transcript, meeting.column_headers, meeting.custom_instructions),
-      generateMeetingSummary(meeting.transcript, meeting.custom_instructions),
-      extractKeyPoints(meeting.transcript, meeting.custom_instructions),
-      extractActionItems(meeting.transcript, meeting.custom_instructions),
-      generateTimeStampedHighlights(meeting.transcript, meeting.custom_instructions),
+      analyzeTranscript(meeting.transcript, meeting.column_headers, meeting.prompt),
+      generateMeetingSummary(meeting.transcript, meeting.prompt),
+      extractKeyPoints(meeting.transcript, meeting.prompt),
+      extractActionItems(meeting.transcript, meeting.prompt),
+      generateTimeStampedHighlights(meeting.transcript, meeting.prompt),
       analyzeTopicDistribution(meeting.transcript)
     ])
 

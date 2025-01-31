@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchMeetings, createMeeting, updateMeetingStatus, updateMeetingTranscript, updateMeetingProcessedData, deleteMeeting, getUserById } from '@/lib/supabase-server';
+import { fetchMeetings, createMeeting, updateMeetingStatus, updateMeetingTranscript, updateMeetingProcessedData, deleteMeeting, getSubscription } from '@/lib/supabase-server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { createBot } from '@/lib/recall';
 
@@ -30,9 +30,9 @@ export async function POST(request: Request) {
 
   try {
     // Get user details to check meeting hours
-    const userDetails = await getUserById(user.id);
+    const userData = await getSubscription();
 
-    if (!userDetails || userDetails.meeting_hours_remaining <= 0) {
+    if (!userData || userData.hours <= 0) {
       return NextResponse.json({ 
         error: 'Insufficient meeting hours. Please purchase more hours to continue.' 
       }, { status: 403 });
@@ -40,20 +40,20 @@ export async function POST(request: Request) {
 
     const { 
       name,
-      zoomLink,
+      meetingLink,
       spreadsheetId, 
-      customInstructions
+      prompt
     } = await request.json();
 
-    const botMeetingData = await createBot(zoomLink, { automatic_leave: userDetails.meeting_hours_remaining * 3600})
+    const botMeetingData = await createBot(meetingLink, { automatic_leave: userData.hours * 3600})
 
     // Create meeting with recording status
     const newMeeting = await createMeeting(
       user.id,
       name,
       spreadsheetId,
-      customInstructions,
-      zoomLink,
+      prompt,
+      meetingLink,
       botMeetingData.id,
       { status: 'created' }
     );

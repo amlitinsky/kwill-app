@@ -9,9 +9,9 @@ const model = anthropic('claude-3-5-sonnet-20241022');
 export async function analyzeTranscript(
   transcript: ProcessedTranscriptSegment[], 
   columnHeaders: string[], 
-  customInstructions: string
+  prompt: string
 ): Promise<Record<string, string>> {
-  const prompt = `
+  const mainPrompt = `
   You are an expert data analyst specializing in extracting structured information from meeting transcripts. Your task is to analyze the provided transcript and generate a valid JSON object mapping specific data points to predefined column headers.
 
   Output Format:
@@ -35,8 +35,8 @@ export async function analyzeTranscript(
   8. Consider both explicit statements and implied information
   9. For pricing/financial information, be precise and include currency markers
 
-  Custom Analysis Instructions:
-  ${customInstructions}
+  Custom Analysis Prompt:
+  ${prompt}
 
   Transcript Analysis:
   ${JSON.stringify(transcript)}
@@ -52,7 +52,7 @@ export async function analyzeTranscript(
 
   const { text } = await generateText({
     model: model,
-    prompt: prompt,
+    prompt: mainPrompt,
     temperature: 0.1, // Lower temperature for more consistent outputs
     maxTokens: 2000
   });
@@ -67,9 +67,9 @@ export async function analyzeTranscript(
 
 export async function generateMeetingSummary(
   transcript: ProcessedTranscriptSegment[],
-  customInstructions?: string
+  prompt?: string
 ): Promise<string> {
-  const prompt = `
+  const mainPrompt = `
   You are an expert meeting analyst specializing in executive summaries. Your task is to provide a clear, structured summary of this meeting transcript.
 
   If the transcript does not contain business-related content, respond with a brief summary of the meeting following the guidelines below NOT the Required Summary Components.
@@ -92,7 +92,7 @@ export async function generateMeetingSummary(
   - Use objective, factual tone
 
   Custom Instructions:
-  ${customInstructions || ''}
+  ${prompt || ''}
 
   Transcript (with speaker names and timestamps):
   ${JSON.stringify(transcript)}
@@ -100,7 +100,7 @@ export async function generateMeetingSummary(
 
   const { text } = await generateText({
     model: model,
-    prompt: prompt,
+    prompt: mainPrompt,
     temperature: 0.3,
     maxTokens: 1000
   });
@@ -111,9 +111,9 @@ export async function generateMeetingSummary(
 
 export async function extractKeyPoints(
   transcript: ProcessedTranscriptSegment[],
-  customInstructions?: string
+  prompt?: string
 ): Promise<string[]> {
-  const prompt = `
+  const mainPrompt = `
   You are an expert meeting analyst specializing in identifying critical information. Extract the most important points from this meeting transcript.
 
   If the transcript does not contain business-related content or doesn't contain any relevant key points, respond with an empty array or generic key points sticking to the format below.
@@ -135,7 +135,7 @@ export async function extractKeyPoints(
   7. Critical dependencies
 
   Custom Instructions:
-  ${customInstructions || ''}
+  ${prompt || ''}
 
   Format Guidelines:
   - Each point should be 10-20 words
@@ -149,7 +149,7 @@ export async function extractKeyPoints(
 
   const { text } = await generateText({
     model: model,
-    prompt: prompt,
+    prompt: mainPrompt,
     temperature: 0.2,
     maxTokens: 1000
   });
@@ -159,9 +159,9 @@ export async function extractKeyPoints(
 
 export async function extractActionItems(
   transcript: ProcessedTranscriptSegment[],
-  customInstructions?: string
+  prompt?: string
 ): Promise<string[]> {
-  const prompt = `
+  const mainPrompt = `
   You are an expert project manager specializing in action item extraction. Identify all concrete tasks and commitments from this meeting transcript.
 
   Required Output Format:
@@ -193,7 +193,7 @@ export async function extractActionItems(
   5. Must preserve original context and intent
 
   Custom Instructions:
-  ${customInstructions || ''}
+  ${prompt || ''}
 
   Extraction Rules:
   - Include both explicit ("I will...") and implicit ("We should...") commitments
@@ -208,7 +208,7 @@ export async function extractActionItems(
 
   const { text } = await generateText({
     model: model,
-    prompt: prompt,
+    prompt: mainPrompt,
     temperature: 0.1,
     maxTokens: 1000
   });
@@ -219,9 +219,9 @@ export async function extractActionItems(
 
 export async function generateTimeStampedHighlights(
   transcript: ProcessedTranscriptSegment[],
-  customInstructions?: string
+  prompt?: string
 ): Promise<Array<{ timestamp: number; text: string }>> {
-  const prompt = `
+  const mainPrompt = `
   You are an expert meeting analyst specializing in identifying pivotal moments in discussions. Create a timeline of key moments from this transcript.
 
   Output Format:
@@ -249,7 +249,7 @@ export async function generateTimeStampedHighlights(
   7. Risk or opportunity identification
 
   Custom Instructions:
-  ${customInstructions || ''}
+  ${prompt || ''}
 
   Guidelines:
   - Generate 5-10 highlights
@@ -266,7 +266,7 @@ export async function generateTimeStampedHighlights(
 
   const { text } = await generateText({
     model,
-    prompt,
+    prompt: mainPrompt,
     temperature: 0.2,
     maxTokens: 1500
   });
@@ -278,7 +278,7 @@ export async function generateTimeStampedHighlights(
 export async function analyzeTopicDistribution(
   transcript: ProcessedTranscriptSegment[]
 ): Promise<Record<string, number>> {
-  const prompt = `
+  const mainPrompt = `
   You are an expert conversation analyst specializing in topic analysis. Calculate the distribution of discussion topics in this meeting transcript.
 
   Output Format Requirements:
@@ -315,7 +315,7 @@ export async function analyzeTopicDistribution(
 
   const { text } = await generateText({
     model: model,
-    prompt: prompt,
+    prompt: mainPrompt,
     temperature: 0.1,
     maxTokens: 1000
   });

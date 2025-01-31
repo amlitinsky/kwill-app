@@ -21,9 +21,9 @@ function extractSpreadsheetId(url: string): string | null {
 
 export function CreateMeetingDialog({ open, onOpenChange }: CreateMeetingDialogProps) {
   const [name, setName] = useState('')
-  const [zoomLink, setZoomLink] = useState('')
+  const [meetingLink, setMeetingLink] = useState('')
   const [spreadsheetId, setSpreadsheetId] = useState('')
-  const [customInstructions, setCustomInstructions] = useState('')
+  const [prompt, setPrompt] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
   const router = useRouter()
@@ -56,9 +56,9 @@ export function CreateMeetingDialog({ open, onOpenChange }: CreateMeetingDialogP
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
-          zoomLink,
+          meetingLink,
           spreadsheetId: extractedSpreadsheetId,
-          customInstructions
+          prompt
         })
       })
 
@@ -98,11 +98,11 @@ export function CreateMeetingDialog({ open, onOpenChange }: CreateMeetingDialogP
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="zoom-link" className="text-right">Zoom Link</Label>
+            <Label htmlFor="meeting-link" className="text-right">Meeting Link</Label>
             <Input
-              id="zoom-link"
-              value={zoomLink}
-              onChange={(e) => setZoomLink(e.target.value)}
+              id="meeting-link"
+              value={meetingLink}
+              onChange={(e) => setMeetingLink(e.target.value)}
               className="col-span-3"
               placeholder="https://zoom.us/j/..."
             />
@@ -118,13 +118,13 @@ export function CreateMeetingDialog({ open, onOpenChange }: CreateMeetingDialogP
             />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
-            <Label htmlFor="instructions" className="text-right">Instructions</Label>
+            <Label htmlFor="instructions" className="text-right">Prompt</Label>
             <Textarea
               id="instructions"
-              value={customInstructions}
-              onChange={(e) => setCustomInstructions(e.target.value)}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
               className="col-span-3"
-              placeholder="Custom instructions for processing the meeting..."
+              placeholder="Prompt for processing the meeting..."
             />
           </div>
         </div>

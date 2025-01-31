@@ -1,4 +1,4 @@
-import { type NextRequest } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { updateSession } from '@/utils/supabase/middleware'
 import { createServerSupabaseClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
@@ -16,13 +16,19 @@ export async function middleware(request: NextRequest) {
   if (!user && protectedPaths.some(path => 
     request.nextUrl.pathname.startsWith(path)
   )) {
-    redirect('/signin')
+    return NextResponse.redirect(new URL('/', request.url))
+  }
+
+
+  // Add cache control for root path
+  if (request.nextUrl.pathname === '/') {
+    response.headers.set('Cache-Control', 'no-store, max-age=0');
   }
 
   // Auth path check
-  if (user && authPaths.includes(request.nextUrl.pathname)) {
-    redirect('/dashboard')
-  }
+  // if (user && authPaths.includes(request.nextUrl.pathname)) {
+  //   redirect('/dashboard')
+  // }
 
   return response
 }

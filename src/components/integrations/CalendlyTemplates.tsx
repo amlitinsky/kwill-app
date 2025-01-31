@@ -24,17 +24,17 @@ import {
 import { motion } from 'framer-motion';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
-interface CalendlyConfig {
+interface CalendlyTemplate {
   id: string;
   name: string;
   uri: string;
   spreadsheet_id: string | null;
-  custom_instructions: string | null;
+  prompt: string | null;
   active: boolean;
 }
 
-interface CalendlyConfigsProps {
-  initialConfigs?: CalendlyConfig | null;
+interface CalendlyTemplatesProps {
+  initialTemplates?: CalendlyTemplate[] | null;
 }
 
 // Helper function to extract spreadsheet ID from URL
@@ -61,24 +61,24 @@ const LoadingRow = ({ delay = 0 }) => (
   </motion.tr>
 );
 
-export function CalendlyConfigs({ initialConfigs = null }: CalendlyConfigsProps) {
-  const [configs, setConfigs] = useState<CalendlyConfig[]>(initialConfigs ? [initialConfigs] : []);
-  const [loading, setLoading] = useState(!initialConfigs);
+export function CalendlyTemplates({ initialTemplates = null }: CalendlyTemplatesProps) {
+  const [templates, setTemplates] = useState<CalendlyTemplate[]>(initialTemplates || []);
+  const [loading, setLoading] = useState(!initialTemplates);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValues, setEditingValues] = useState<{
     spreadsheet_id?: string;
-    custom_instructions?: string;
+    prompt?: string;
   }>({});
   const [calendlyEnabled, setCalendlyEnabled] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!initialConfigs) {
-      syncConfigs();
+    if (!initialTemplates) {
+      syncTemplates();
     }
-  }, [initialConfigs]);
+  }, [initialTemplates]);
 
-  async function syncConfigs() {
+  async function syncTemplates() {
     try {
       const response = await fetch('/api/calendly/templates', {
         method: 'POST'
@@ -86,7 +86,7 @@ export function CalendlyConfigs({ initialConfigs = null }: CalendlyConfigsProps)
       if (!response.ok) throw new Error('Failed to sync');
       const data = await response.json();
       setCalendlyEnabled(data.calendlyEnabled);
-      setConfigs(data.configs || []);
+      setTemplates(data.templates || []);
       if (data.added > 0) {
         toast({
           title: 'Success',
@@ -104,7 +104,7 @@ export function CalendlyConfigs({ initialConfigs = null }: CalendlyConfigsProps)
     }
   }
 
-  async function updateConfig(id: string, updates: Partial<CalendlyConfig>) {
+  async function updateTemplate(id: string, updates: Partial<CalendlyTemplate>) {
     try {
       // Process spreadsheet URL if provided
       if (updates.spreadsheet_id) {
@@ -128,8 +128,8 @@ export function CalendlyConfigs({ initialConfigs = null }: CalendlyConfigsProps)
       
       if (!response.ok) throw new Error('Failed to update');
       
-      setConfigs(configs.map(config => 
-        config.id === id ? { ...config, ...updates } : config
+      setTemplates(templates.map(template => 
+        template.id === id ? { ...template, ...updates } : template
       ));
       setEditingId(null);
       
@@ -147,7 +147,7 @@ export function CalendlyConfigs({ initialConfigs = null }: CalendlyConfigsProps)
   }
 
   const handleSave = async (id: string) => {
-    await updateConfig(id, editingValues);
+    await updateTemplate(id, editingValues);
     setEditingId(null);
     setEditingValues({});
   };
@@ -175,7 +175,7 @@ export function CalendlyConfigs({ initialConfigs = null }: CalendlyConfigsProps)
             <TableRow>
               <TableHead>Event Type</TableHead>
               <TableHead>Spreadsheet</TableHead>
-              <TableHead>Custom Instructions</TableHead>
+              <TableHead>Prompt</TableHead>
               <TableHead>Active</TableHead>
               <TableHead></TableHead>
             </TableRow>
@@ -216,13 +216,13 @@ export function CalendlyConfigs({ initialConfigs = null }: CalendlyConfigsProps)
               </TableHead>
               <TableHead>
                 <div className="flex items-center space-x-2">
-                  <span>Custom Instructions</span>
+                  <span>Prompt</span>
                   <Tooltip>
                     <TooltipTrigger>
                       <HelpCircle className="h-4 w-4 text-muted-foreground" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Custom prompt for the AI assistant during meetings</p>
+                      <p>Prompt for the AI assistant during meetings</p>
                     </TooltipContent>
                   </Tooltip>
                 </div>
@@ -231,11 +231,11 @@ export function CalendlyConfigs({ initialConfigs = null }: CalendlyConfigsProps)
             </TableRow>
           </TableHeader>
           <TableBody>
-            {configs.map((config) => (
-              <TableRow key={config.id}>
-                <TableCell className="font-medium">{config.name}</TableCell>
+            {templates.map((template) => (
+              <TableRow key={template.id}>
+                <TableCell className="font-medium">{template.name}</TableCell>
                 <TableCell>
-                  {editingId === config.id ? (
+                  {editingId === template.id ? (
                     <div className="space-y-1">
                       <Input
                         value={editingValues.spreadsheet_id || ''}
@@ -247,45 +247,45 @@ export function CalendlyConfigs({ initialConfigs = null }: CalendlyConfigsProps)
                         className="w-full"
                       />
                       <p className="text-xs text-muted-foreground">
-                        Current ID: {config.spreadsheet_id || 'None'}
+                        Current ID: {template.spreadsheet_id || 'None'}
                       </p>
                     </div>
                   ) : (
                     <span className="text-sm text-muted-foreground">
-                      {config.spreadsheet_id || 'No spreadsheet connected'}
+                      {template.spreadsheet_id || 'No spreadsheet connected'}
                     </span>
                   )}
                 </TableCell>
                 <TableCell>
-                  {editingId === config.id ? (
+                  {editingId === template.id ? (
                     <div className="space-y-1">
                       <Textarea
-                        value={editingValues.custom_instructions || ''}
+                        value={editingValues.prompt || ''}
                         onChange={(e) => setEditingValues(prev => ({
                           ...prev,
-                          custom_instructions: e.target.value
+                          prompt: e.target.value
                         }))}
-                        placeholder="Enter custom instructions for the AI assistant"
+                        placeholder="Enter prompt for AI assist"
                         className="min-h-[100px]"
                       />
                     </div>
                   ) : (
                     <span className="text-sm text-muted-foreground">
-                      {config.custom_instructions || 'No custom instructions'}
+                      {template.prompt || 'No prompt'}
                     </span>
                   )}
                 </TableCell>
                 <TableCell>
                   <Switch
-                    checked={config.active}
+                    checked={template.active}
                     onCheckedChange={(checked) => 
-                      updateConfig(config.id, { active: checked })
+                      updateTemplate(template.id, { active: checked })
                     }
-                    disabled={!config.spreadsheet_id}
+                    disabled={!template.spreadsheet_id}
                   />
                 </TableCell>
                 <TableCell>
-                  {editingId === config.id ? (
+                  {editingId === template.id ? (
                     <div className="flex space-x-2">
                       <Button 
                         variant="outline" 
@@ -299,7 +299,7 @@ export function CalendlyConfigs({ initialConfigs = null }: CalendlyConfigsProps)
                       </Button>
                       <Button 
                         size="sm"
-                        onClick={() => handleSave(config.id)}
+                        onClick={() => handleSave(template.id)}
                       >
                         Save
                       </Button>
@@ -308,7 +308,7 @@ export function CalendlyConfigs({ initialConfigs = null }: CalendlyConfigsProps)
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setEditingId(editingId === config.id ? null : config.id)}
+                      onClick={() => setEditingId(editingId === template.id ? null : template.id)}
                     >
                       <Edit2 className="h-4 w-4" />
                     </Button>

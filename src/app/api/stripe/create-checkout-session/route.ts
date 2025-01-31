@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient, getOrCreateStripeCustomerId, getUserById } from '@/lib/supabase-server';
+import { createServerSupabaseClient, getOrCreateStripeCustomerId } from '@/lib/supabase-server';
 import { createCheckoutSession } from '@/lib/stripe';
 
 export async function POST(req: Request) {
@@ -16,10 +16,7 @@ export async function POST(req: Request) {
 
     const { priceId, setupOnly } = await req.json();
 
-    const userData = await getUserById(user.id)
-
-    
-    const customerId = await getOrCreateStripeCustomerId(userData.id, userData.email)
+    const customerId = await getOrCreateStripeCustomerId(user.id, user.email!)
 
 
     const session = await createCheckoutSession(

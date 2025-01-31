@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 export default function Docs() {
   return (
     <div className="container mx-auto py-12 px-4">
-      <h1 className="text-3xl font-bold mb-6">Kwill Documentation</h1>
+      <h1 className="text-3xl font-bold mb-6">Kwill Docs</h1>
       
       <Card className="mb-8">
         <CardHeader>
@@ -16,10 +16,11 @@ export default function Docs() {
             <li>Navigate to the &quot;New Meeting&quot; page.</li>
             <li>Enter a valid shareable Google Sheets link.</li>
             <li>Enter a valid Zoom link.</li>
-            <li>Add any custom instructions or specify people to omit or include from the analysis.</li>
+            <li>Add any prompt or specify people to omit or include from the analysis.</li>
             <li>Click &quot;Submit&quot; to create your query.</li>
             <li>Our AI bot will join the Zoom call at the specified time.</li>
             <li>After the call, Kwill will analyze the meeting and update your Google Sheet with the results.</li>
+            <li>You will also be able to view deeper meeting insights once the meeting has fully processed.</li>
           </ol>
 
           <h3 className="text-lg font-semibold mt-4 mb-2">Sending a Bot to a Zoom Call</h3>
@@ -82,7 +83,7 @@ export default function Docs() {
           <ul className="list-disc list-inside space-y-2">
             <li><strong>How many meetings can I analyze?</strong> The free plan includes 4 meetings. After that, you&apos;ll need to upgrade to a paid plan.</li>
             <li><strong>Is my meeting data secure?</strong> Yes, we use encryption for all data in transit and at rest. We only retain transcripts only momentarily.</li>
-            <li><strong>Can I customize the analysis?</strong> Yes, you can provide custom instructions when creating a new query.</li>
+            <li><strong>Can I customize the analysis?</strong> Yes, you can provide a prompt when creating a new query.</li>
             <li><strong>How do I update my payment information?</strong> You can update your payment details in the Billing section of your account settings.</li>
           </ul>
         </CardContent>

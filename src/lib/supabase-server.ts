@@ -40,24 +40,6 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
 
-export async function deleteAccount() {
-  const supabase = await createServerSupabaseClient()
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('No user logged in');
-
-  // Delete user data from the users table
-  const { error: deleteUserError } = await supabase
-    .from('users')
-    .delete()
-    .match({ auth_id: user.id });
-
-  if (deleteUserError) throw deleteUserError;
-
-  // Delete the auth user
-  const { error } = await supabase.rpc('delete_user');
-  if (error) throw error;
-}
-
 export async function fetchTemplates() {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
@@ -72,7 +54,7 @@ export async function fetchTemplates() {
   return data;
 }
 
-export async function createTemplate(name: string, spreadsheetId: string, customInstructions: string, transcript: string) {
+export async function createTemplate(name: string, spreadsheetId: string, prompt: string, transcript: string) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
@@ -82,7 +64,7 @@ export async function createTemplate(name: string, spreadsheetId: string, custom
     .insert([{ 
       name, 
       spreadsheet_id: spreadsheetId, 
-      custom_instructions: customInstructions,
+      prompt: prompt,
       transcript: transcript,
       user_id: user.id
     }]);
@@ -91,7 +73,7 @@ export async function createTemplate(name: string, spreadsheetId: string, custom
   return data;
 }
 
-export async function updateTemplate(id: string, name: string, spreadsheetId: string, customInstructions: string) {
+export async function updateTemplate(id: string, name: string, spreadsheetId: string, prompt: string) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
@@ -101,7 +83,7 @@ export async function updateTemplate(id: string, name: string, spreadsheetId: st
     .update({ 
       name, 
       spreadsheet_id: spreadsheetId, 
-      custom_instructions: customInstructions 
+      prompt: prompt 
     })
     .eq('id', id)
     .eq('user_id', user.id);
@@ -174,7 +156,7 @@ export async function updateMeetingProcessedData(botId: string, processedData: R
 export async function getMeetingDetails(botId: string) {
   const { data, error } = await supabaseAdmin
     .from('meetings')
-    .select('user_id, spreadsheet_id, column_headers, custom_instructions, status, spreadsheet_row_number')
+    .select('user_id, spreadsheet_id, column_headers, prompt, status, spreadsheet_row_number')
     .eq('bot_id', botId)
     .single()
 
@@ -215,40 +197,6 @@ export async function deleteMeeting(id: string) {
   if (error) throw error;
 }
 
-
-
-export async function incrementMeetingCount(userId: string) {
-  // First, get the current meetings_used count
-  const { data: userData, error: fetchError } = await supabaseAdmin
-    .from('users')
-    .select('meetings_used')
-    .eq('id', userId)
-    .single();
-
-  if (fetchError) {
-    console.error('Error fetching user data:', fetchError);
-    throw fetchError;
-  }
-
-  const currentCount = userData?.meetings_used || 0;
-  const newCount = currentCount + 1;
-
-  // Now, update the meetings_used count
-  const { data, error } = await supabaseAdmin
-    .from('users')
-    .update({ meetings_used: newCount })
-    .eq('id', userId)
-    .select('meetings_used')
-    .single();
-
-  if (error) {
-    console.error('Error incrementing meeting count:', error);
-    throw error;
-  }
-
-  return data?.meetings_used;
-}
-
 export async function getStripeCustomerId(userId: string) {
   const { data, error } = await supabaseAdmin
     .from('subscriptions')
@@ -264,48 +212,6 @@ export async function getStripeCustomerId(userId: string) {
   return data?.stripe_customer_id;
 }
 
-// Function to update user profile in Supabase
-export async function updateUserProfileWithGoogleInfo(accessToken: string) {
-  if (!accessToken) throw new Error('Access token is required');
-
-  const supabase = await createServerSupabaseClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  if (!user) throw new Error('No user logged in');
-  const { firstName, lastName } = await getGoogleUserInfo(accessToken);
-
-  const { error } = await supabase
-    .from('users')
-    .update({ first_name: firstName, last_name: lastName })
-    .eq('id', user.id);
-
-  if (error) {
-    console.error('Error updating user profile:', error);
-    throw error;
-  }
-
-  return { firstName, lastName };
-}
-
-export async function getUserDisplayName(userId: string): Promise<string | null> {
-  try {
-    const { data, error } = await supabaseAdmin
-      .from('auth.users')
-      .select('raw_user_meta_data')
-      .eq('id', userId)
-      .single()
-
-    if (error) throw error
-
-    // The display name is stored in the raw_user_meta_data column
-    const displayName = data?.raw_user_meta_data?.display_name
-
-    return displayName || null
-  } catch (error) {
-    console.error('Error fetching user display name:', error)
-    return null
-  }
-}
 
 export async function getCalendlyCreds(userId: string) {
   const { data, error } = await supabaseAdmin
@@ -529,7 +435,7 @@ interface MeetingOptions {
   eventUri?:string;
 }
 
-export async function createMeeting(userId: string, name: string, spreadsheetId: string, customInstructions: string, zoomLink: string, botId: string, options: MeetingOptions = {}) {
+export async function createMeeting(userId: string, name: string, spreadsheetId: string, prompt: string, meetingLink: string, botId: string, options: MeetingOptions = {}) {
 
   const supabase = options.useAdmin ? supabaseAdmin : await createServerSupabaseClient();
 
@@ -549,8 +455,8 @@ export async function createMeeting(userId: string, name: string, spreadsheetId:
       spreadsheet_id: spreadsheetId,
       spreadsheet_row_number: newRow,
       column_headers: fetchedColumnHeaders,
-      custom_instructions: customInstructions,
-      zoom_link: zoomLink,
+      prompt: prompt,
+      meeting_link: meetingLink,
       bot_id: botId,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -580,58 +486,58 @@ export async function getCalendlyUser(uri: string) {
 }
 
 
-interface CalendlyConfig {
+interface CalendlyTemplate {
   id: string;
   user_id: string;
   uri: string;
   name: string;
   spreadsheet_id: string | null;
-  custom_instructions: string | null;
+  prompt: string | null;
   active: boolean;
   created_at: string;
   updated_at: string;
 }
 
 // 1. Function to fetch existing configs
-export async function getCalendlyConfigs(userId: string) {
+export async function getCalendlyTemplates(userId: string) {
   const supabase = await createServerSupabaseClient();
   
   const { data, error } = await supabase
-    .from('calendly_configs')
+    .from('calendly_templates')
     .select('*')
     .eq('user_id', userId);
 
   if (error) throw error;
-  return data as CalendlyConfig[];
+  return data as CalendlyTemplate[];
 }
 
 // 2. Function to create initial configs (used in OAuth callback)
-export async function createInitialCalendlyConfigs(userId: string, eventTypes: CalendlyConfig[]) {
+export async function createInitialCalendlyTemplates(userId: string, eventTypes: CalendlyTemplate[]) {
   
-  const configs = eventTypes.map(eventType => ({
+  const templates = eventTypes.map(eventType => ({
     user_id: userId,
     uri: eventType.uri,
     name: eventType.name,
     spreadsheet_id: null,
-    custom_instructions: null,
+    prompt: null,
     active: false
   }));
 
   const { error } = await supabaseAdmin
-    .from('calendly_configs')
-    .insert(configs);
+    .from('calendly_templates')
+    .insert(templates);
 
   if (error) throw error;
 }
 
 // 3. Function to add new event types (used when checking for updates)
 // TODO when user has deleted an event type on their calendly, we should update by deleting it too
-export async function addNewCalendlyEventTypes(userId: string, eventTypes: CalendlyConfig[]) {
+export async function addNewCalendlyEventTypes(userId: string, eventTypes: CalendlyTemplate[]) {
   const supabase = await createServerSupabaseClient();
   
   // Get existing event type URIs
   const { data: existing } = await supabase
-    .from('calendly_configs')
+    .from('calendly_templates')
     .select('uri')
     .eq('user_id', userId);
 
@@ -649,12 +555,12 @@ export async function addNewCalendlyEventTypes(userId: string, eventTypes: Calen
     uri: eventType.uri,
     name: eventType.name,
     spreadsheet_id: null,
-    custom_instructions: null,
+    prompt: null,
     active: false
   }));
 
   const { error } = await supabase
-    .from('calendly_configs')
+    .from('calendly_templates')
     .insert(configs);
 
   if (error) throw error;
@@ -662,20 +568,20 @@ export async function addNewCalendlyEventTypes(userId: string, eventTypes: Calen
 }
 
 // 4. Function to update a single config
-export async function updateCalendlyConfig(
+export async function updateCalendlyTemplate(
   userId: string, 
-  configId: string, 
-  updates: Partial<CalendlyConfig>
+  templateId: string, 
+  updates: Partial<CalendlyTemplate>
 ) {
   const supabase = await createServerSupabaseClient();
   
   const { error } = await supabase
-    .from('calendly_configs')
+    .from('calendly_templates')
     .update({
       ...updates,
       updated_at: new Date().toISOString()
     })
-    .eq('id', configId)
+    .eq('id', templateId)
     .eq('user_id', userId); // Extra safety check
 
   if (error) throw error;
@@ -703,9 +609,9 @@ export async function getMeetingByEventUri(eventUri: string) {
   if (error) throw error;
   return data;
 }
-export async function getCalendlyConfigByUri(eventTypeUri: string) {
+export async function getCalendlyTemplateByUri(eventTypeUri: string) {
   const { data, error } = await supabaseAdmin
-    .from('calendly_configs')
+    .from('calendly_templates')
     .select('*')
     .eq('uri', eventTypeUri)
     .maybeSingle();
@@ -722,12 +628,12 @@ export async function cancelCalendlyMeeting(eventUri: string) {
   if (error) throw error;
 }
 
-export async function syncCalendlyEventTypes(userId: string, eventTypes: CalendlyConfig[]) {
+export async function syncCalendlyEventTypes(userId: string, eventTypes: CalendlyTemplate[]) {
   const supabase = await createServerSupabaseClient();
   
   // Get existing event types with names
   const { data: existing } = await supabase
-    .from('calendly_configs')
+    .from('calendly_templates')
     .select('uri, id, name')
     .eq('user_id', userId);
 
@@ -752,12 +658,12 @@ export async function syncCalendlyEventTypes(userId: string, eventTypes: Calendl
       uri: eventType.uri,
       name: eventType.name,
       spreadsheet_id: null,
-      custom_instructions: null,
+      prompt: null,
       active: false
     }));
 
     await supabase
-      .from('calendly_configs')
+      .from('calendly_templates')
       .insert(configs);
   }
 
@@ -765,7 +671,7 @@ export async function syncCalendlyEventTypes(userId: string, eventTypes: Calendl
   if (toUpdate.length > 0) {
     for (const eventType of toUpdate) {
       await supabase
-        .from('calendly_configs')
+        .from('calendly_templates')
         .update({ name: eventType.name })
         .eq('uri', eventType.uri)
         .eq('user_id', userId);
@@ -775,7 +681,7 @@ export async function syncCalendlyEventTypes(userId: string, eventTypes: Calendl
   // Handle deletions
   if (toDelete.length > 0) {
     await supabase
-      .from('calendly_configs')
+      .from('calendly_templates')
       .delete()
       .in('id', toDelete.map(et => et.id));
   }
@@ -785,88 +691,6 @@ export async function syncCalendlyEventTypes(userId: string, eventTypes: Calendl
     updated: toUpdate.length,
     deleted: toDelete.length
   };
-}
-
-export async function getUserById(userId: string) {
-  const { data, error } = await supabaseAdmin
-    .from('users')
-    .select('*')
-    .eq('id', userId)
-    .single();
-
-  if (error) {
-    console.error('Error fetching user:', error);
-    return null;
-  }
-
-  return data;
-}
-
-export async function updateUserMeetingHours(userId: string, hours: number) {
-  const { data: user } = await supabaseAdmin
-    .from('users')
-    .select('meeting_hours_remaining, total_hours_purchased, auto_renewal_package_hours, auto_renewal_enabled')
-    .eq('id', userId)
-    .single();
-
-  if (!user) {
-    throw new Error('User not found');
-  }
-
-  console.log('Updating user meeting hours:', { userId, hours });
-  console.log('Current user state:', { 
-    currentHours: user.meeting_hours_remaining,
-    currentTotalHours: user.total_hours_purchased 
-  });
-
-  const currentHours = user.meeting_hours_remaining || 0;
-  const currentTotalHours = user.total_hours_purchased || 0;
-  const newHours = currentHours + hours;
-  const newTotalHours = currentTotalHours + (hours > 0 ? hours : 0);
-
-  console.log('Calculated new values:', {
-    newHours,
-    newTotalHours,
-    hoursChange: hours
-  });
-
-  const { error } = await supabaseAdmin
-    .from('users')
-    .update({ 
-      meeting_hours_remaining: newHours,
-      total_hours_purchased: newTotalHours
-    })
-    .eq('id', userId);
-
-  if (error) {
-    console.error('Error updating user meeting hours:', error);
-    throw error;
-  }
-
-  console.log('Successfully updated user hours:', {
-    userId,
-    newHours,
-    newTotalHours
-  });
-
-  return { 
-    meeting_hours_remaining: newHours,
-    total_hours_purchased: newTotalHours,
-    auto_renewal_package_hours: user.auto_renewal_package_hours,
-    auto_renewal_enabled: user.auto_renewal_enabled
-  };
-}
-
-export async function enableUserCalendlyAccess(userId: string, expiryDate: string) {
-  const { error } = await supabaseAdmin
-    .from('users')
-    .update({ calendly_access_until: expiryDate, calendly_enabled: true })
-    .eq('id', userId);
-
-  if (error) {
-    console.error('Error updating user Calendly access:', error);
-    throw error;
-  }
 }
 
 export async function getUserSubscriptionByStripeCustomerId(stripeCustomerId: string) {
@@ -888,9 +712,9 @@ export async function getOrCreateStripeCustomerId(userId: string, email: string)
   try {
     // First try to get existing customer ID
     const { data: userData } = await supabaseAdmin
-      .from('users')
+      .from('subscriptions')
       .select('stripe_customer_id')
-      .eq('id', userId)
+      .eq('user_id', userId)
       .maybeSingle();
 
     if (userData?.stripe_customer_id) {
@@ -902,9 +726,9 @@ export async function getOrCreateStripeCustomerId(userId: string, email: string)
 
     // Update user with new Stripe customer ID
     await supabaseAdmin
-      .from('users')
+      .from('subscriptions')
       .update({ stripe_customer_id: customer.id })
-      .eq('id', userId);
+      .eq('user_id', userId);
 
     return customer.id;
   } catch (error) {
@@ -921,9 +745,9 @@ export interface Meeting {
   spreadsheet_id: string
   spreadsheet_name: string
   spreadsheet_row_number?: number
-  zoom_link: string
+  meeting_link: string
   bot_id: string
-  custom_instructions: string
+  prompt: string
   transcript: string | null
   processed_data: Record<string, unknown> | null
   column_headers: string[]
@@ -986,7 +810,7 @@ export async function getMeetingsWithFilters(
   filters: {
     status?: Meeting['status'][]
     dateRange?: { start: Date; end: Date }
-    hasCustomInstructions?: boolean
+    hasprompt?: boolean
   },
   sort: {
     field: keyof Meeting
@@ -1008,11 +832,11 @@ export async function getMeetingsWithFilters(
       .lte('date', filters.dateRange.end.toISOString());
   }
 
-  if (filters.hasCustomInstructions !== undefined) {
-    if (filters.hasCustomInstructions) {
-      query = query.not('custom_instructions', 'eq', '');
+  if (filters.hasprompt !== undefined) {
+    if (filters.hasprompt) {
+      query = query.not('prompt', 'eq', '');
     } else {
-      query = query.eq('custom_instructions', '');
+      query = query.eq('prompt', '');
     }
   }
 
@@ -1024,39 +848,6 @@ export async function getMeetingsWithFilters(
   return data;
 }
 
-export async function getUser() {
-  const supabase = await createServerSupabaseClient();
-  const { data: { user }, error } = await supabase.auth.getUser();
-  
-  if (error || !user) {
-    throw new Error('Not authenticated');
-  }
-
-  const { data: userDetails } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', user.id)
-    .single();
-
-  return {
-    ...userDetails
-  };
-}
-
-export async function getZoomCreds(userId: string) {
-  const { data, error } = await supabaseAdmin
-    .from('zoom_oauth_credentials')
-    .select('*')
-    .eq('user_id', userId)
-    .single();
-
-  if (error) {
-    console.error('Error fetching Zoom credentials:', error);
-    return null;
-  }
-
-  return data;
-}
 export async function getSubscription() {
   const supabase = await createServerSupabaseClient();
   const { data: { user } } = await supabase.auth.getUser();

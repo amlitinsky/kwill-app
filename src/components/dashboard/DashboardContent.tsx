@@ -69,8 +69,8 @@ export function DashboardContent({ initialMeetings }: DashboardContentProps) {
       .slice(0, 5)
 
     const templateUsage = initialMeetings.reduce((acc: Record<string, number>, meeting: Meeting) => {
-      if (meeting.custom_instructions) {
-        acc[meeting.custom_instructions] = (acc[meeting.custom_instructions] || 0) + 1
+      if (meeting.prompt) {
+        acc[meeting.prompt] = (acc[meeting.prompt] || 0) + 1
       }
       return acc
     }, {})
@@ -78,8 +78,8 @@ export function DashboardContent({ initialMeetings }: DashboardContentProps) {
     const mostUsedTemplates = Object.entries(templateUsage)
       .sort(([, a], [, b]) => (b as number) - (a as number))
       .slice(0, 3)
-      .map(([instructions, count]) => ({
-        name: instructions.length > 30 ? instructions.substring(0, 30) + '...' : instructions,
+      .map(([prompt, count]) => ({
+        name: prompt.length > 30 ? prompt.substring(0, 30) + '...' : prompt,
         usageCount: count as number
       }))
 
@@ -116,10 +116,10 @@ export function DashboardContent({ initialMeetings }: DashboardContentProps) {
         .sort((a: Meeting, b: Meeting) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, 5)
 
-      // Get most used templates (based on custom instructions)
+      // Get most used templates (based on prompt)
       const templateUsage = meetings.reduce((acc: Record<string, number>, meeting: Meeting) => {
-        if (meeting.custom_instructions) {
-          acc[meeting.custom_instructions] = (acc[meeting.custom_instructions] || 0) + 1
+        if (meeting.prompt) {
+          acc[meeting.prompt] = (acc[meeting.prompt] || 0) + 1
         }
         return acc
       }, {})
@@ -127,8 +127,8 @@ export function DashboardContent({ initialMeetings }: DashboardContentProps) {
       const mostUsedTemplates = Object.entries(templateUsage)
         .sort(([, a], [, b]) => (b as number) - (a as number))
         .slice(0, 3)
-        .map(([instructions, count]) => ({
-          name: instructions.length > 30 ? instructions.substring(0, 30) + '...' : instructions,
+        .map(([prompt, count]) => ({
+          name: prompt.length > 30 ? prompt.substring(0, 30) + '...' : prompt,
           usageCount: count as number
         }))
 
@@ -257,12 +257,6 @@ export function DashboardContent({ initialMeetings }: DashboardContentProps) {
                 <CardDescription>Your most frequently used templates</CardDescription>
               </div>
               <div className="space-x-4">
-                <Button variant="outline" size="sm" className="border-zinc-800 bg-zinc-950" asChild>
-                  <Link href="/integrations">
-                    Manage Integrations
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
                 <Button variant="outline" size="sm" className="border-zinc-800 bg-zinc-950" asChild>
                   <Link href="/templates">
                     Manage Templates

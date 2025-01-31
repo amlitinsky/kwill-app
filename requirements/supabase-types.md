@@ -12,11 +12,11 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      calendly_configs: {
+      calendly_templates: {
         Row: {
           active: boolean | null
           created_at: string
-          custom_instructions: string | null
+          prompt: string | null
           id: string
           name: string | null
           spreadsheet_id: string | null
@@ -27,7 +27,7 @@ export type Database = {
         Insert: {
           active?: boolean | null
           created_at?: string
-          custom_instructions?: string | null
+          prompt?: string | null
           id?: string
           name?: string | null
           spreadsheet_id?: string | null
@@ -38,7 +38,7 @@ export type Database = {
         Update: {
           active?: boolean | null
           created_at?: string
-          custom_instructions?: string | null
+          prompt?: string | null
           id?: string
           name?: string | null
           spreadsheet_id?: string | null
@@ -48,7 +48,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "calendly_configs_user_id_fkey"
+            foreignKeyName: "calendly_templates_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -144,7 +144,7 @@ export type Database = {
           bot_id: string | null
           column_headers: string[] | null
           created_at: string
-          custom_instructions: string | null
+          prompt: string | null
           event_uri: string | null
           fields_analyzed: number | null
           id: string
@@ -159,14 +159,14 @@ export type Database = {
           transcript: Json | null
           updated_at: string
           user_id: string | null
-          zoom_link: string | null
+          meeting_link: string | null
         }
         Insert: {
           ai_insights?: Json | null
           bot_id?: string | null
           column_headers?: string[] | null
           created_at: string
-          custom_instructions?: string | null
+          prompt?: string | null
           event_uri?: string | null
           fields_analyzed?: number | null
           id?: string
@@ -181,14 +181,14 @@ export type Database = {
           transcript?: Json | null
           updated_at: string
           user_id?: string | null
-          zoom_link?: string | null
+          meeting_link?: string | null
         }
         Update: {
           ai_insights?: Json | null
           bot_id?: string | null
           column_headers?: string[] | null
           created_at?: string
-          custom_instructions?: string | null
+          prompt?: string | null
           event_uri?: string | null
           fields_analyzed?: number | null
           id?: string
@@ -203,7 +203,7 @@ export type Database = {
           transcript?: Json | null
           updated_at?: string
           user_id?: string | null
-          zoom_link?: string | null
+          meeting_link?: string | null
         }
         Relationships: [
           {
@@ -251,7 +251,7 @@ export type Database = {
         Row: {
           column_headers: string[] | null
           created_at: string
-          custom_instructions: string | null
+          prompt: string | null
           id: string
           name: string
           spreadsheet_id: string | null
@@ -262,7 +262,7 @@ export type Database = {
         Insert: {
           column_headers?: string[] | null
           created_at: string
-          custom_instructions?: string | null
+          prompt?: string | null
           id?: string
           name: string
           spreadsheet_id?: string | null
@@ -273,7 +273,7 @@ export type Database = {
         Update: {
           column_headers?: string[] | null
           created_at?: string
-          custom_instructions?: string | null
+          prompt?: string | null
           id?: string
           name?: string
           spreadsheet_id?: string | null

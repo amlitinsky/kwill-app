@@ -5,11 +5,11 @@ import { getColumnHeaders } from '@/lib/google-auth';
 export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
-
-  if (authError || !user) {
+    
+    if (authError || !user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+    }
+    
   try {
     const { spreadsheetId } = await request.json();
     
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     // Then fetch column headers
     const headers = await getColumnHeaders(valid_access_token, spreadsheetId);
-    
+
     if (!headers || headers.length === 0) {
       return NextResponse.json({ 
         error: 'Spreadsheet must have at least one column header' 

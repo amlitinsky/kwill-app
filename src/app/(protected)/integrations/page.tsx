@@ -29,11 +29,10 @@ export default async function IntegrationsPage() {
     .eq('user_id', user.id)
     .single()
 
-  const { data: calendlyConfigs } = await supabase
-    .from('calendly_configs')
+  const { data: calendlyTemplates } = await supabase
+    .from('calendly_templates')
     .select('*')
     .eq('user_id', user.id)
-    .single()
 
   return (
     <div className="container py-10">
@@ -41,7 +40,7 @@ export default async function IntegrationsPage() {
         recallOauthAppCredentials={recallOauthAppCreds}
         calendlyCredentials={calendlyCreds}
         googleCredentials={googleCreds}
-        calendlyConfigs={calendlyConfigs}
+        calendlyTemplates={calendlyTemplates}
         googleAuthUrl={googleAuthUrl}
       />
     </div>

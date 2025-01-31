@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient, getCalendlyConfigs, getCalendlyCreds, getUserById, getValidCalendlyToken, syncCalendlyEventTypes, updateCalendlyConfig } from '@/lib/supabase-server';
+import { createServerSupabaseClient, getCalendlyTemplates, getCalendlyCreds, getValidCalendlyToken, syncCalendlyEventTypes, updateCalendlyTemplate } from '@/lib/supabase-server';
 import { getCalendlyEventTypes } from '@/lib/calendly';
+import { getSubscription } from '@/lib/supabase-server';
 
 export async function GET() {
   const supabase = await createServerSupabaseClient();
@@ -11,12 +12,12 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const configs = await getCalendlyConfigs(user.id);
-    const userData = await getUserById(user.id);
-    return NextResponse.json({ configs, calendlyEnabled: userData.calendly_enabled });
+    const templates = await getCalendlyTemplates(user.id);
+    const userData = await getSubscription();
+    return NextResponse.json({ templates, calendlyEnabled: userData.calendly_enabled });
   } catch (error) {
-    console.error('Error fetching configs:', error);
-    return NextResponse.json({ error: 'Failed to fetch configs' }, { status: 500 });
+    console.error('Error fetching templates:', error);
+    return NextResponse.json({ error: 'Failed to fetch templates' }, { status: 500 });
   }
 }
 
@@ -34,11 +35,11 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Config ID is required' }, { status: 400 });
     }
 
-    await updateCalendlyConfig(user.id, id, updates);
+    await updateCalendlyTemplate(user.id, id, updates);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error('Error updating config:', error);
-    return NextResponse.json({ error: 'Failed to update config' }, { status: 500 });
+    console.error('Error updating template:', error);
+    return NextResponse.json({ error: 'Failed to update template' }, { status: 500 });
   }
 }
 
@@ -66,11 +67,11 @@ export async function POST() {
     );
 
     const { added } = await syncCalendlyEventTypes(user.id, eventTypes);
-    const configs = await getCalendlyConfigs(user.id);
+    const templates = await getCalendlyTemplates(user.id);
 
-    return NextResponse.json({ configs, added });
+    return NextResponse.json({ templates, added });
   } catch (error) {
-    console.error('Error syncing configs:', error);
+    console.error('Error syncing templates:', error);
     return NextResponse.json({ error: 'Sync failed' }, { status: 500 });
   }
 }

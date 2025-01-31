@@ -11,7 +11,7 @@ export default function PrivacyPolicy() {
           <li>Account information (name, email, password)</li>
           <li>Meeting data (Zoom links, transcripts, processed data)</li>
           <li>Google Sheets information (spreadsheet IDs, column headers)</li>
-          <li>Custom instructions for meeting analysis</li>
+          <li>Custom prompting for meeting analysis</li>
         </ul>
 
         <h2>2. How We Use Your Information</h2>

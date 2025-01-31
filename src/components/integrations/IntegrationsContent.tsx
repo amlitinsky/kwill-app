@@ -2,7 +2,7 @@
 
 import { Card, CardDescription, CardTitle } from "@/components/ui/card"
 import { ConnectButton } from '@/components/integrations/ConnectButton'
-import { CalendlyConfigs } from "@/components/integrations/CalendlyConfigs"
+import { CalendlyTemplates } from "@/components/integrations/CalendlyTemplates"
 import { useSearchParams } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
@@ -22,12 +22,12 @@ interface RecallOauthAppCredentials {
   created_at: string;
 }
 
-interface CalendlyConfig {
+interface CalendlyTemplate {
   id: string;
   name: string;
   uri: string;
   spreadsheet_id: string | null;
-  custom_instructions: string | null;
+  prompt: string | null;
   active: boolean;
 }
 
@@ -35,7 +35,7 @@ interface IntegrationsContentProps {
   recallOauthAppCredentials: RecallOauthAppCredentials | null;
   calendlyCredentials: OAuthCredentials | null;
   googleCredentials: OAuthCredentials | null;
-  calendlyConfigs: CalendlyConfig | null;
+  calendlyTemplates: CalendlyTemplate[] | null;
   googleAuthUrl: string;
 }
 
@@ -43,7 +43,7 @@ export function IntegrationsContent({
   recallOauthAppCredentials,
   calendlyCredentials,
   googleCredentials,
-  calendlyConfigs,
+  calendlyTemplates,
   googleAuthUrl
 }: IntegrationsContentProps) {
   const searchParams = useSearchParams()
@@ -149,8 +149,8 @@ export function IntegrationsContent({
               onConnect={handleCalendlyConnect}
             />
           </div>
-          {isCalendlyConnected && calendlyConfigs && (
-            <CalendlyConfigs initialConfigs={calendlyConfigs} />
+          {isCalendlyConnected && calendlyTemplates && (
+            <CalendlyTemplates initialTemplates={calendlyTemplates} />
           )}
         </Card>
       </div>

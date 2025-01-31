@@ -9,6 +9,7 @@ import { Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { PricingPlans } from '@/components/stripe/PricingPlans';
 import { Plan, Subscription } from '@/types/stripe';
+import { FREE_PLAN } from '@/lib/stripe-constants';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_API_PUBLISHABLE_KEY!);
 
@@ -20,16 +21,7 @@ interface StripeManagerProps {
 export function StripeManager({ initialSubscription, initialPlans }: StripeManagerProps) {
   const [currentSubscription] = useState<Subscription | null>(initialSubscription);
   const [availablePlans] = useState<Plan[]>([
-    {
-      id: 'free',
-      name: 'Free',
-      price: 0,
-      description: 'Get started with basic features',
-      hours: 2,
-      calendlyEnabled: false,
-      order: 0,
-      features: ['Up to 2 hours of Meeting Hours', 'Unlimited Templates']
-    },
+    FREE_PLAN,
     ...initialPlans
   ]);
   const [loading, setLoading] = useState(false);

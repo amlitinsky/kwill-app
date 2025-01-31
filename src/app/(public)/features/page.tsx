@@ -11,8 +11,8 @@ export default function FeaturesPage() {
       description: "Connect effortlessly with Zoom and Google Sheets for a smooth workflow."
     },
     {
-      title: "Custom Instructions",
-      description: "Tailor the analysis to your specific needs with custom instructions."
+      title: "Custom Prompting",
+      description: "Tailor the analysis to your specific needs with custom prompting."
     },
     {
       title: "Real-time Transcription",

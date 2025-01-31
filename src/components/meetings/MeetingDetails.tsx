@@ -39,7 +39,7 @@ const statusColors = {
 
 export function MeetingDetails({ meeting: initialMeeting }: MeetingDetailsProps) {
   const [meeting, setMeeting] = useState(initialMeeting)
-  const [instructions, setInstructions] = useState(meeting.custom_instructions)
+  const [prompt, setPrompt] = useState(meeting.prompt || '')
   const [isProcessing, setIsProcessing] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [isTranscriptExpanded, setIsTranscriptExpanded] = useState(false)
@@ -60,7 +60,7 @@ export function MeetingDetails({ meeting: initialMeeting }: MeetingDetailsProps)
         },
         (payload) => {
           setMeeting(payload.new)
-          setInstructions(payload.new.custom_instructions)
+          setPrompt(payload.new.prompt)
           toast({
             title: 'Meeting Updated',
             description: 'Meeting details have been refreshed.',
@@ -75,28 +75,28 @@ export function MeetingDetails({ meeting: initialMeeting }: MeetingDetailsProps)
     }
   }, [meeting.id])
 
-  const handleSaveInstructions = async () => {
+  const handleSavePrompt = async () => {
     if (isSaving) return
     setIsSaving(true)
 
     try {
       const { error } = await supabase
         .from('meetings')
-        .update({ custom_instructions: instructions })
+        .update({ prompt: prompt })
         .eq('id', meeting.id)
 
       if (error) throw error
 
       toast({
-        title: 'Instructions Saved',
-        description: 'Custom instructions have been updated.',
+        title: 'Prompt Saved',
+        description: 'Prompt has been updated.',
         duration: 3000
       })
     } catch (error) {
-      console.error('Error saving instructions:', error)
+      console.error('Error saving prompt:', error)
       toast({
         title: 'Error',
-        description: 'Failed to save instructions. Please try again.',
+        description: 'Failed to save prompt. Please try again.',
         variant: 'destructive',
         duration: 5000
       })
@@ -131,7 +131,7 @@ export function MeetingDetails({ meeting: initialMeeting }: MeetingDetailsProps)
 
       toast({
         title: 'Processing Started',
-        description: 'Your meeting is being reprocessed with the new instructions.',
+        description: 'Your meeting is being reprocessed with the new prompt.',
         duration: 5000
       })
     } catch (error) {
@@ -298,25 +298,25 @@ export function MeetingDetails({ meeting: initialMeeting }: MeetingDetailsProps)
             </CardContent>
           </Card>
 
-          {/* Custom Instructions */}
+          {/* Prompt */}
           <Card>
             <CardHeader className="pb-3">
-              <h2 className="text-xl font-semibold">Custom Instructions</h2>
+              <h2 className="text-xl font-semibold">Prompt</h2>
             </CardHeader>
             <CardContent className="space-y-4">
               <Textarea
-                value={instructions}
-                onChange={(e) => setInstructions(e.target.value)}
-                placeholder="Enter custom instructions for AI processing..."
+                value={prompt}
+                onChange={(e) => setPrompt(e.target.value)}
+                placeholder="Enter prompt for AI processing..."
                 className="min-h-[100px]"
               />
               <div className="flex gap-4">
                 <Button
-                  onClick={handleSaveInstructions}
-                  disabled={isSaving || instructions === meeting.custom_instructions}
+                  onClick={handleSavePrompt}
+                  disabled={isSaving || prompt === meeting.prompt}
                 >
                   <Save className="mr-2 h-4 w-4" />
-                  {isSaving ? 'Saving...' : 'Save Instructions'}
+                  {isSaving ? 'Saving...' : 'Save Prompt'}
                 </Button>
                 <Button
                   onClick={handleReprocess}

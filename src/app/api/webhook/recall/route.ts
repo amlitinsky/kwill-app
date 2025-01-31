@@ -198,11 +198,25 @@ async function processCompletedMeeting(botId: string) {
           const processed_data = await analyzeTranscript(
             transcript, 
             meetingDetails.column_headers, 
-            meetingDetails.custom_instructions
+            meetingDetails.prompt
           )
 
           // update supabase with processed data
           await updateMeetingProcessedData(botId, processed_data)
+
+          // get valid access_token
+          const access_token = await getValidGoogleToken(meetingDetails.user_id)
+
+          // append to google sheets
+          // TODO eventually we will have to adapt to different sheet names with different headers or maybe exporting to different sheets at once
+          await mapHeadersAndAppendData(
+            meetingDetails.spreadsheet_id, 
+            "", 
+            processed_data, 
+            access_token,
+            meetingDetails.spreadsheet_row_number,
+            false 
+          )
 
           // Calculate success rate after processing data
           const success_rate = await calculateSuccessRate(processed_data, meetingDetails.column_headers)
@@ -228,19 +242,6 @@ async function processCompletedMeeting(botId: string) {
           await updateMeetingAIInsights(botId, aiInsights)
 
 
-          // get valid access_token
-          const access_token = await getValidGoogleToken(meetingDetails.user_id)
-
-          // append to google sheets
-          // TODO eventually we will have to adapt to different sheet names with different headers or maybe exporting to different sheets at once
-          await mapHeadersAndAppendData(
-            meetingDetails.spreadsheet_id, 
-            "", 
-            processed_data, 
-            access_token,
-            meetingDetails.spreadsheet_row_number,
-            false 
-          )
 
           const { data: remainingHours, error: deductionError } = await supabaseAdmin
             .rpc('deduct_hours_atomic', {

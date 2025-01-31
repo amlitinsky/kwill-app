@@ -51,10 +51,11 @@ export async function getPlans() {
     return prices.data
       .filter(price => {
         const product = price.product as Stripe.Product;
-        // Only include active web-based plans
+        // Only include active paid web-based plans
         return price.active === true && 
                product.active === true &&
-               product.metadata.web === 'true';
+               product.metadata.web === 'true' &&
+               price.unit_amount! > 0; // Exclude free plans
       })
       .map(price => {
         const product = price.product as Stripe.Product;

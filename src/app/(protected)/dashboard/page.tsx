@@ -1,7 +1,8 @@
 import { Suspense } from 'react'
 import { DashboardContent } from '@/components/dashboard/DashboardContent'
 import { Skeleton } from '@/components/ui/skeleton'
-import { fetchMeetings } from '@/lib/supabase-server'
+import { createServerSupabaseClient, fetchMeetings } from '@/lib/supabase-server'
+import { redirect } from 'next/navigation'
 
 function DashboardSkeleton() {
   return (
@@ -22,6 +23,13 @@ function DashboardSkeleton() {
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect('/');
+  }
+
   const meetings = await fetchMeetings()
 
   return (

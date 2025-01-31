@@ -57,7 +57,7 @@ export default function LoadingMeetingDetails() {
             </CardContent>
           </Card>
 
-          {/* Custom Instructions Skeleton */}
+          {/* Prompt Skeleton */}
           <Card>
             <CardHeader className="pb-3">
               <Skeleton className="h-6 w-[150px]" />

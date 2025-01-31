@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cancelCalendlyMeeting, createMeeting, getCalendlyConfigByUri, getCalendlyUser, getMeetingByEventUri, supabaseAdmin } from '@/lib/supabase-server';
+import { cancelCalendlyMeeting, createMeeting, getCalendlyTemplateByUri, getCalendlyUser, getMeetingByEventUri, supabaseAdmin } from '@/lib/supabase-server';
 import crypto from 'crypto';
 import { createBot, deleteBot } from '@/lib/recall';
 
@@ -74,8 +74,8 @@ export async function POST(request: Request) {
         }        // Check if user has active Calendly access
 
         const user = await supabaseAdmin
-          .from('users')
-          .select('calendly_enabled, calendly_access_until, meeting_hours_remaining')
+          .from('subscriptions')
+          .select('calendly_enabled, hours')
           .eq('id', userId)
           .single();
 
@@ -92,13 +92,13 @@ export async function POST(request: Request) {
         const startTime = eventData.scheduled_event.start_time;
         const name = `${eventData.scheduled_event.name} - ${new Date(startTime).toLocaleString()}`
 
-        const config = await getCalendlyConfigByUri(eventTypeUri);
-        if (!config || !config.active || !config.spreadsheet_id) {
+        const template = await getCalendlyTemplateByUri(eventTypeUri);
+        if (!template || !template.active || !template.spreadsheet_id) {
           return NextResponse.json({ message: 'Event type not configured or inactive' });
         }
 
         const joinTime = new Date(new Date(startTime).getTime() - 30000);
-        const automaticLeave = Math.floor(user.data.meeting_hours_remaining * 3600)
+        const automaticLeave = Math.floor(user.data.hours * 3600)
         const scheduledBot = await createBot(locationData.join_url, {
           join_at: joinTime.toISOString(),
           automatic_leave: automaticLeave
@@ -108,8 +108,8 @@ export async function POST(request: Request) {
           userId,
           name,
           locationData.join_url,
-          config.spreadsheet_id,
-          config.custom_instructions,
+          template.spreadsheet_id,
+          template.prompt,
           scheduledBot.id,
           {
             useAdmin: true,

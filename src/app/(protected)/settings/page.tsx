@@ -8,6 +8,7 @@ import { getSubscription } from '@/lib/supabase-server'
 import { getPlans } from '@/lib/stripe'
 import { ClientSettingsWrapper } from './ClientSettingsWrapper'
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { DeleteAccount } from '@/components/DeleteAccount'
 
 export default async function SettingsPage() {
   const supabase = await createServerSupabaseClient()
@@ -66,6 +67,7 @@ export default async function SettingsPage() {
                           Any changes made to your Google profile will be reflected here.
                         </p>
                       </div>
+                      <DeleteAccount />
                     </CardContent>
                   </Card>
                 </TabsContent>

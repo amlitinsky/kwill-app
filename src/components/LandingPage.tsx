@@ -94,7 +94,7 @@ export default function LandingPage() {
                   Pricing
                 </Link>
                 <Link href="/docs" className="block text-sm text-muted-foreground hover:text-foreground">
-                  Documentation
+                  Docs
                 </Link>
               </div>
             </div>

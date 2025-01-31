@@ -12,9 +12,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { usePathname, useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { signOut } from '@/lib/supabase-client'
 import { Logo } from '../Logo'
 import { User } from '@supabase/supabase-js'
+import { useToast } from "@/hooks/use-toast"
 
 interface PrivateNavbarProps {
   children: React.ReactNode
@@ -24,6 +24,7 @@ interface PrivateNavbarProps {
 export function PrivateNavbar({ children, user }: PrivateNavbarProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const { toast } = useToast()
   const userMetadata = user?.user_metadata || null
   const tabs = [
     { name: 'Meetings', href: '/meetings' },
@@ -33,11 +34,23 @@ export function PrivateNavbar({ children, user }: PrivateNavbarProps) {
 
   const handleSignOut = async () => {
     try {
-      await signOut()
-      router.push('/')
+      await fetch('/auth/signout', { method: 'POST' });
+      
+      // 2. Force full client reset
+      localStorage.clear();
+      sessionStorage.clear();
+      
+      // 3. Hard redirect with cache busting
       router.refresh()
+      window.location.href = `/?t=${Date.now()}`;
+
     } catch (error) {
-      console.error('Error signing out:', error)
+      console.error('Error signing out:', error);
+      toast({
+        title: "Error",
+        description: "Failed to sign out. Please try again.",
+        variant: "destructive"
+      });
     }
   }
 
