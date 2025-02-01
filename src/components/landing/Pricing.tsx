@@ -4,8 +4,15 @@ import { motion } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 import { Button } from "@/components/ui/button"
 import { Check } from "lucide-react"
+import Link from "next/link"
 
 const plans = [
+  {
+    name: "Free",
+    hours: 2,
+    price: 0,
+    features: ["First 2 hours of meeting processing", "Basic analytics", "Email support"],
+  },
   {
     name: "Starter",
     hours: 5,
@@ -19,10 +26,10 @@ const plans = [
     features: ["10 hours of meeting processing", "Advanced analytics", "Priority email support"],
   },
   {
-    name: "Enterprise",
+    name: "Premium",
     hours: 20,
     price: 40,
-    features: ["20 hours of meeting processing", "Custom analytics", "24/7 phone & email support"],
+    features: ["20 hours of meeting processing", "Advanced analytics", "Priority email support"],
   },
 ]
 
@@ -42,7 +49,7 @@ export default function Pricing() {
       >
         Simple, Transparent Pricing
       </motion.h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         {plans.map((plan, index) => (
           <motion.div
             key={index}
@@ -64,8 +71,8 @@ export default function Pricing() {
               animate={inView ? { scale: 1 } : {}}
               transition={{ duration: 0.5, delay: index * 0.2 + 0.2 }}
             >
-              ${plan.price}
-              <span className="text-xl font-normal text-muted-foreground">/mo</span>
+              {plan.price === 0 ? 'Free' : `$${plan.price}`}
+              {plan.price > 0 && <span className="text-xl font-normal text-muted-foreground">/mo</span>}
             </motion.p>
             <ul className="mb-8 space-y-2">
               {plan.features.map((feature, i) => (
@@ -81,11 +88,13 @@ export default function Pricing() {
                 </motion.li>
               ))}
             </ul>
-            <Button 
-              className="w-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
-            >
-              Choose Plan
-            </Button>
+            <Link href="/signin">
+              <Button 
+                className="w-full bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white"
+              >
+                {plan.price === 0 ? 'Get Started' : `Choose ${plan.name}`}
+              </Button>
+            </Link>
           </motion.div>
         ))}
       </div>
