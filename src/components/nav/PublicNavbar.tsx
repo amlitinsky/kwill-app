@@ -19,7 +19,7 @@ export function PublicNavbar() {
 
           {/* Auth Buttons */}
           <div className="flex items-center gap-4">
-            <Link href="/signin">
+            <Link href="/login">
               <Button 
                 variant="ghost" 
                 size="sm"
@@ -28,7 +28,7 @@ export function PublicNavbar() {
                 Sign In
               </Button>
             </Link>
-            <Link href="/signin">
+            <Link href="/login">
               <Button 
                 size="sm" 
                 className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-medium"

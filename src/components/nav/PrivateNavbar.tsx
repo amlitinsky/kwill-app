@@ -10,21 +10,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Logo } from '../Logo'
 import { User } from '@supabase/supabase-js'
 import { useToast } from "@/hooks/use-toast"
-
+import { createClient } from '@/utils/supabase/client'
 interface PrivateNavbarProps {
   children: React.ReactNode
   user: User | null
 }
 
 export function PrivateNavbar({ children, user }: PrivateNavbarProps) {
-  const router = useRouter()
   const pathname = usePathname()
   const { toast } = useToast()
+  const supabase = createClient()
   const userMetadata = user?.user_metadata || null
   const tabs = [
     { name: 'Meetings', href: '/meetings' },
@@ -34,24 +34,11 @@ export function PrivateNavbar({ children, user }: PrivateNavbarProps) {
 
   const handleSignOut = async () => {
     try {
-      // First, make the sign-out request
-      const response = await fetch('/auth/signout', { 
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      // CHECK if I really don't need to clear cookies manually
+      const { error } = await supabase.auth.signOut()
+      if (error) { throw error }
+      window.location.href = '/'
 
-      if (!response.ok) {
-        throw new Error('Failed to sign out');
-      }
-
-      // Clear any client-side state
-      localStorage.clear();
-      sessionStorage.clear();
-
-      // Use router.replace with the root path
-      router.replace('/');
     } catch (error) {
       console.error('Error signing out:', error);
       toast({

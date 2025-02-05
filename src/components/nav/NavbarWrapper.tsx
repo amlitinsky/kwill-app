@@ -12,7 +12,7 @@ interface NavbarWrapperProps {
 
 export function NavbarWrapper({ user }: NavbarWrapperProps) {
   const pathname = usePathname()
-  const hideNavbarRoutes = ['/signin', '/signup']
+  const hideNavbarRoutes = ['/login']
   const shouldHideNavbar = hideNavbarRoutes.includes(pathname)
 
   if (user) {
