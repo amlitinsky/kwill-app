@@ -60,8 +60,8 @@ export async function POST(req: Request) {
   let evt: RecallWebhookPayload 
   try {
     evt = wh.verify(payload, headers) as RecallWebhookPayload
-  } catch (err) {
-    console.error('Webhook verification failed')
+  } catch (error) {
+    console.error('Webhook verification failed', error)
     return NextResponse.json({}, { status: 400 })
   }
 
@@ -242,7 +242,7 @@ async function processCompletedMeeting(botId: string) {
 
 
 
-          const { data: remainingHours, error: deductionError } = await supabaseAdmin
+          const { error: deductionError } = await supabaseAdmin
             .rpc('deduct_hours_atomic', {
               user_id: meetingDetails.user_id,
               duration_minutes: durationInMinutes

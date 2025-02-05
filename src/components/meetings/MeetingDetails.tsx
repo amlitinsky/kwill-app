@@ -390,6 +390,7 @@ export function MeetingDetails({ meeting: initialMeeting }: MeetingDetailsProps)
                         </div>
                       );
                     } catch (error) {
+                      console.error('Error displaying transcript', error)
                       return (
                         <p className="text-sm text-muted-foreground">
                           Unable to display transcript. The data may be in an incorrect format.
@@ -438,6 +439,7 @@ export function MeetingDetails({ meeting: initialMeeting }: MeetingDetailsProps)
                       </div>
                     );
                   } catch (error) {
+                    console.error('Error displaying transcript', error)
                     return (
                       <p className="text-sm text-muted-foreground">
                         Unable to display transcript. The data may be in an incorrect format.

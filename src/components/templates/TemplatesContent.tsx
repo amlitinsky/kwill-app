@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { Plus, Pencil } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { FormEvent, ChangeEvent } from 'react';
 
 import {
   Card,
@@ -77,8 +77,9 @@ type DialogMode = 'create' | 'edit' | null;
 interface TemplateFormProps {
   mode: DialogMode;
   formData: TemplateFormData;
-  onSubmit: (e: React.FormEvent) => void;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  /* eslint-disable no-unused-vars */
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+  onChange: (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   isLoading: boolean;
 }
 
@@ -282,7 +283,7 @@ export function TemplatesContent({ initialTemplates }: TemplatesContentProps) {
     setDialogMode('edit');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (editingTemplateId) {
       updateTemplate.mutate({ ...formData, id: editingTemplateId });
@@ -292,7 +293,7 @@ export function TemplatesContent({ initialTemplates }: TemplatesContentProps) {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));

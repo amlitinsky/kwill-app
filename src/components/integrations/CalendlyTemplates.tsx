@@ -43,6 +43,7 @@ function extractedSpreadsheetId(url: string): string | null {
     const matches = url.match(/\/d\/(.*?)\/|$|\/edit/);
     return matches ? matches[1] : null;
   } catch (error) {
+    console.error('Failed to extract spreadsheet ID', error)
     return null;
   }
 }
@@ -90,6 +91,7 @@ export function CalendlyTemplates({ initialTemplates = null }: CalendlyTemplates
           });
         }
       } catch (error) {
+        console.error('Failed to load Calendly configurations', error)
         toast({
           title: 'Error',
           description: 'Failed to load Calendly configurations',
@@ -103,7 +105,7 @@ export function CalendlyTemplates({ initialTemplates = null }: CalendlyTemplates
     if (!initialTemplates) {
       syncTemplates();
     }
-  }, [initialTemplates]);
+  }, [initialTemplates, toast]);
 
 
   async function updateTemplate(id: string, updates: Partial<CalendlyTemplate>) {
@@ -140,6 +142,7 @@ export function CalendlyTemplates({ initialTemplates = null }: CalendlyTemplates
         description: 'Configuration updated successfully'
       });
     } catch (error) {
+      console.error('Failed to update configuration', error)
       toast({
         title: 'Error',
         description: 'Failed to update configuration',

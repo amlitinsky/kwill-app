@@ -32,6 +32,7 @@ function verifyWebhookSignature(payload: string, signature: string): boolean {
       Buffer.from(computedSignature)
     );
   } catch (error) {
+    console.error('Webhook signature verification failed', error)
     return false;
   }
 }

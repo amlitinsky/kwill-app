@@ -19,6 +19,7 @@ import { useRouter } from 'next/navigation'
 
 interface CreateMeetingDialogProps {
   open: boolean
+  /* eslint-disable no-unused-vars */
   onOpenChange: (open: boolean) => void
 }
 

@@ -16,6 +16,7 @@ import { Plan } from "@/types/stripe";
 interface PricingPlansProps {
   plans: Plan[];
   isLoading?: boolean;
+  /* eslint-disable no-unused-vars */
   onSelectPlan: (priceId: string) => void;
 }
 

@@ -92,7 +92,7 @@ export default function Docs() {
                   <AccordionTrigger>How many meetings can I analyze?</AccordionTrigger>
                   <AccordionContent>
                     Our subscription plans offer 5, 10, or 20 hours of meeting analysis per month, priced at $20, $30,
-                    and $40 respectively. If you exceed your plan's hours, you can purchase additional hours at $3.5 per
+                    and $40 respectively. If you exceed your plan&apos;s hours, you can purchase additional hours at $3.5 per
                     hour.
                   </AccordionContent>
                 </AccordionItem>
@@ -129,7 +129,7 @@ export default function Docs() {
             <CardContent>
               <ul className="space-y-4">
                 <li>
-                  <strong>Bot didn't join the meeting:</strong> Ensure your Zoom link is correct and the meeting is
+                  <strong>Bot didn&apos;t join the meeting:</strong> Ensure your Zoom link is correct and the meeting is
                   scheduled for the future.
                 </li>
                 <li>
@@ -137,7 +137,7 @@ export default function Docs() {
                   have the necessary permissions.
                 </li>
                 <li>
-                  <strong>Analysis taking too long:</strong> Large meetings may take some time to process. If it's been
+                  <strong>Analysis taking too long:</strong> Large meetings may take some time to process. If it&apos;s been
                   over 24 hours, please contact support.
                 </li>
               </ul>
