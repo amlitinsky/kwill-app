@@ -71,7 +71,7 @@ export async function POST(req: Request) {
 }
 
 
-export async function syncStripeSubscription(customerId: string, eventType: Stripe.Event['type']) {
+async function syncStripeSubscription(customerId: string, eventType: Stripe.Event['type']) {
   try {
     // Get latest subscription from Stripe
     const subscriptions = await stripe.subscriptions.list({
