@@ -1,31 +1,26 @@
-import type { Metadata } from "next";
-import localFont from "next/font/local";
-import "./globals.css";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import { NavbarWrapper } from "@/components/NavbarWrapper";
-import AuthListener from "@/components/AuthListener";
 import { Toaster } from "@/components/ui/toaster";
 import { createServerSupabaseClient } from "@/lib/supabase-server";
+import { Providers } from './providers';
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { NavbarWrapper } from "@/components/nav/NavbarWrapper";
+import AuthListener from "@/components/AuthListener";
+import { Metadata } from "next";
+import localFont from "next/font/local";
+import "./globals.css";
+import { Inter } from 'next/font/google';
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
   weight: "100 900",
 });
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
+
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: "Kwill",
   description: "AI-powered query analysis",
-  icons: [
-    // { url: '/favicon.ico', sizes: '32x32' },
-    { url: '/public/images/logos/kwill.png', sizes: '32x32' },
-    // { rel: 'apple-touch-icon', url: '/images/logos/kwill.png' },
-  ],
+  icons: [],
   other: {
     'darkreader-lock': '',
   },
@@ -33,27 +28,28 @@ export const metadata: Metadata = {
 
 export default async function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
-  const supabase = await createServerSupabaseClient()
-  const { data: { session } } = await supabase.auth.getSession();
+}) {
+  const supabase = await createServerSupabaseClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <div className="min-h-screen flex flex-col">
-            <NavbarWrapper session={!!session}/>
-            <main className="flex-grow">
-              {children}
-              <Toaster />
-            </main>
-          </div>
-        </ThemeProvider>
-        <AuthListener initialSession={!!session} />
+      <head><meta name="darkreader-lock"/></head>
+      <body className={`${geistSans.variable} font-sans antialiased ${inter.className}`}>
+        <Providers>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <div className="min-h-screen flex flex-col">
+              <NavbarWrapper user={user}/>
+              <main className="flex-grow">
+                {children}
+                <Toaster />
+              </main>
+            </div>
+          </ThemeProvider>
+        </Providers>
+        <AuthListener initialUser={user} />
       </body>
     </html>
   );

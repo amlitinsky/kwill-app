@@ -1,3 +1,0 @@
-KWILL PROMPT
-
-You’re an agent tasked to extract information from the following transcript and map them to the column headers of a spreadsheet as follows: [Inject column headers here] Additionally, here’s the transcript with speakers’ names: [Inject transcript with speaker names here]. It’s key that you exclude the context of [VC person name here] questions/answers. The expected result is a dictionary that maps the column headers to the expected values. Our user has also included specific instructions which you need to follow as long as it does not conflict with expected dictionary result. Custom instructions: [include custom instrucions here]

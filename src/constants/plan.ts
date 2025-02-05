@@ -8,7 +8,7 @@ export const FREE_PLAN =   {
       'Basic meeting transcription',
       'Google Sheets integration',
       'Zoom Integration',
-      'Custom instructions for data processing',
+      'Custom prompting for data processing',
       'Email support'
     ]
   }

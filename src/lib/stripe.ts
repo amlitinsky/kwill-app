@@ -1,76 +1,108 @@
 import Stripe from 'stripe';
 
-// should I use the api version or nah
 export const stripe = new Stripe(process.env.STRIPE_API_SECRET_KEY!, {
-  apiVersion: '2024-09-30.acacia', // Use the latest API version
+  apiVersion: '2025-01-27.acacia',
 });
+
+export async function createCheckoutSession(
+  priceId: string,
+  customerId: string,
+  returnUrl: string = `${process.env.NEXT_PUBLIC_BASE_URL}/settings`
+) {
+  try {
+    // Get the price details to access metadata
+    const price = await stripe.prices.retrieve(priceId);
+    const product = await stripe.products.retrieve(price.product as string);
+    
+    const session = await stripe.checkout.sessions.create({
+      customer: customerId,
+      payment_method_types: ['card'],
+      line_items: [
+        {
+          price: priceId,
+          quantity: 1,
+        },
+      ],
+      mode: 'subscription',
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/settings?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/settings?canceled=true`,
+      metadata: {
+        hours: product.metadata.hours,
+        calendly_enabled: product.metadata.calendly_enabled,
+        order: product.metadata.order
+      },
+      allow_promotion_codes: true,
+    });
+
+    return { sessionId: session.id };
+  } catch (error) {
+    console.error('Error creating checkout session:', error);
+    throw error;
+  }
+}
+
+export async function getPlans() {
+  try {
+    const prices = await stripe.prices.list({
+      expand: ['data.product'],
+      active: true,
+    });
+
+    return prices.data
+      .filter(price => {
+        const product = price.product as Stripe.Product;
+        // Only include active paid web-based plans
+        return price.active === true && 
+               product.active === true &&
+               product.metadata.web === 'true' &&
+               price.unit_amount! > 0; // Exclude free plans
+      })
+      .map(price => {
+        const product = price.product as Stripe.Product;
+        return {
+          id: price.id,
+          name: product.name,
+          price: price.unit_amount ? price.unit_amount / 100 : 0,
+          description: product.description,
+          hours: parseInt(product.metadata.hours || '0'),
+          calendlyEnabled: product.metadata.calendly_enabled === 'true',
+          order: parseInt(product.metadata.order || '0'),
+          features: product.metadata.features ? JSON.parse(product.metadata.features) : []
+        };
+      })
+      .sort((a, b) => a.order - b.order);
+  } catch (error) {
+    console.error('Error fetching plans:', error);
+    throw error;
+  }
+}
+
+export async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
+  try {
+    const customerId = subscription.customer as string;
+    const hours = parseInt(subscription.metadata?.hours || '0');
+    const calendlyEnabled = subscription.metadata?.calendly_enabled === 'true';
+
+    // Return the processed information
+    return {
+      customerId,
+      hours,
+      calendlyEnabled,
+      status: subscription.status,
+      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      subscriptionId: subscription.id
+    };
+  } catch (error) {
+    console.error('Error handling subscription update:', error);
+    throw error;
+  }
+}
 
 export async function createStripeCustomer(email: string) {
   const customer = await stripe.customers.create({
     email,
   });
   return customer;
-}
-
-export async function createSubscription(customerId: string, priceId: string) {
-  const subscription = await stripe.subscriptions.create({
-    customer: customerId,
-    items: [{ price: priceId }],
-    payment_behavior: 'default_incomplete',
-    expand: ['latest_invoice.payment_intent'],
-  });
-  return subscription;
-}
-
-export async function cancelSubscription(subscriptionId: string) {
-  const canceledSubscription = await stripe.subscriptions.cancel(subscriptionId);
-  return canceledSubscription;
-}
-
-export async function updateSubscription(subscriptionId: string, newPriceId: string) {
-  const updatedSubscription = await stripe.subscriptions.retrieve(subscriptionId);
-  await stripe.subscriptions.update(subscriptionId, {
-    items: [
-      {
-        id: updatedSubscription.items.data[0].id,
-        price: newPriceId,
-      },
-    ],
-  });
-  return updatedSubscription;
-}
-
-export async function createCheckoutSession(priceId: string, subscriptionId: string, existingCustomerId: string) {
-    const prices = await stripe.prices.list();
-    const price = prices.data.find(p => p.id === priceId);
-    const planName = price?.nickname || 'unknown';
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      line_items: [{ price: priceId, quantity: 1 }],
-      mode: 'subscription',
-      customer: existingCustomerId,
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/private/settings?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL}/private/settings`,
-      metadata: {
-        planName: planName,
-        previous_subscription_id: subscriptionId
-      }
-    });
-
-    return session
-}
-
-export async function retrieveSubscription(subscriptionId: string) {
-  try {
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
-      expand: ['customer', 'default_payment_method', 'items.data.price.product']
-    });
-    return subscription;
-  } catch (error) {
-    console.error('Error retrieving subscription:', error);
-    throw error;
-  }
 }
 
 export async function listStripeCustomer(email: string): Promise<string | null> {
@@ -83,33 +115,47 @@ export async function listStripeCustomer(email: string): Promise<string | null> 
   }
 }
 
-export async function getCustomerInvoices(customerId: string) {
+export async function getSubscriptionHistory(customerId: string) {
   try {
-    const invoices = await stripe.invoices.list({
+    const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
-      limit: 10, // Adjust as needed
-      status: 'paid', // Only fetch paid invoices
+      limit: 10,
+      expand: ['data.default_payment_method']
     });
 
-    return invoices.data.map(invoice => ({
-      id: invoice.id,
-      date: new Date(invoice.created * 1000).toLocaleDateString(),
-      total: `$${(invoice.total / 100).toFixed(2)}`,
-      status: invoice.status,
-      pdfUrl: invoice.invoice_pdf,
+    return subscriptions.data.map(sub => ({
+      id: sub.id,
+      status: sub.status,
+      currentPeriodEnd: new Date(sub.current_period_end * 1000).toLocaleDateString(),
+      amount: `$${(sub.items.data[0].price.unit_amount! / 100).toFixed(2)}`,
+      interval: sub.items.data[0].price.recurring?.interval || 'month',
+      hours: sub.metadata.hours || '0',
+      paymentMethod: sub.default_payment_method ? {
+        brand: (sub.default_payment_method as Stripe.PaymentMethod).card?.brand,
+        last4: (sub.default_payment_method as Stripe.PaymentMethod).card?.last4,
+      } : null
     }));
   } catch (error) {
-    console.error('Error fetching customer invoices:', error);
+    console.error('Error fetching subscription history:', error);
     throw error;
   }
 }
 
 export async function createCustomerPortalSession(stripeCustomerId: string) {
+  const session = await stripe.billingPortal.sessions.create({
+    customer: stripeCustomerId,
+    return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/settings`,
+  });
 
-    const session = await stripe.billingPortal.sessions.create({
-      customer: stripeCustomerId,
-      return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/private/settings`,
-    });
+  return session;
+}
 
-    return session
+export async function cancelSubscription(subscriptionId: string) {
+  try {
+    const subscription = await stripe.subscriptions.cancel(subscriptionId);
+    return subscription;
+  } catch (error) {
+    console.error('Error canceling subscription:', error);
+    throw error;
+  }
 }

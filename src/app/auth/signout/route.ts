@@ -1,4 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase-server';
+import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
 export async function POST() {
@@ -8,11 +9,13 @@ export async function POST() {
     const { data: { session } } = await supabase.auth.getSession();
     
     if (session) {
-      // Invalidate the current session
-      await supabase.auth.admin.signOut(session.access_token);
+      // Sign out from Supabase
+      await supabase.auth.signOut();
       
-      // Clear session cookies
+      // Create response
       const response = NextResponse.json({ success: true });
+      
+      // Clear Supabase cookies
       response.cookies.delete('sb-access-token');
       response.cookies.delete('sb-refresh-token');
       
@@ -22,6 +25,9 @@ export async function POST() {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error signing out:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' }, 
+      { status: 500 }
+    );
   }
 }

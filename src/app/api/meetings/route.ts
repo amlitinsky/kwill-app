@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchMeetings, createMeeting, updateMeetingStatus, updateMeetingTranscript, updateMeetingProcessedData, deleteMeeting } from '@/lib/supabase-server';
+import { fetchMeetings, createMeeting, updateMeetingStatus, updateMeetingTranscript, updateMeetingProcessedData, deleteMeeting, getSubscription } from '@/lib/supabase-server';
 import { createServerSupabaseClient } from '@/lib/supabase-server';
 import { createBot } from '@/lib/recall';
 
@@ -21,19 +21,50 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const supabase = await createServerSupabaseClient()
-  const { data: { user }, error } = await supabase.auth.getUser()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-  if (error || !user) {
+  if (authError || !user) {
+    console.error('Auth error:', authError)
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    const { name, zoomLink, spreadsheetId, customInstructions } = await request.json();
-    const bot = await createBot(zoomLink)
-    const newMeeting = await createMeeting(name, zoomLink, spreadsheetId, customInstructions, bot.id);
+    // Get user details to check meeting hours
+    const userData = await getSubscription();
+
+    if (!userData || userData.hours <= 0) {
+      return NextResponse.json({ 
+        error: 'Insufficient meeting hours. Please purchase more hours to continue.' 
+      }, { status: 403 });
+    }
+
+    const { 
+      name,
+      meetingLink,
+      spreadsheetId, 
+      prompt
+    } = await request.json();
+
+    const botMeetingData = await createBot(meetingLink, { automatic_leave: userData.hours * 3600})
+
+    // Create meeting with recording status
+    const newMeeting = await createMeeting(
+      user.id,
+      name,
+      spreadsheetId,
+      prompt,
+      meetingLink,
+      botMeetingData.id,
+      { status: 'created' }
+    );
+    
     return NextResponse.json(newMeeting);
   } catch (error) {
-    return NextResponse.json({ error: (error as Error).message }, { status: 500 });
+    console.error('Error in POST /api/meetings:', error)
+    return NextResponse.json({ 
+      error: `Failed to create meeting: ${(error as Error).message}`,
+      stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
+    }, { status: 500 });
   }
 }
 
