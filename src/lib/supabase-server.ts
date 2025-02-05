@@ -54,7 +54,7 @@ export async function fetchTemplates() {
   return data;
 }
 
-export async function createTemplate(name: string, spreadsheetId: string, prompt: string, meetingLink: string) {
+export async function createTemplate(name: string, spreadsheetId: string, prompt: string, meetingLink: string, columnHeaders: string[]) {
   const supabase = await createServerSupabaseClient()
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error('No user logged in');
@@ -62,11 +62,13 @@ export async function createTemplate(name: string, spreadsheetId: string, prompt
   const { data, error } = await supabase
     .from('templates')
     .insert([{ 
-      name, 
+      user_id: user.id,
+      name: name, 
       spreadsheet_id: spreadsheetId, 
       prompt: prompt,
       meeting_link: meetingLink,
-      user_id: user.id
+      column_headers: columnHeaders,
+      created_at: new Date().toISOString(),
     }]);
 
   if (error) throw error;

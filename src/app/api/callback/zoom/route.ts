@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createZoomOAuthCredential, deleteZoomOAuthCredential } from '@/lib/recall'
-import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const supabase = await createServerSupabaseClient();
-  const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-  if (userError || !user) {
-    console.error('Error getting user:', userError);
-    return NextResponse.redirect(`${requestUrl.origin}/auth-error?reason=no_user`);
-  }
 
   if (!code) {
     return NextResponse.json({ error: 'Invalid OAuth code' }, { status: 400 })
@@ -45,27 +37,6 @@ export async function GET(request: NextRequest) {
       console.error('Error in Zoom OAuth callback:', error)
       throw error
     }
-  }
-  // Update zoom_oauth_credentials in Supabase
-  const { error: upsertError } = await supabase
-    .from('recall_oauth_app_credentials')
-    .upsert(
-      {
-        user_id: user.id,
-        recall_id: recall_oauth_app_credentials.id,
-        recall_oauth_app: recall_oauth_app_credentials.oauth_app,
-        recall_user_id: recall_oauth_app_credentials.user_id,
-        created_at: new Date().toISOString()
-      },
-      {
-        onConflict: 'user_id',
-        ignoreDuplicates: false // Force update if exists
-      }
-    );
-
-  if (upsertError) {
-    console.error('Error upserting Zoom credentials:', upsertError);
-    throw upsertError;
   }
 
   // TODO verify this is good (also update it to base url which will naturally include https)

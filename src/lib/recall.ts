@@ -1,6 +1,7 @@
 import { base64Image } from "./base64Image";
 
 const RECALL_API_KEY = process.env.RECALL_API_KEY
+const NGROK_URL = 'https://evolved-raccoon-key.ngrok-free.app/api/callback/zoom' 
 const RECALL_API_URL = 'https://us-west-2.recall.ai/api/v1/bot'
 const RECALL_API_ZOOM_OAUTH_CREDENTIALS = 'https://us-west-2.recall.ai/api/v2/zoom-oauth-credentials'
 interface CreateBotOptions {
@@ -179,6 +180,7 @@ export async function deleteZoomOAuthCredential(credentialId: string) {
 
 //TODO verify that using next public zoom api client id actually generates the valid URL and update the NGROK for production to use base url
 export function generateZoomAuthURL(): string {
+
   const baseUrl = "https://zoom.us/oauth/authorize"
   const queryParams = {
     "response_type": "code",

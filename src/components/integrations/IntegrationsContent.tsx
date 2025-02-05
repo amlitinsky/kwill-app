@@ -19,6 +19,7 @@ interface RecallOauthAppCredentials {
   recall_id: string;
   recall_oauth_app: string;
   recall_user_id: string;
+  connected: boolean;
   created_at: string;
 }
 
@@ -65,10 +66,29 @@ export function IntegrationsContent({
       })
     }
     if (zoomConnected === 'true') {
-      setIsZoomConnected(true)
-      toast({
-        title: "Success",
-        description: "Successfully connected to Zoom"
+      // Update connection status in database
+      fetch('/api/callback/zoom/connected', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }).then(async (response) => {
+        if (response.ok) {
+          setIsZoomConnected(true)
+          toast({
+            title: "Success",
+            description: "Successfully connected to Zoom"
+          })
+        } else {
+          console.error('Failed to update Zoom connection status')
+          toast({
+            title: "Warning",
+            description: "Connected to Zoom but failed to save status",
+            variant: "destructive"
+          })
+        }
+      }).catch((error) => {
+        console.error('Error updating Zoom connection:', error)
       })
     }
     if (calendlyConnected === 'true') {

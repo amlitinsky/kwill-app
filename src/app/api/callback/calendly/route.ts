@@ -20,14 +20,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const googleCreds = await getGoogleCreds(user.id)
-    // TODO we need to test pending oauth flow
-    if (!googleCreds) {
-        await createPendingOAuthFlow(user.id, 'calendly', code)
-
-        return NextResponse.redirect(getGoogleAuthUrl())
-    }
-
     const tokens = await getCalendlyTokens(code);
 
     // Get user info to get organization
@@ -53,12 +45,6 @@ export async function GET(request: Request) {
     
     // Subscribe to webhooks
     await subscribeToCalendlyWebhooks(tokens.access_token, userInfo.uri, userInfo.current_organization);
-
-    // Get and update event types with Kwill questions
-    const eventTypes = await getCalendlyEventTypes(tokens.access_token, userInfo.uri);
-    console.log("event types", eventTypes)
-
-
 
     return NextResponse.redirect(`${requestUrl.origin}/integrations?calendly_connected=true`);
 

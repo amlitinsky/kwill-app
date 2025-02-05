@@ -1,286 +1,406 @@
-'use client'
+'use client';
 
-import { useState } from 'react'
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { MoreHorizontal, Plus } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
-import { useRouter } from 'next/navigation'
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Plus, Pencil } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Template {
-  id: string
-  name: string
-  spreadsheet_id: string
-  prompt: string
-  meeting_link: string
+  id: string;
+  name: string;
+  spreadsheet_id: string;
+  prompt: string | null;
+  meeting_link: string | null;
+  column_headers: string[] | null;
+}
+
+interface TemplateFormData {
+  name: string;
+  spreadsheetId: string;
+  prompt: string;
+  meetingLink: string;
+}
+
+interface ErrorResponse {
+  message: string;
 }
 
 interface TemplatesContentProps {
-  initialTemplates: Template[]
+  initialTemplates: Template[];
 }
 
-function extractSpreadsheetId(url: string): string | null {
-  const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/);
-  return match ? match[1] : null;
+const initialFormData: TemplateFormData = {
+  name: '',
+  spreadsheetId: '',
+  prompt: '',
+  meetingLink: '',
+};
+
+function extractSpreadsheetId(input: string): string {
+  // Handle full URLs
+  const urlMatch = input.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (urlMatch) return urlMatch[1];
+
+  // Handle direct IDs (if they just paste the ID)
+  const idMatch = input.match(/^[a-zA-Z0-9-_]+$/);
+  if (idMatch) return input;
+
+  // If no match, return the original input
+  return input;
 }
 
-export default function TemplatesContent({ initialTemplates }: TemplatesContentProps) {
-  const [templates, setTemplates] = useState<Template[]>(initialTemplates)
-  const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [isEditOpen, setIsEditOpen] = useState(false)
-  const [currentTemplate, setCurrentTemplate] = useState<Template | null>(null)
-  const [name, setName] = useState('')
-  const [spreadsheetId, setSpreadsheetId] = useState('')
-  const [prompt, setPrompt] = useState('')
-  const [meetingLink, setMeetingLink] = useState('')
-  const { toast } = useToast()
-  const router = useRouter()
+type DialogMode = 'create' | 'edit' | null;
 
-  const handleCreateTemplate = async () => {
-    if (templates.some((t: Template) => t.name === name)) {
-      toast({ title: "Error", description: "A template with this name already exists", variant: "destructive" })
-      return
-    }
+interface TemplateFormProps {
+  mode: DialogMode;
+  formData: TemplateFormData;
+  onSubmit: (e: React.FormEvent) => void;
+  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
+  isLoading: boolean;
+}
 
-    // Extract spreadsheet ID from the link
-    const extractedSpreadsheetId = extractSpreadsheetId(spreadsheetId)
-    if (!extractedSpreadsheetId) {
-      toast({ title: "Error", description: "Invalid spreadsheet link", variant: "destructive" })
-      return
-    }
+const TemplateForm = ({
+  mode,
+  formData,
+  onSubmit,
+  onChange,
+  isLoading,
+}: TemplateFormProps) => (
+  <form onSubmit={onSubmit}>
+    <DialogHeader>
+      <DialogTitle>
+        {mode === 'edit' ? 'Edit Template' : 'Create New Template'}
+      </DialogTitle>
+      <DialogDescription>
+        {mode === 'edit'
+          ? 'Update your template details below.'
+          : 'Create a new template for your meetings. Add a name, spreadsheet link, and optional prompt.'}
+      </DialogDescription>
+    </DialogHeader>
+    <div className="grid gap-4 py-4">
+      <div className="grid gap-2">
+        <Label htmlFor="name">Name</Label>
+        <Input
+          id="name"
+          name="name"
+          value={formData.name}
+          onChange={onChange}
+          placeholder="Template name"
+          required
+        />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="spreadsheetId">Spreadsheet Link</Label>
+        <Input
+          id="spreadsheetId"
+          name="spreadsheetId"
+          value={formData.spreadsheetId}
+          onChange={onChange}
+          placeholder="Google Spreadsheet URL or ID"
+          required
+        />
+        <p className="text-xs text-muted-foreground">
+          Paste the full Google Sheets URL or just the spreadsheet ID
+        </p>
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="prompt">Prompt (Optional)</Label>
+        <Textarea
+          id="prompt"
+          name="prompt"
+          value={formData.prompt}
+          onChange={onChange}
+          placeholder="Enter a prompt for the AI"
+          className="h-20"
+        />
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="meetingLink">Meeting Link (Optional)</Label>
+        <Input
+          id="meetingLink"
+          name="meetingLink"
+          value={formData.meetingLink}
+          onChange={onChange}
+          placeholder="Default meeting link"
+        />
+      </div>
+    </div>
+    <DialogFooter>
+      <Button
+        type="submit"
+        disabled={isLoading}
+        aria-disabled={isLoading}
+      >
+        {isLoading
+          ? mode === 'edit'
+            ? 'Updating...'
+            : 'Creating...'
+          : mode === 'edit'
+          ? 'Update Template'
+          : 'Create Template'}
+      </Button>
+    </DialogFooter>
+  </form>
+);
 
-    try {
-      // Validate spreadsheet
-      const validateResponse = await fetch('/api/google/validate-spreadsheet', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ spreadsheetId: extractedSpreadsheetId }),
-      })
+export function TemplatesContent({ initialTemplates }: TemplatesContentProps) {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [dialogMode, setDialogMode] = useState<DialogMode>(null);
+  const [formData, setFormData] = useState<TemplateFormData>(initialFormData);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
 
-      if (!validateResponse.ok) {
-        throw new Error('Invalid spreadsheet ID')
-      }
+  // Fetch templates with initialData
+  const { data: templates, error } = useQuery<Template[]>({
+    queryKey: ['templates'],
+    queryFn: async () => {
+      const response = await fetch('/api/templates');
+      if (!response.ok) throw new Error('Failed to fetch templates');
+      return response.json();
+    },
+    initialData: initialTemplates,
+  });
 
-      // Create template through server action (will be added later)
+  // Create template mutation
+  const createTemplate = useMutation({
+    mutationFn: async (data: TemplateFormData) => {
       const response = await fetch('/api/templates', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          name, 
-          spreadsheetId: extractedSpreadsheetId, 
-          prompt, 
-          meeting_link: meetingLink 
+        body: JSON.stringify({
+          name: data.name,
+          spreadsheetId: extractSpreadsheetId(data.spreadsheetId),
+          prompt: data.prompt || null,
+          meetingLink: data.meetingLink || null,
         }),
-      })
+      });
+      if (!response.ok) throw new Error('Failed to create template');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      setDialogMode(null);
+      setFormData(initialFormData);
+      setEditingTemplateId(null);
+      toast.success('Template created successfully');
+    },
+    onError: (error: ErrorResponse) => {
+      toast.error(`Error creating template: ${error.message}`);
+    },
+  });
 
-      if (!response.ok) {
-        throw new Error('Failed to create template')
-      }
-
-      const newTemplate = await response.json()
-      setTemplates([...templates, newTemplate])
-      toast({ title: "Template created successfully" })
-      setIsCreateOpen(false)
-      router.refresh()
-    } catch (error) {
-      toast({ 
-        title: "Error creating template", 
-        description: (error as Error).message, 
-        variant: "destructive" 
-      })
-    }
-  }
-
-  const handleUpdateTemplate = async () => {
-    if (!currentTemplate) return
-
-    try {
+  // Update template mutation
+  const updateTemplate = useMutation({
+    mutationFn: async (data: TemplateFormData & { id: string }) => {
       const response = await fetch('/api/templates', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          id: currentTemplate.id, 
-          name, 
-          spreadsheetId, 
-          prompt, 
-          meeting_link: meetingLink 
+        body: JSON.stringify({
+          id: data.id,
+          name: data.name,
+          spreadsheetId: extractSpreadsheetId(data.spreadsheetId),
+          prompt: data.prompt || null,
+          meetingLink: data.meetingLink || null,
         }),
-      })
+      });
+      if (!response.ok) throw new Error('Failed to update template');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      setDialogMode(null);
+      setFormData(initialFormData);
+      setEditingTemplateId(null);
+      toast.success('Template updated successfully');
+    },
+    onError: (error: ErrorResponse) => {
+      toast.error(`Error updating template: ${error.message}`);
+    },
+  });
 
-      if (!response.ok) {
-        throw new Error('Failed to update template')
-      }
-
-      const updatedTemplate = await response.json()
-      setTemplates(templates.map(t => 
-        t.id === currentTemplate.id ? updatedTemplate : t
-      ))
-      toast({ title: "Template updated successfully" })
-      setIsEditOpen(false)
-      router.refresh()
-    } catch (error) {
-      toast({ 
-        title: "Error updating template", 
-        description: (error as Error).message, 
-        variant: "destructive" 
-      })
-    }
-  }
-
-  const handleDeleteTemplate = async (id: string) => {
-    try {
+  // Delete template mutation
+  const deleteTemplate = useMutation({
+    mutationFn: async (templateId: string) => {
       const response = await fetch('/api/templates', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      })
+        body: JSON.stringify({ id: templateId }),
+      });
+      if (!response.ok) throw new Error('Failed to delete template');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['templates'] });
+      toast.success('Template deleted successfully');
+    },
+    onError: (error: ErrorResponse) => {
+      toast.error(`Error deleting template: ${error.message}`);
+    },
+  });
 
-      if (!response.ok) {
-        throw new Error('Failed to delete template')
-      }
+  const handleDialogClose = () => {
+    setDialogMode(null);
+    setFormData(initialFormData);
+    setEditingTemplateId(null);
+  };
 
-      setTemplates(templates.filter(t => t.id !== id))
-      toast({ title: "Template deleted successfully" })
-      router.refresh()
-    } catch (error) {
-      toast({ 
-        title: "Error deleting template", 
-        description: (error as Error).message, 
-        variant: "destructive" 
-      })
+  const handleCreateClick = () => {
+    setFormData(initialFormData);
+    setEditingTemplateId(null);
+    setDialogMode('create');
+  };
+
+  const handleEditClick = (template: Template) => {
+    setFormData({
+      name: template.name,
+      spreadsheetId: template.spreadsheet_id,
+      prompt: template.prompt || '',
+      meetingLink: template.meeting_link || '',
+    });
+    setEditingTemplateId(template.id);
+    setDialogMode('edit');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingTemplateId) {
+      updateTemplate.mutate({ ...formData, id: editingTemplateId });
+    } else {
+      createTemplate.mutate(formData);
     }
-  }
+  };
 
-  const openEditDialog = (template: Template) => {
-    setCurrentTemplate(template)
-    setName(template.name)
-    setSpreadsheetId(template.spreadsheet_id)
-    setPrompt(template.prompt)
-    setMeetingLink(template.meeting_link)
-    setIsEditOpen(true)
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const isLoading = createTemplate.isPending || updateTemplate.isPending;
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-[50vh]">
+        <p className="text-destructive">Error loading templates: {error.message}</p>
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-2xl font-bold">Templates</CardTitle>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button><Plus className="mr-2 h-4 w-4" /> Create Template</Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Create New Template</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">Name</Label>
-                  <Input id="name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="spreadsheet" className="text-right">Spreadsheet Link</Label>
-                  <Input id="spreadsheet" value={spreadsheetId} onChange={(e) => setSpreadsheetId(e.target.value)} className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="instructions" className="text-right">Prompt</Label>
-                  <Textarea id="instructions" value={prompt} onChange={(e) => setPrompt(e.target.value)} className="col-span-3" />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="meeting-link" className="text-right">Meeting Link</Label>
-                  <Input 
-                    id="meeting-link" 
-                    value={meetingLink} 
-                    onChange={(e) => setMeetingLink(e.target.value)} 
-                    className="col-span-3"
-                    placeholder="Enter meeting link (e.g., Zoom, Google Meet)" 
-                  />
-                </div>
-              </div>
-              <Button onClick={handleCreateTemplate}>Create Template</Button>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent>
-          {templates.length === 0 ? (
-            <p>No templates available. Create one to get started!</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Spreadsheet Link</TableHead>
-                  <TableHead>Prompt</TableHead>
-                  <TableHead>Meeting Link</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {templates.map((template: Template) => (
-                  <TableRow key={template.id}>
-                    <TableCell className="font-medium">{template.name}</TableCell>
-                    <TableCell>{template.spreadsheet_id}</TableCell>
-                    <TableCell>{template.prompt.length > 50 ? `${template.prompt.substring(0, 50)}...` : template.prompt}</TableCell>
-                    <TableCell>{template.meeting_link}</TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEditDialog(template)}>Edit</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDeleteTemplate(template.id)}>Delete</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+    <div className="container mx-auto py-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Templates</h1>
+          <p className="text-muted-foreground">
+            Manage your meeting templates and configurations
+          </p>
+        </div>
+        <Button onClick={handleCreateClick}>
+          <Plus className="mr-2 h-4 w-4" />
+          Create Template
+        </Button>
+      </div>
 
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Edit Template</DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-name" className="text-right">Name</Label>
-              <Input id="edit-name" value={name} onChange={(e) => setName(e.target.value)} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-spreadsheet" className="text-right">Spreadsheet Link</Label>
-              <Input id="edit-spreadsheet" value={spreadsheetId} onChange={(e) => setSpreadsheetId(e.target.value)} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-instructions" className="text-right">Prompt</Label>
-              <Textarea id="edit-instructions" value={prompt} onChange={(e) => setPrompt(e.target.value)} className="col-span-3" />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-meeting-link" className="text-right">Meeting Link</Label>
-              <Input 
-                id="edit-meeting-link" 
-                value={meetingLink} 
-                onChange={(e) => setMeetingLink(e.target.value)} 
-                className="col-span-3"
-                placeholder="Enter meeting link (e.g., Zoom, Google Meet)" 
-              />
-            </div>
+      {templates?.length === 0 ? (
+        <div className="flex flex-col items-center justify-center p-8 text-center">
+          <h3 className="text-lg font-semibold">No templates yet</h3>
+          <p className="mt-2 text-sm text-muted-foreground max-w-sm">
+            Create your first template to get started
+          </p>
+          <div className="mt-6">
+            <Button onClick={handleCreateClick}>
+              <Plus className="mr-2 h-4 w-4" />
+              Create Template
+            </Button>
           </div>
-          <Button onClick={handleUpdateTemplate}>Update Template</Button>
+        </div>
+      ) : (
+        <ScrollArea className="h-[calc(100vh-12rem)]">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 pb-6">
+            {templates?.map((template: Template) => (
+              <Card key={template.id}>
+                <CardHeader>
+                  <CardTitle>{template.name}</CardTitle>
+                  <CardDescription>
+                    Spreadsheet ID: {template.spreadsheet_id}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {template.prompt && (
+                    <p className="text-sm text-muted-foreground line-clamp-3">
+                      {template.prompt}
+                    </p>
+                  )}
+                  {template.column_headers && (
+                    <div className="mt-2">
+                      <p className="text-xs font-medium text-muted-foreground">
+                        Available Fields:
+                      </p>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {template.column_headers.join(', ')}
+                      </p>
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="justify-between">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEditClick(template)}
+                  >
+                    <Pencil className="mr-2 h-3 w-3" />
+                    Edit
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => deleteTemplate.mutate(template.id)}
+                    disabled={deleteTemplate.isPending}
+                  >
+                    Delete
+                  </Button>
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        </ScrollArea>
+      )}
+
+      <Dialog open={dialogMode !== null} onOpenChange={(open) => !open && handleDialogClose()}>
+        <DialogContent>
+          <TemplateForm
+            mode={dialogMode || 'create'}
+            formData={formData}
+            onSubmit={handleSubmit}
+            onChange={handleInputChange}
+            isLoading={isLoading}
+          />
         </DialogContent>
       </Dialog>
     </div>
-  )
-} 
+  );
+}

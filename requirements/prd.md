@@ -6,8 +6,8 @@ Version 1.0 | December 2024
 ### 1.1 Problem Statement
 Business professionals and investors need an efficient way to capture, analyze, and organize key information from Zoom meetings into structured data formats. Manual note-taking and data entry are time-consuming and prone to errors.
 
-### 1.2 Product Vision
-Kwill is an AI-powered meeting assistant that automatically captures, analyzes, and organizes meeting information into structured spreadsheet data, focusing primarily on investor calls and business meetings.
+### 1.2 Revised Product Vision
+Kwill is a vertical AI agent platform that enables natural language interaction with business automation workflows, specializing in meeting intelligence and data orchestration through conversational interfaces.
 
 ### 1.3 Target Users
 - Primary: Venture capitalists and investors
@@ -16,23 +16,13 @@ Kwill is an AI-powered meeting assistant that automatically captures, analyzes, 
 
 ## 2. Product Architecture
 
-### 2.1 Technology Stack
-- Frontend: Next.js 15, TailwindCSS, ShadCN UI
-- Backend: Next.js API routes
-- Database & Auth: Supabase
-- APIs:
-  - Recall.ai: Zoom meeting bot and recording
-  - AssemblyAI: Speech transcription
-  - Deepseek: Transcript analysis and data extraction
-  - Google Sheets: Data storage
-  - Stripe: Payment processing
-  - Calendly: Meeting scheduling integration
-- Infrastructure:
-  - Hosting: Vercel
-  - Queue: Qstash/Upstash
-  - Cache: Redis
-  - Runtime: Node.js
-  - Package Manager: Yarn
+### 2.1 Updated Technology Stack
+- **Core Stack**: Next.js 15, tRPC, Drizzle ORM, Auth.js
+- **AI Infrastructure**: Vercel AI SDK, LangChain
+- **Key Additions**:
+  - Agent orchestration with LangGraph
+  - Real-time communication with PartyKit
+  - Vector DB for agent memory
 
 ## 3. Core Features
 
@@ -163,3 +153,15 @@ Kwill is an AI-powered meeting assistant that automatically captures, analyzes, 
 - Customer acquisition cost
 - Average revenue per user
 - API cost per meeting
+
+## 3.1 New Core Features
+### AI Agent Interface
+- Natural language command processing
+- Context-aware workflow activation
+- Multi-modal interaction (text/voice)
+- Agent-to-agent collaboration
+
+### Vertical-Specific Capabilities
+- "Create meeting bot" → Zoom integration
+- "Analyze last meeting" → Data pipeline trigger
+- "Show revenue trends" → Chart generation
