@@ -70,7 +70,6 @@ export async function POST(req: Request) {
   const currentEnvironment = process.env.NODE_ENV // 'development' | 'production' | 'test'
 
   if (botEnvironment && botEnvironment !== currentEnvironment) {
-    console.log(`Skipping webhook: environment mismatch. Expected ${currentEnvironment}, got ${botEnvironment}`)
     return NextResponse.json({ 
       skipped: true, 
       reason: 'environment_mismatch' 
@@ -259,7 +258,6 @@ async function processCompletedMeeting(botId: string) {
             throw new Error('Could not deduct hours - insufficient balance or expired subscription');
           }
 
-          console.log(`Successfully deducted ${durationInMinutes} minutes from user ${meetingDetails.user_id}. Remaining: ${remainingHours}`);
 
 
   } catch (error) {

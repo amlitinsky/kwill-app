@@ -10,7 +10,6 @@ import { isStripeWebhookProcessed, markStripeWebhookProcessed } from '@/lib/redi
 export async function POST(req: Request) {
   const payload = await req.text();
   const sig = req.headers.get('Stripe-Signature');
-  console.log("received a stripe webhook event")
   
   if (!sig) {
     return NextResponse.json(
@@ -29,7 +28,6 @@ export async function POST(req: Request) {
 
     // Atomic check for duplicate webhook
     if (await isStripeWebhookProcessed(event.id)) {
-      console.log(`Duplicate Stripe webhook event: ${event.id}`);
       return NextResponse.json({ received: true });
     }
 
@@ -48,7 +46,7 @@ export async function POST(req: Request) {
 
         // Add more cases as needed
         default:
-          console.log(`Unhandled event type: ${event.type}`);
+          break;
       }
 
       success = true;

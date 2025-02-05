@@ -104,7 +104,6 @@ export async function generateMeetingSummary(
     temperature: 0.3,
     maxTokens: 1000
   });
-  console.log("summary", text)
 
   return text;
 }
@@ -153,7 +152,6 @@ export async function extractKeyPoints(
     temperature: 0.2,
     maxTokens: 1000
   });
-  console.log("key points", text)
   return JSON.parse(text);
 }
 
@@ -212,7 +210,6 @@ export async function extractActionItems(
     temperature: 0.1,
     maxTokens: 1000
   });
-  console.log("action items", text)
 
   return JSON.parse(text);
 }
@@ -270,7 +267,6 @@ export async function generateTimeStampedHighlights(
     temperature: 0.2,
     maxTokens: 1500
   });
-  console.log("highlights", text)
 
   return JSON.parse(text);
 }
@@ -319,7 +315,6 @@ export async function analyzeTopicDistribution(
     temperature: 0.1,
     maxTokens: 1000
   });
-  console.log("topic distribution", text)
 
   return JSON.parse(text);
 }
