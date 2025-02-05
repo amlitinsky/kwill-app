@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { priceId, setupOnly } = await req.json();
+    const { priceId } = await req.json();
 
     const customerId = await getOrCreateStripeCustomerId(user.id, user.email!)
 
@@ -22,7 +22,6 @@ export async function POST(req: Request) {
     const session = await createCheckoutSession(
       priceId,
       customerId,
-      setupOnly ? 'setup' : 'payment',
     );
 
     return NextResponse.json(session);
