@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import { createStripeCustomer } from './stripe';
-import { findNextEmptyRow, getColumnHeaders, getGoogleUserInfo, refreshAccessToken } from './google-auth';
+import { findNextEmptyRow, getColumnHeaders, refreshAccessToken } from './google-auth';
 import { createServerClient } from '@supabase/ssr';
 import { checkCalendlyTokenValidity, refreshCalendlyToken } from './calendly';
 import { ProcessedTranscriptSegment } from './transcript-utils';

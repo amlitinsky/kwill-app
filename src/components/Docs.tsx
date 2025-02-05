@@ -51,11 +51,11 @@ export default function Docs() {
                   <AccordionTrigger>Creating a New Meeting Query</AccordionTrigger>
                   <AccordionContent>
                     <ol className="list-decimal list-inside space-y-2">
-                      <li>Navigate to the "New Meeting" page</li>
+                      <li>Navigate to the &quot;New Meeting&quot; page</li>
                       <li>Enter a valid shareable Google Sheets link</li>
                       <li>Enter a valid Zoom link</li>
                       <li>Add any custom instructions or speaker exclusions</li>
-                      <li>Click "Submit" to create your query</li>
+                      <li>Click &quot;Submit&quot; to create your query</li>
                     </ol>
                   </AccordionContent>
                 </AccordionItem>
@@ -63,7 +63,7 @@ export default function Docs() {
                   <AccordionTrigger>How the Bot Joins Your Meeting</AccordionTrigger>
                   <AccordionContent>
                     <p>
-                      Our AI bot automatically joins the Zoom call at the specified time. You don't need to do anything
+                      Our AI bot automatically joins the Zoom call at the specified time. You don&apos;t need to do anything
                       else - the bot will join at the meeting time and leave once the call is finished.
                     </p>
                   </AccordionContent>
@@ -72,7 +72,7 @@ export default function Docs() {
                   <AccordionTrigger>After the Meeting</AccordionTrigger>
                   <AccordionContent>
                     <p>
-                      Kwill will analyze the meeting and update your Google Sheet with the results. You'll also be able
+                      Kwill will analyze the meeting and update your Google Sheet with the results. You&apos;ll also be able
                       to view deeper meeting insights once the meeting has fully processed.
                     </p>
                   </AccordionContent>
@@ -158,9 +158,9 @@ export default function Docs() {
             <ol className="list-decimal list-inside space-y-2">
               <li>Sign up for a Kwill account</li>
               <li>Log in and navigate to the Settings page</li>
-              <li>Click on "Connect Zoom Account"</li>
+              <li>Click on &quot;Connect Zoom Account&quot;</li>
               <li>Authorize Kwill on the Zoom permissions page</li>
-              <li>You're all set to use Kwill!</li>
+              <li>You&apos;re all set to use Kwill!</li>
             </ol>
             <Button className="mt-6">
               <Zap className="mr-2 h-4 w-4" /> Get Started
@@ -172,7 +172,7 @@ export default function Docs() {
             <CardTitle>Uninstallation</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="mb-4">To remove Kwill's access to your Zoom account:</p>
+            <p className="mb-4">To remove Kwill&apos;s access to your Zoom account:</p>
             <ol className="list-decimal list-inside space-y-2">
               <li>Log in to your Zoom Account</li>
               <li>Navigate to the Zoom App Marketplace</li>

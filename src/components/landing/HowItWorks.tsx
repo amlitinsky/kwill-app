@@ -57,7 +57,12 @@ export default function HowItWorks() {
   )
 }
 
-function StepItem({ step, index, inView }: { step: any, index: number, inView: boolean }) {
+interface Step {
+  title: string;
+  description: string;
+}
+
+function StepItem({ step, index, inView }: { step: Step, index: number, inView: boolean }) {
   return (
     <motion.div
       className="flex items-center relative"

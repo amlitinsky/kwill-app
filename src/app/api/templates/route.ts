@@ -5,14 +5,14 @@ import { getColumnHeaders } from '@/lib/google-auth';
 import { getValidGoogleToken } from '@/lib/supabase-server';
 import { revalidatePath } from 'next/cache'
 
-interface Template {
-  id: string;
-  name: string;
-  spreadsheet_id: string;
-  prompt: string | null;
-  meeting_link: string | null;
-  column_headers: string[] | null;
-}
+// interface Template {
+//   id: string;
+//   name: string;
+//   spreadsheet_id: string;
+//   prompt: string | null;
+//   meeting_link: string | null;
+//   column_headers: string[] | null;
+// }
 
 export async function GET() {
   try {

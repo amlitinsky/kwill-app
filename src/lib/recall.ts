@@ -1,7 +1,7 @@
 import { base64Image } from "./base64Image";
 
 const RECALL_API_KEY = process.env.RECALL_API_KEY
-const NGROK_URL = 'https://evolved-raccoon-key.ngrok-free.app/api/callback/zoom' 
+// const NGROK_URL = 'https://evolved-raccoon-key.ngrok-free.app/api/callback/zoom' 
 const RECALL_API_URL = 'https://us-west-2.recall.ai/api/v1/bot'
 const RECALL_API_ZOOM_OAUTH_CREDENTIALS = 'https://us-west-2.recall.ai/api/v2/zoom-oauth-credentials'
 interface CreateBotOptions {

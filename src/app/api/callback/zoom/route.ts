@@ -10,9 +10,8 @@ export async function GET(request: NextRequest) {
   }
 
   // TODO these functions appear to be working as it didn't throw an error when it saw that I had an existing crednential (maybe because of the await?) Not totally sure, worth investing again in the future
-  let recall_oauth_app_credentials;
   try {
-    recall_oauth_app_credentials = await createZoomOAuthCredential(code)
+    await createZoomOAuthCredential(code)
 
   } catch (error) {
     if (
@@ -29,7 +28,7 @@ export async function GET(request: NextRequest) {
             await deleteZoomOAuthCredential(existingUserId)
             
             // Retry creating the credential
-            recall_oauth_app_credentials = await createZoomOAuthCredential(code)
+            await createZoomOAuthCredential(code)
           } else {
         throw new Error('Invalid conflicting_zoom_user_id')
       }

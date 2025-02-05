@@ -7,7 +7,6 @@ export const stripe = new Stripe(process.env.STRIPE_API_SECRET_KEY!, {
 export async function createCheckoutSession(
   priceId: string,
   customerId: string,
-  returnUrl: string = `${process.env.NEXT_PUBLIC_BASE_URL}/settings`
 ) {
   try {
     // Get the price details to access metadata

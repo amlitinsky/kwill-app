@@ -40,7 +40,7 @@ export default function Support() {
   return (
     <div className="container mx-auto py-12 px-4">
       <h1 className="text-4xl font-bold mb-6">Kwill Support</h1>
-      <p className="text-xl text-muted-foreground mb-8">We're here to help you get the most out of Kwill.</p>
+      <p className="text-xl text-muted-foreground mb-8">We&apos;re here to help you get the most out of Kwill.</p>
 
       <div className="grid gap-8 md:grid-cols-3 mb-12">
         <Card>
@@ -143,11 +143,11 @@ export default function Support() {
                 <div>
                   <h3 className="font-semibold">How do I connect my Zoom account?</h3>
                   <p>
-                    Go to the Settings page and click on "Connect Zoom Account". Follow the prompts to authorize Kwill.
+                    Go to the Settings page and click on &quot;Connect Zoom Account&quot;. Follow the prompts to authorize Kwill.
                   </p>
                 </div>
                 <div>
-                  <h3 className="font-semibold">What if the bot doesn't join my meeting?</h3>
+                  <h3 className="font-semibold">What if the bot doesn&apos;t join my meeting?</h3>
                   <p>
                     Ensure your Zoom link is correct and the meeting is scheduled for the future. If issues persist,
                     contact support.
@@ -173,7 +173,7 @@ export default function Support() {
         </CardHeader>
         <CardContent>
           <p>
-            Our dedicated support team is committed to providing you with the best possible assistance. We'll work
+            Our dedicated support team is committed to providing you with the best possible assistance. We&apos;ll work
             diligently to address your concerns and ensure your experience with Kwill is smooth and productive.
           </p>
           <div className="mt-4 flex items-center justify-center space-x-4">

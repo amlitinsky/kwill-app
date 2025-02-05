@@ -1,4 +1,3 @@
-import { deepseek } from '@ai-sdk/deepseek';
 import { anthropic } from '@ai-sdk/anthropic';
 import { generateText } from 'ai';
 import { ProcessedTranscriptSegment } from './transcript-utils';

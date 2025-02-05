@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Check, ChevronsUpDown } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
@@ -15,7 +14,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { cn } from "@/lib/utils"
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 

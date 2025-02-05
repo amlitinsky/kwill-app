@@ -25,7 +25,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -168,7 +167,6 @@ const TemplateForm = ({
 );
 
 export function TemplatesContent({ initialTemplates }: TemplatesContentProps) {
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
   const [formData, setFormData] = useState<TemplateFormData>(initialFormData);

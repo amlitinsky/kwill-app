@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getCalendlyEventTypes, getCalendlyTokens, getCalendlyUserInfo, subscribeToCalendlyWebhooks } from '@/lib/calendly';
-import { createPendingOAuthFlow, createServerSupabaseClient, getGoogleCreds} from '@/lib/supabase-server';
-import { getGoogleAuthUrl } from '@/lib/google-auth';
+import { getCalendlyTokens, getCalendlyUserInfo, subscribeToCalendlyWebhooks } from '@/lib/calendly';
+import { createServerSupabaseClient } from '@/lib/supabase-server';
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);

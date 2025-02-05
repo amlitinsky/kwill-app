@@ -73,36 +73,38 @@ export function CalendlyTemplates({ initialTemplates = null }: CalendlyTemplates
   const { toast } = useToast();
 
   useEffect(() => {
+
+    async function syncTemplates() {
+      try {
+        const response = await fetch('/api/calendly/templates', {
+          method: 'POST'
+        });
+        if (!response.ok) throw new Error('Failed to sync');
+        const data = await response.json();
+        setCalendlyEnabled(data.calendlyEnabled);
+        setTemplates(data.templates || []);
+        if (data.added > 0) {
+          toast({
+            title: 'Success',
+            description: data.message
+          });
+        }
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to load Calendly configurations',
+          variant: 'destructive'
+        });
+      } finally {
+        setLoading(false);
+      }
+    }
+
     if (!initialTemplates) {
       syncTemplates();
     }
   }, [initialTemplates]);
 
-  async function syncTemplates() {
-    try {
-      const response = await fetch('/api/calendly/templates', {
-        method: 'POST'
-      });
-      if (!response.ok) throw new Error('Failed to sync');
-      const data = await response.json();
-      setCalendlyEnabled(data.calendlyEnabled);
-      setTemplates(data.templates || []);
-      if (data.added > 0) {
-        toast({
-          title: 'Success',
-          description: data.message
-        });
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to load Calendly configurations',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
-    }
-  }
 
   async function updateTemplate(id: string, updates: Partial<CalendlyTemplate>) {
     try {
