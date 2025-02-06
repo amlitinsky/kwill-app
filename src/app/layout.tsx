@@ -3,7 +3,6 @@ import { createServerSupabaseClient } from "@/lib/supabase-server";
 import { Providers } from './providers';
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { NavbarWrapper } from "@/components/nav/NavbarWrapper";
-import AuthListener from "@/components/AuthListener";
 import { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -52,7 +51,6 @@ export default async function RootLayout({
             </div>
           </ThemeProvider>
         </Providers>
-        <AuthListener initialUser={user} />
       </body>
     </html>
   );
