@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu"
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Logo } from '../Logo'
 import { User } from '@supabase/supabase-js'
@@ -23,6 +23,7 @@ interface PrivateNavbarProps {
 
 export function PrivateNavbar({ children, user }: PrivateNavbarProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const { toast } = useToast()
   const supabase = createClient()
   const userMetadata = user?.user_metadata || null
@@ -34,11 +35,9 @@ export function PrivateNavbar({ children, user }: PrivateNavbarProps) {
 
   const handleSignOut = async () => {
     try {
-      // CHECK if I really don't need to clear cookies manually
       const { error } = await supabase.auth.signOut()
-      if (error) { throw error }
-      window.location.href = '/'
-
+      if (error) throw error
+      router.push('/')
     } catch (error) {
       console.error('Error signing out:', error);
       toast({
@@ -111,7 +110,7 @@ export function PrivateNavbar({ children, user }: PrivateNavbarProps) {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem 
-              onClick={handleSignOut}
+              onSelect={handleSignOut}
               className="text-red-600 focus:text-red-600"
             >
               Sign out
