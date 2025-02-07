@@ -24,29 +24,28 @@ TypeScript
 
 import { pgTable, serial, text, timestamp, jsonb, varchar, integer, foreignKey } from 'drizzle-orm/pg-core';
 
-export const spreadsheets = pgTable('spreadsheets', {
+export const spreadsheets = createTable('spreadsheets', {
   id: serial('id').primaryKey(),
-  clerkId: varchar('clerk_id', { length: 255 }).notNull(),
+  userId: varchar('user_id', { length: 255 }).notNull(),
   googleSheetId: varchar('google_sheet_id', { length: 255 }).notNull(),
   name: text('name'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-export const meetings = pgTable('meetings', {
+export const meetings = createTable('meetings', {
   id: serial('id').primaryKey(),
-  clerkId: varchar('clerk_id', { length: 255 }).notNull(),
+  userId: varchar('user_id', { length: 255 }).notNull(),
   spreadsheetId: integer('spreadsheet_id').references(() => spreadsheets.id),
-  recallAiTranscriptId: varchar('recall_ai_transcript_id', { length: 255 }),
-  zoomMeetingLink: text('zoom_meeting_link'),
+  botId: varchar('bot_id', { length: 255 }),
   llmExtractedData: jsonb('llm_extracted_data'),
   processingStatus: varchar('processing_status', { length: 50 }).default('pending'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-export const chatMessages = pgTable('chat_messages', {
+export const chatMessages = createTable('chat_messages', {
   id: serial('id').primaryKey(),
-  clerkId: varchar('clerk_id', { length: 255 }).notNull(),
+  userId: varchar('user_id', { length: 255 }).notNull(),
   meetingId: integer('meeting_id').references(() => meetings.id),
   role: varchar('role', { length: 50 }).notNull(),
   content: text('content').notNull(),
@@ -68,9 +67,9 @@ import { clerk } from '@clerk/nextjs/server'; // Clerk backend SDK
 export const appRouter = router({
   chat: router({
     sendMessage: publicProcedure
-      .input(z.object({ message: z.string(), clerkId: z.string() }))
+      .input(z.object({ message: z.string(), userId: z.string() }))
       .mutation(async ({ input }) => {
-        const { message, clerkId } = input;
+        const { message, userId } = input;
 
         // --- 1. LLM Intent Recognition & URL Extraction (Groq LPU) ---
         const intentPrompt = `... (Your Intent Recognition Prompt - include finance jargon context) ... User Message: ${message} ... Response Format: JSON ...`;
@@ -81,7 +80,7 @@ export const appRouter = router({
 
         if (intent === "link_spreadsheet") {
           if (spreadsheet_id) {
-            await db.insert(spreadsheets).values({ clerkId, googleSheetId: spreadsheet_id });
+            await db.insert(spreadsheets).values({ userId, googleSheetId: spreadsheet_id });
             return { response: `Spreadsheet linked: ${spreadsheet_id}` };
           } else {
             return { response: "Please provide a valid Spreadsheet ID." };
@@ -90,7 +89,7 @@ export const appRouter = router({
           if (zoom_url) {
              // --- 2. Database: Record Meeting Start ---
             const newMeeting = await db.insert(meetings).values({
-              clerkId,
+              userId,
               zoomMeetingLink: zoom_url,
               processingStatus: 'processing'
             }).returning();
@@ -109,7 +108,7 @@ export const appRouter = router({
 
             // --- 5. Google Sheets API Update (Synchronous for MVP) ---
             const linkedSpreadsheet = await db.query.spreadsheets.findFirst({
-              where: (spreadsheets, { eq }) => eq(spreadsheets.clerkId, clerkId), // Assuming 1 linked sheet per user for MVP
+              where: (spreadsheets, { eq }) => eq(spreadsheets.userId, userId), // Assuming 1 linked sheet per user for MVP
             });
             if (linkedSpreadsheet) {
               const googleAccessToken = await clerk.session.getToken({ provider: "google" }); // Get Google Access Token from Clerk
@@ -182,6 +181,7 @@ export type AppRouter = typeof appRouter;
 5. LLM Selection (MVP)
 
 Groq LPU remains the recommended LLM for its speed and cost advantages, with prompt engineering as key for optimization.
+Also considering DeepSeek, Gemini, Qwen 2.5, and Llama 3.1 via Grok.
 
 6. Frontend (Next.js 15, AI SDK - MVP)
 

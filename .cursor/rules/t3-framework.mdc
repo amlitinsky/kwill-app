@@ -130,7 +130,7 @@ Server Components are ideal for data fetching because they run on the server, me
       return (
         <div>
           <h1>Fetching Data in Next.js 14</h1>
-          <DataDisplay apiUrl="[https://jsonplaceholder.typicode.com/posts](https://www.google.com/search?q=https://jsonplaceholder.typicode.com/posts)" />
+          <DataDisplay apiUrl="[https://jsonplaceholder.typicode.com/posts](mdc:https:/www.google.com/search?q=https:/jsonplaceholder.typicode.com/posts)" />
         </div>
       );
     }
