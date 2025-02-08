@@ -1,3 +1,5 @@
+"use client";
+
 import { api } from "@/trpc/react";
 import { useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
@@ -31,16 +33,16 @@ export function ChatMessages() {
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
       </div>
     );
   }
 
   if (!messages?.length) {
     return (
-      <div className="flex h-full flex-col items-center justify-center space-y-2 text-center text-gray-500">
-        <p className="text-lg font-medium">Welcome to Kwill!</p>
-        <p>Start by typing a message, pasting a Zoom link, or asking for help.</p>
+      <div className="flex h-full flex-col items-center justify-center space-y-2 text-center">
+        <p className="text-lg font-medium text-gray-200">Welcome to Kwill!</p>
+        <p className="text-gray-500">Start by typing a message, pasting a Zoom link, or asking for help.</p>
       </div>
     );
   }
@@ -57,8 +59,8 @@ export function ChatMessages() {
           <div
             className={`max-w-[80%] rounded-lg px-4 py-2 ${
               message.role === "user"
-                ? "bg-blue-500 text-white"
-                : "bg-gray-100 text-gray-900"
+                ? "bg-[#0c1425] text-gray-100"
+                : "bg-[#020817] text-gray-200"
             }`}
           >
             <p className="whitespace-pre-wrap">{message.content}</p>
