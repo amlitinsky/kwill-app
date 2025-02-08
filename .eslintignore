@@ -1,2 +1,13 @@
-# Ignore the entire old_core directory
-old_core/**/* 
+# Ignore all files in old_core
+/old_core/*
+/old_core/**/*
+old_core/
+src/old_core/**/*
+
+# Be more specific if needed
+old_core/webhook/**/*
+old_core/redis.ts
+old_core/stripe.ts
+old_core/calendly.ts
+old_core/recall.ts
+old_core/google-auth.ts 

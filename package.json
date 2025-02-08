@@ -66,5 +66,8 @@
   "ct3aMetadata": {
     "initVersion": "7.38.1"
   },
-  "packageManager": "pnpm@10.2.1"
+  "packageManager": "pnpm@10.2.1",
+  "eslintConfig": {
+    "ignorePatterns": ["old_core/**/*"]
+  }
 }
