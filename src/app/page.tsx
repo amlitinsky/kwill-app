@@ -1,14 +1,20 @@
-import Link from "next/link";
-
-import { api, HydrateClient } from "@/trpc/server";
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
+import LandingPage from "./_components/landing/LandingPage";
+import { HydrateClient } from "@/trpc/server";
 
 export default async function Home() {
+  const { userId } = await auth();
+  
+  // If authenticated, redirect to chat
+  if (userId) {
+    redirect("/chat");
+  }
 
+  // Otherwise show landing page
   return (
     <HydrateClient>
-      <main className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-[#2e026d] to-[#15162c] text-white">
-        <h1>Kwill</h1>
-      </main>
+      <LandingPage />
     </HydrateClient>
   );
 }

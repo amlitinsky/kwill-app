@@ -171,3 +171,7 @@ Internal dialogue: Response complete.  Did I follow cursor rules? Yes - expert p
 ## Prompting Rules
 [prompt-rules.md](mdc:requirements/prompt-rules.md)
 
+
+This is a new of my old service (it was originally form based) I've attached the relevant files in old_core directory in the root of the project
+@old_core/
+
