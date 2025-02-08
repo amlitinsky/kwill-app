@@ -62,7 +62,7 @@ export const env = createEnv({
     // LLMs
     DEEPSEEK_API_KEY: z.string().min(1),
     ANTHROPIC_API_KEY: z.string().min(1),
-
+    GOOGLE_GENERATIVE_AI_API_KEY: z.string().min(1),
     // Clerk
     CLERK_SECRET_KEY: z.string().min(1),
   },
@@ -157,7 +157,7 @@ export const env = createEnv({
     // LLMs
     DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY,
     ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY,
-
+    GOOGLE_GENERATIVE_AI_API_KEY: process.env.GOOGLE_GENERATIVE_AI_API_KEY,
     // Clerk
     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY,
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,

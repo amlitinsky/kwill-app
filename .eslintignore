@@ -1,0 +1,2 @@
+# Ignore the entire old_core directory
+old_core/**/* 
