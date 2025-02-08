@@ -4,7 +4,11 @@ import { useState } from "react";
 import { api } from "@/trpc/react";
 import { Loader2, Send } from "lucide-react";
 
-export function ChatInput() {
+interface ChatInputProps {
+  conversationId: number;
+}
+
+export function ChatInput({ conversationId }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const utils = api.useUtils();
   
@@ -15,11 +19,15 @@ export function ChatInput() {
     },
   });
 
+  // TODO: if its frist chat we want to center (or bring up) the chat window for first message
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!message.trim() || isPending) return;
     
-    sendMessage({ content: message });
+    sendMessage({ 
+      content: message,
+      conversationId,
+    });
   };
 
   return (

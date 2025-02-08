@@ -9,14 +9,22 @@ interface Message {
   userId: string;
   content: string;
   role: string;
-  meetingId: number | null;
+  conversationId: number;
+  metadata: Record<string, unknown>;
   createdAt: Date;
 }
 
-export function ChatMessages() {
+interface ChatMessagesProps {
+  conversationId: number;
+}
+
+export function ChatMessages({ conversationId }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { data: messages, isLoading } = api.chat.getMessages.useQuery(
-    { limit: 50 },
+    { 
+      conversationId,
+      limit: 50 
+    },
     {
       refetchInterval: 1000,
     }
@@ -49,7 +57,7 @@ export function ChatMessages() {
 
   return (
     <div className="space-y-4">
-      {messages.map((message: Message) => (
+      {messages.map((message) => (
         <div
           key={message.id}
           className={`flex ${

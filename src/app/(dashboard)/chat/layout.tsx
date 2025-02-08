@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, SidebarClose, PanelLeftOpen } from "lucide-react";
+import { Menu, PanelLeftOpen } from "lucide-react";
 
 export default function ChatLayout({
   children,

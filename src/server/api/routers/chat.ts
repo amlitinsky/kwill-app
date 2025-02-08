@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { chatMessages } from "@/server/db/schema";
+import { chatMessages, conversations } from "@/server/db/schema";
 import { desc, eq } from "drizzle-orm";
 
 export const chatRouter = createTRPCRouter({
@@ -8,7 +8,7 @@ export const chatRouter = createTRPCRouter({
     .input(
       z.object({
         content: z.string(),
-        meetingId: z.number().optional(),
+        conversationId: z.number(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -17,7 +17,8 @@ export const chatRouter = createTRPCRouter({
         content: input.content,
         userId: ctx.userId,
         role: "user",
-        meetingId: input.meetingId,
+        conversationId: input.conversationId,
+        metadata: {}, // Empty metadata for now
       });
 
       // TODO: Process message with AI
@@ -26,7 +27,8 @@ export const chatRouter = createTRPCRouter({
         content: `You said: ${input.content}`,
         userId: ctx.userId,
         role: "assistant",
-        meetingId: input.meetingId,
+        conversationId: input.conversationId,
+        metadata: {}, // Empty metadata for now
       });
 
       return { success: true };
@@ -35,6 +37,7 @@ export const chatRouter = createTRPCRouter({
   getMessages: protectedProcedure
     .input(
       z.object({
+        conversationId: z.number(),
         limit: z.number().default(50),
         cursor: z.number().optional(),
       })
@@ -43,10 +46,39 @@ export const chatRouter = createTRPCRouter({
       const messages = await ctx.db
         .select()
         .from(chatMessages)
-        .where(eq(chatMessages.userId, ctx.userId))
+        .where(eq(chatMessages.conversationId, input.conversationId))
         .orderBy(desc(chatMessages.createdAt))
         .limit(input.limit);
 
       return messages;
+    }),
+
+  createConversation: protectedProcedure
+    .input(
+      z.object({
+        name: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const conversation = await ctx.db
+        .insert(conversations)
+        .values({
+          userId: ctx.userId,
+          name: input.name,
+        })
+        .returning();
+
+      return conversation[0];
+    }),
+
+  getConversations: protectedProcedure
+    .query(async ({ ctx }) => {
+      const userConversations = await ctx.db
+        .select()
+        .from(conversations)
+        .where(eq(conversations.userId, ctx.userId))
+        .orderBy(desc(conversations.updatedAt));
+
+      return userConversations;
     }),
 }); 
