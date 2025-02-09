@@ -45,7 +45,7 @@ Let's walk through an end-to-end example to clarify the database interactions an
                 *   Drizzle ORM generates `id` for the `meetings` table, let's say `meetingId_1`.  `spreadsheetId` is linked to `spreadsheetId_1` (from step 2).  `processingStatus` is set to 'processing'.
         *   **Direct Recall.ai API Call (Synchronous for MVP):** Backend calls Recall.ai API to process `zoomMeetingLink = "https://zoom.us/j/zoomMeeting456"`.
         *   **Recall.ai Processes and Returns Transcript:** Recall.ai processes the meeting and returns the transcript and metadata. Let's assume `recallAiTranscriptId = "transcriptXYZ"`.
-        *   **LLM Entity Extraction (Groq LPU):** Backend sends the transcript to Groq LPU with a prompt that includes finance-specific jargon consideration (e.g., instructing the LLM to be aware of terms like "Series A," "valuation," "term sheet," "dilution," etc. in its analysis). The prompt asks for structured JSON output.
+        *   **LLM Entity Extraction (Google Gemini Pro):** Backend sends the transcript to Google Gemini Pro with a prompt that includes finance-specific jargon consideration (e.g., instructing the LLM to be aware of terms like "Series A," "valuation," "term sheet," "dilution," etc. in its analysis). The prompt asks for structured JSON output.
         *   **LLM Returns Structured JSON (example):**
             ```json
             {
@@ -110,7 +110,7 @@ Let's walk through an end-to-end example to clarify the database interactions an
 
 **Finance Jargon Consideration:**
 
-*   **Prompt Engineering is Key:**  To ensure the LLM (Groq LPU) understands finance jargon, your prompts must be carefully engineered to:
+*   **Prompt Engineering is Key:**  To ensure the LLM (Google Gemini Pro) understands finance jargon, your prompts must be carefully engineered to:
     *   **System Prompt:** In the system prompt, explicitly instruct the LLM that it's operating in the context of "investor meetings," "venture capital," "financial analysis," etc.  Provide examples of investor-specific terms (Series A, valuation, dilution, term sheet, cap table, due diligence, etc.).
     *   **Example Prompts/Few-Shot Learning:**  Consider including a few examples in your prompts (few-shot learning) showing how to extract entities and interpret text in the context of investor meetings.  "For example, if the transcript mentions 'They are raising a Series A,' you should identify 'Series A' as the funding stage."
     *   **Iterative Prompt Refinement:** Expect to iteratively refine your prompts based on testing and observing the LLM's output. Analyze cases where the LLM misinterprets jargon and adjust the prompts to improve its understanding.

@@ -4,15 +4,15 @@ import { api } from "@/trpc/react";
 import { useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 
-interface Message {
-  id: number;
-  userId: string;
-  content: string;
-  role: string;
-  conversationId: number;
-  metadata: Record<string, unknown>;
-  createdAt: Date;
-}
+// interface Message {
+//   id: number;
+//   userId: string;
+//   content: string;
+//   role: string;
+//   conversationId: number;
+//   metadata: Record<string, unknown>;
+//   createdAt: Date;
+// }
 
 interface ChatMessagesProps {
   conversationId: number;

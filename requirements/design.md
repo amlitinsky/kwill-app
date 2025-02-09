@@ -7,7 +7,7 @@ This document outlines the design for the core functionality of Kwill Minimum Vi
 |   Frontend (Client)   | <--> |     Backend (API)     | <--> |  Integrations & LLM  |
 |  (Next.js 15,       |      |  (tRPC, Next.js API  |      |  (Recall.ai,        |
 |   shadcn/ui,         |      |   Drizzle ORM,       |      |   Google Sheets API, |
-|   Next.js AI SDK)    |      |   Neon Postgres)        |      |   Groq LPU)         |
+|   Next.js AI SDK)    |      |   Neon Postgres)        |      |   Gemini Pro)        |
 +---------------------+      +---------------------+      +---------------------+
          ^                                ^                                ^
          | User Interaction               | API, Orchestration, Data      | AI Processing & Data Sources
@@ -180,8 +180,8 @@ export type AppRouter = typeof appRouter;
 
 5. LLM Selection (MVP)
 
-Groq LPU remains the recommended LLM for its speed and cost advantages, with prompt engineering as key for optimization.
-Also considering DeepSeek, Gemini, Qwen 2.5, and Llama 3.1 via Grok.
+Google Gemini Pro remains the recommended LLM for its integration with Google ecosystem and structured output capabilities, with prompt engineering as key for optimization.
+Also considering DeepSeek, Claude 3, and Llama 3 as alternatives.
 
 6. Frontend (Next.js 15, AI SDK - MVP)
 
