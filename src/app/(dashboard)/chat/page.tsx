@@ -9,10 +9,10 @@ import { Loader2, PlusCircle } from "lucide-react";
 export default function ChatPage() {
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   
-  const { data: conversations, isLoading: isLoadingConversations } = api.chat.getConversations.useQuery();
-  const { mutate: createConversation, isPending: isCreatingConversation } = api.chat.createConversation.useMutation({
+  const { data: conversations, isLoading: isLoadingConversations } = api.conversation.getAll.useQuery();
+  const { mutate: createConversation, isPending: isCreatingConversation } = api.conversation.create.useMutation({
     onSuccess: (newConversation) => {
-      if (newConversation) {
+      if (newConversation?.id) {
         setActiveConversationId(newConversation.id);
       }
     },

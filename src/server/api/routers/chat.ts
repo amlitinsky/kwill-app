@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { chatMessages, conversations } from "@/server/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { chatMessages } from "@/server/db/schema";
+import { desc, eq, and } from "drizzle-orm";
 
 export const chatRouter = createTRPCRouter({
   sendMessage: protectedProcedure
@@ -12,6 +12,22 @@ export const chatRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // Verify conversation exists and belongs to user
+      const messages = await ctx.db
+        .select()
+        .from(chatMessages)
+        .where(
+          and(
+            eq(chatMessages.conversationId, input.conversationId),
+            eq(chatMessages.userId, ctx.userId)
+          )
+        )
+        .limit(1);
+
+      if (!messages[0]) {
+        throw new Error("Conversation not found or unauthorized");
+      }
+
       // Insert user message
       await ctx.db.insert(chatMessages).values({
         content: input.content,
@@ -46,39 +62,15 @@ export const chatRouter = createTRPCRouter({
       const messages = await ctx.db
         .select()
         .from(chatMessages)
-        .where(eq(chatMessages.conversationId, input.conversationId))
+        .where(
+          and(
+            eq(chatMessages.conversationId, input.conversationId),
+            eq(chatMessages.userId, ctx.userId)
+          )
+        )
         .orderBy(desc(chatMessages.createdAt))
         .limit(input.limit);
 
       return messages;
-    }),
-
-  createConversation: protectedProcedure
-    .input(
-      z.object({
-        name: z.string().optional(),
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const conversation = await ctx.db
-        .insert(conversations)
-        .values({
-          userId: ctx.userId,
-          name: input.name,
-        })
-        .returning();
-
-      return conversation[0];
-    }),
-
-  getConversations: protectedProcedure
-    .query(async ({ ctx }) => {
-      const userConversations = await ctx.db
-        .select()
-        .from(conversations)
-        .where(eq(conversations.userId, ctx.userId))
-        .orderBy(desc(conversations.updatedAt));
-
-      return userConversations;
     }),
 }); 
