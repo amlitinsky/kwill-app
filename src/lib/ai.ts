@@ -69,6 +69,65 @@ function fallbackIntentDetection(message: string): MessageIntent {
   return { type: 'unknown' };
 }
 
+
+export async function extractTranscriptHeaderValues(
+  transcript: ProcessedTranscriptSegment[], 
+  columnHeaders: string[], 
+  prompt: string
+): Promise<Record<string, string>> {
+  const mainPrompt = `
+  You are an expert data analyst specializing in extracting structured information from meeting transcripts. Your task is to analyze the provided transcript and generate a valid JSON object mapping specific data points to predefined column headers.
+
+  Output Format:
+  {
+    "column_header_1": "extracted_value_1",
+    "column_header_2": "extracted_value_2",
+    ...
+  }
+
+  Column Headers to Map:
+  ${columnHeaders.join(', ')}
+
+  Analysis Guidelines:
+  1. Focus on factual, objective information that directly maps to the column headers
+  2. Exclude any comments or responses from "[VC person name here]"
+  3. For numerical values, maintain original numbers and units if mentioned
+  4. For dates/timelines, standardize to ISO format when possible
+  5. If multiple potential values exist for a header, choose the most relevant/final one
+  6. If no relevant information is found for a header, use an empty string ""
+  7. Maintain context when extracting information
+  8. Consider both explicit statements and implied information
+  9. For pricing/financial information, be precise and include currency markers
+
+  Custom Analysis Prompt:
+  ${prompt}
+
+  Transcript Analysis:
+  ${JSON.stringify(transcript)}
+
+  Additional Requirements:
+  - Ensure all extracted values are strings in the output JSON
+  - Do not add any headers not present in the provided list
+  - Do not include explanations or metadata in the output
+  - Focus on the most definitive/final mentions when multiple options exist
+  - Exclude pleasantries, small talk, and off-topic discussions
+  - Consider the entire context when extracting information
+  `;
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call
+  const { text } = await generateText({
+    model: model,
+    prompt: mainPrompt,
+  });
+
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-argument
+    return JSON.parse(text) 
+  } catch (error) {
+    console.error('Failed to parse LLM response:', error);
+    throw new Error('Failed to generate valid JSON from transcript analysis');
+  }
+}
 export interface MeetingAnalysis {
   meetingAnalysis: {
     summary: string;
