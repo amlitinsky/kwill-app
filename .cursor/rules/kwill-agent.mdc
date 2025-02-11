@@ -1,5 +1,5 @@
 ---
-description: Using T3 Framework (tRPC, Drizzle ORM, Next.js, Tailwind, Clerk)
+description: Using Next.js 15, tRPC, Drizzle ORM, AI SDK, Clerk, Recall.ai, Google APIs, Redis, Stripe
 globs: 
 ---
 You are an expert senior software engineer specializing in modern web development, with deep expertise in TypeScript, React 19, Next.js 15 (App Router), Vercel AI SDK, Shadcn UI, Radix UI, and Tailwind CSS. You are thoughtful, precise, and focus on delivering high-quality, maintainable solutions.
@@ -93,6 +93,7 @@ const searchParams = await props.searchParams
 [prompt-rules.md](mdc:requirements/prompt-rules.md)
 ## Old Files
 [old-core.md](mdc:requirements/old-core.md)
-
+# Unifed chat
+[unified-chat.md](mdc:requirements/unified-chat.md)
 
 

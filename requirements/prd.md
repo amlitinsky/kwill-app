@@ -1,86 +1,96 @@
 # Revised Product Requirements Document (PRD) for Kwill (2025-02-08) - MVP Edition
-Simplified scope for Minimum Viable Product, focusing on core functionality and streamlined architecture.
 
-1. Overview
-Product Name: Kwill
-Mission: Empower investors and venture capitalists to automate meeting data export, analysis, and spreadsheet integration using a vertical AI agent tailored to financial workflows. (MVP Focus: Initial automation for Zoom meetings and Google Sheets.)
-Vision: Become the system of action for investor workflows, replacing fragmented manual processes with AI-driven automation. (MVP Focus:  Validate core automation for meeting data to spreadsheets.)
+## 1. Overview
 
-Key Trends Addressed:
+**Product Name:** Kwill  
+**Mission:** Empower investors and venture capitalists to automate meeting data export, analysis, and spreadsheet integration using a vertical AI agent tailored to financial workflows.  
+*(MVP Focus: Initial automation for Zoom meetings and Google Sheets.)*
 
-Vertical AI dominance: Specialized agents for niche industries are projected to capture 70% of AI's economic value by 2026.
-Agentic workflows: Shift from systems of record (e.g., CRMs) to systems of action that automate tasks end-to-end.
-Unstructured data processing: Critical for handling meeting transcripts and mapping data to structured spreadsheets.
-2. Core Features (MVP)
-Domain-Specific Chat Interface
+**Vision:** Become the system of action for investor workflows – replacing fragmented manual processes with AI-driven automation.  
+*(MVP Focus: Validate core automation for meeting data to spreadsheets.)*
 
-AI Agent: LLM-powered assistant (Google Gemini Pro) fine-tuned on investor jargon, financial regulations, and spreadsheet semantics. (MVP: Focus on general financial and investor terms; fine-tuning as future enhancement.)
-Contextual Awareness: Retains chat history for basic conversational continuity within a single session. (MVP: Basic session memory, no cross-session memory or knowledge base for MVP.)
-Spreadsheet Integration
+**Key Trends Addressed:**
 
-Google Sheets API: Read/write access to map transcript-derived data to user-defined columns. (MVP: Automated mapping based on basic keyword matching; manual overrides deferred.)
-Single Spreadsheet Context: MVP assumes a single Google Sheet for data export per chat session.
-Zoom Meeting Processing
+- **Vertical AI Dominance:** Specialized agents for niche industries are projected to capture 70% of AI’s economic value by 2026.
+- **Agentic Workflows:** Transition from systems of record (e.g., CRMs) to systems of action that automate tasks end-to-end.
+- **Unstructured Data Processing:** Handling meeting transcripts and mapping data to structured spreadsheets is critical.
 
-Direct API Call from Chat: User provides Zoom link in chat; Kwill directly calls Recall.ai API to fetch transcript and metadata. (MVP: Synchronous processing for MVP. Webhook integration for Recall.ai deferred.)
-Real-Time Status: "Thinking" state during processing, with basic progress updates via chat.
-LLM Analysis Pipeline (Google Gemini Pro)
+## 2. Core Features (MVP)
 
-Entity Extraction: Identify startups, funding amounts, and action items from transcripts using Google Gemini Pro. (MVP: Focus on core entities; domain-specific training and fine-tuning deferred for MVP.)
-Data Validation: Basic validation of extracted data against spreadsheet headers (e.g., data type mismatch). (MVP: Basic validation rules.)
-Dynamic Reporting (MVP - Text-Based Summaries)
+### Domain-Specific Chat Interface
 
-AI-Generated Summaries: Action items, meeting highlights provided as text summaries in chat. (MVP: Text summaries only. Visualizations deferred.)
-Basic Querying: Users can ask simple questions about processed meetings within the current chat session. (MVP: Basic question answering within session context only.)
-3. User Stories (MVP)
-Role	Goal	Outcome
-VC Analyst	Automate post-meeting data entry for a single meeting	Reduce manual work for individual meeting data entry using AI-generated spreadsheet updates.
-Investor	Get a quick summary of a recent meeting	Instantly receive text-based summaries of action items and key highlights from a processed meeting.
+- **AI Agent:** LLM-powered assistant (Google Gemini Pro) fine-tuned on investor jargon and financial regulations.
+  - *(MVP: Focus on general investor terms; future fine-tuning as enhancement.)*
+- **Contextual Awareness:** Retains chat history for basic conversational continuity within a session.
+  - *(MVP: Basic session memory only.)*
 
-Export to Sheets
-4. Technical Architecture (MVP)
-Stack:
+### Spreadsheet Integration
 
-Frontend: Next.js 15 (App Router), shadcn/ui, Next.js AI SDK for streaming chat.
-Backend: tRPC for type-safe APIs, Next.js API Routes (App Router), Drizzle ORM (Neon Postgres), Neon Postgres Database.
-Integrations: Google Sheets API, Recall.ai API (direct API calls for MVP), Google Gemini Pro (LLM via Vercel AI SDK).
-Key Components:
+- **Google Sheets API:** Read/write access to map transcript-derived data into user-defined columns.
+  - *(MVP: Automated mapping via keyword matching; manual overrides deferred.)*
+- **Single Spreadsheet Context:** One Google Sheet per chat session.
 
-Cognitive Skills Module (Simplified MVP):
+### Zoom Meeting Processing
 
-Domain-Specific Inference: Basic inference using Google Gemini Pro and prompt engineering, focused on core investor concepts. Domain-specific training deferred.
-Basic Regulatory Considerations: Data mapping for common financial data fields. In-depth regulatory compliance features deferred for MVP.
-Agentic Workflow Engine (Synchronous MVP):
+- **Direct API Call from Chat:** When a user includes a Zoom link, Kwill makes a synchronous Recall.ai API call to fetch the transcript and metadata.
+  - *(MVP: Synchronous processing. Webhook integration deferred.)*
+- **Unified Transcript Processing:**  
+  When a meeting finishes, the system funnels the transcript into the unified `/api/chat` endpoint with an `isTranscript` flag.  
+  - The transcript is used solely as input to the LLM.
+  - Only the generated meeting insights (e.g., summary and action items) are inserted as an assistant message in the conversation.
+  - The raw transcript is not displayed to the end user.
 
-Step 1: Detect Zoom URL in chat input → Trigger direct Recall.ai API call.
-Step 2: Process transcript with Google Gemini Pro → Extract entities → Basic validation.
-Step 3: Generate text summaries → Update spreadsheet → Notify user via chat. (All steps synchronous for MVP.)
-Data Security:
+### LLM Analysis Pipeline (Google Gemini Pro)
 
-Encryption: AES-256 for API keys and sensitive data.
-OAuth: Clerk for authentication; Google Workspace scopes limited to spreadsheets owned by the user.
-5. Market & Competitive Landscape
-Vertical AI Growth: Market projected to reach $47.1B by 2030, driven by labor-cost savings.
-Competitors:
-Horizontal Tools: ChatGPT Plugins (limited domain specificity).
-Vertical Differentiators (MVP Focus): Pre-built investor workflows, cost-effective and fast processing with Google Gemini Pro, streamlined for core data entry automation.
-6. Risks & Mitigation (MVP)
-Risk	Mitigation
-Data Mapping Errors (MVP)	Basic validation and user confirmation of overall spreadsheet update. Manual override UI deferred for MVP.
-API Latency (Recall.ai, Gemini, Google Sheets)	Synchronous processing for MVP. Focus on optimizing Gemini Pro prompts for speed. Asynchronous processing (Trigger.dev) for future scalability.
-LLM Output Accuracy (MVP)	Focus on prompt engineering for Gemini Pro. Domain-specific fine-tuning deferred for MVP.
+- **Entity Extraction:** Identify startups, funding amounts, and action items from transcripts.
+  - *(MVP: Focus on core investor entities; advanced training deferred.)*
+- **Data Validation:** Basic validation of extracted data against spreadsheet headers.
+  - *(MVP: Basic validation rules.)*
 
-Export to Sheets
-7. Roadmap (Q2–Q4 2025) - MVP and Beyond
-Q2 2025 (MVP - Core Functionality Beta Launch): Beta launch with Zoom + Google Sheets integration, synchronous processing, basic chat interface, using Google Gemini Pro.
-Q3 2025 (Scalability & Enhanced Features): Asynchronous processing with Trigger.dev, Recall.ai webhook integration, Excel/CSV support, manual mapping UI.
-Q4 2025 (AI-Driven Analytics & Knowledge): AI-driven chart generation, portfolio analytics, vector embeddings for semantic search, more advanced memory management.
-8. Metrics for Success (MVP)
-Adoption (MVP Beta): 100+ beta users (VC analysts/angels) providing feedback.
-Efficiency (MVP): Demonstrate noticeable time savings in post-meeting tasks for beta users.
-Accuracy (MVP): Gather user feedback on the accuracy of AI-generated mappings and data extraction in the MVP.
-9. Key Insights from Vertical AI Trends (MVP Context)
-Specialization Wins: Vertical AI agents offer higher ROI. MVP focuses on investor workflows.
-Ethical Guardrails: Basic data validation and security in MVP. More robust compliance for future.
-Scalability: MVP is synchronous. Scalability via asynchronous processing (Trigger.dev) planned for next phase.
-For implementation details, refer to the revised MVP design document below.
+### Dynamic Reporting (MVP – Text-Based Summaries)
+
+- **AI-Generated Summaries:** Provide action items and meeting highlights as text summaries directly in chat.
+  - *(MVP: Text summaries only; visualizations deferred.)*
+- **Basic Querying:** Allow simple follow-up queries about processed meetings within the current chat session.
+  - *(MVP: Limited to session context.)*
+
+## 3. User Stories (MVP)
+
+| Role          | Goal                                                      | Outcome                                          |
+|---------------|-----------------------------------------------------------|--------------------------------------------------|
+| VC Analyst    | Automate post-meeting data entry for a meeting            | Reduce manual meeting data entry via AI insights |
+| Investor      | Get a quick summary of a recent meeting                   | Receive immediate text-based summaries         |
+
+## 4. Technical Architecture (MVP)
+
+**Stack:**
+
+- **Frontend:** Next.js 15 (App Router), shadcn/ui, Next.js AI SDK (streaming chat with unified `/api/chat`).
+- **Backend:** tRPC for type-safe APIs, Next.js API Routes, Drizzle ORM (Neon Postgres).
+- **Integrations:** Google Sheets API, Recall.ai API (direct API calls for MVP), Google Gemini Pro (LLM).
+
+**Key Components:**
+
+- **Unified Chat Endpoint:**  
+  Uses a single `/api/chat` endpoint for both regular messages and meeting transcripts (flagged by `isTranscript`).  
+  - **For Regular Messages:** It supports tool calls (e.g., linking spreadsheets or joining Zoom meetings).  
+  - **For Meeting Transcripts:** It processes the transcript into meeting insights with a system prompt designed for analysis. Only the LLM’s assistant output (meeting insights) is stored and streamed—keeping the raw transcript hidden from the user.
+
+- **Cognitive Skills Module (MVP):**  
+  Basic domain-specific inference using Google Gemini Pro with prompt engineering for investor contexts.
+
+- **Agentic Workflow Engine (Synchronous MVP):**  
+  1. Detect Zoom URL in chat → Trigger Recall.ai API call.  
+  2. On transcript receipt, send it to `/api/chat` with an `isTranscript` flag.  
+  3. LLM analyzes transcript, extracts entities, and generates meeting insights.  
+  4. Update spreadsheet and chat with the derived insights.
+
+**Data Security:**  
+- AES-256 for encryption.  
+- Clerk for authentication; OAuth with limited Google Sheets scopes.
+
+## 5. Metrics for Success (MVP)
+
+- **Adoption:** 100+ beta users (VC analysts/angels) providing feedback.
+- **Efficiency:** Noticeable time savings in post-meeting tasks.
+- **Accuracy:** Positive user feedback on AI-generated mappings and data extraction.
