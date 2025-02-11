@@ -46,6 +46,7 @@ export function ChatMessages({ conversationId }: ChatMessagesProps) {
     );
   }
 
+  // TODO: if its frist chat we want to center (or bring up) the chat window for first message
   if (!messages?.length) {
     return (
       <div className="flex h-full flex-col items-center justify-center space-y-2 text-center">
