@@ -13,7 +13,7 @@ Let's walk through an end-to-end example to clarify the database interactions an
 1.  **User Starts Chat & Links Spreadsheet:**
     *   Sarah starts a new chat in the SheetSync AI frontend.
     *   Sarah types: "Link this spreadsheet: `https://docs.google.com/spreadsheets/d/spreadsheet123/edit#gid=0`".
-    *   Frontend sends a `chat.sendMessage` request to the backend API with the message and Sarah's `clerkId` (let's say `clerkId = "userSarahClerkId"`).
+    *   Frontend sends a `chat.sendMessage` request to the backend API with the message and Sarah's `userId` (let's say `userId = "userSarahId"`).
 
 2.  **Backend Processes "Link Spreadsheet" Intent:**
     *   Backend API (`/api/chat/sendMessage`) receives the request.
@@ -22,15 +22,15 @@ Let's walk through an end-to-end example to clarify the database interactions an
     *   **Database Interaction (Spreadsheets Table - INSERT):**
         *   Backend inserts a new row into the `spreadsheets` table:
             ```sql
-            INSERT INTO spreadsheets (clerkId, googleSheetId, name)
-            VALUES ('userSarahClerkId', 'spreadsheet123', 'Sarah\'s Deal Flow Sheet');
+            INSERT INTO spreadsheets (userId, googleSheetId, name)
+            VALUES ('userSarahId', 'spreadsheet123', 'Sarah\'s Deal Flow Sheet');
             ```
             *   Drizzle ORM will handle generating the `id` (serial primary key). Let's assume `id` becomes `spreadsheetId_1`.
     *   Backend sends a chat response back to Sarah: "Spreadsheet linked! I will use this for future meeting updates in this chat."
 
 3.  **User Processes Zoom Meeting:**
     *   Sarah pastes a Zoom meeting link into the chat: "Process this meeting: `https://zoom.us/j/zoomMeeting456`".
-    *   Frontend sends another `chat.sendMessage` request with the new message and `clerkId = "userSarahClerkId"`.
+    *   Frontend sends another `chat.sendMessage` request with the new message and `userId = "userSarahId"`.
 
 4.  **Backend Processes "Process Zoom Meeting" Intent:**
     *   Backend API (`/api/chat/sendMessage`) receives the request.
@@ -39,8 +39,8 @@ Let's walk through an end-to-end example to clarify the database interactions an
         *   **Database Interaction (Meetings Table - INSERT - Initial Record):**
             *   Backend inserts a new row into the `meetings` table to track this meeting processing:
                 ```sql
-                INSERT INTO meetings (clerkId, spreadsheetId, zoomMeetingLink, processingStatus)
-                VALUES ('userSarahClerkId', spreadsheetId_1, 'https://zoom.us/j/zoomMeeting456', 'processing');
+                INSERT INTO meetings (userId, spreadsheetId, zoomMeetingLink, processingStatus)
+                VALUES ('userSarahId', spreadsheetId_1, 'https://zoom.us/j/zoomMeeting456', 'processing');
                 ```
                 *   Drizzle ORM generates `id` for the `meetings` table, let's say `meetingId_1`.  `spreadsheetId` is linked to `spreadsheetId_1` (from step 2).  `processingStatus` is set to 'processing'.
         *   **Direct Recall.ai API Call (Synchronous for MVP):** Backend calls Recall.ai API to process `zoomMeetingLink = "https://zoom.us/j/zoomMeeting456"`.
@@ -85,7 +85,7 @@ Let's walk through an end-to-end example to clarify the database interactions an
 
 5.  **User Asks About Past Meeting (Chat History):**
     *   Sarah types: "What were the action items from that last meeting again?"
-    *   Frontend sends `chat.sendMessage` with the message and `clerkId = "userSarahClerkId"`.
+    *   Frontend sends `chat.sendMessage` with the message and `userId = "userSarahId"`.
 
 6.  **Backend Responds to Chat Query (Leveraging Chat History and Meeting Data):**
     *   Backend API (`/api/chat/sendMessage`) receives the query.
@@ -106,7 +106,7 @@ Let's walk through an end-to-end example to clarify the database interactions an
     *   **Future Features (Conversation Analysis):** In the future, you could analyze chat history for user behavior, feedback, and to improve the agent's performance over time.
 *   **Linking to Meetings (Optional):** The `meetingId` column in `chatMessages` allows you to link specific chat messages to a particular meeting processing flow.  This can be useful for:
     *   Grouping chat messages related to a specific meeting for better organization and context.
-    *   Potentially triggering actions or providing context based on chat messages *within* a meeting processing workflow (though this is more advanced and likely beyond the MVP). For the MVP, we can start simpler and just store chat history generally linked to the user (`clerkId`) and optionally linked to a meeting.
+    *   Potentially triggering actions or providing context based on chat messages *within* a meeting processing workflow (though this is more advanced and likely beyond the MVP). For the MVP, we can start simpler and just store chat history generally linked to the user (`userId`) and optionally linked to a meeting.
 
 **Finance Jargon Consideration:**
 
@@ -131,7 +131,7 @@ The database is central to SheetSync AI. It's used to:
 
 *   **Persistent Data Storage:** Store user spreadsheet links, meeting processing history, chat history, and structured data extracted by the LLM.
 *   **State Management:** Track the processing status of meetings (`processingStatus`).
-*   **Context and Relationships:**  Link users to spreadsheets and meetings using `clerkId`, and optionally link chat messages to meetings.
+*   **Context and Relationships:**  Link users to spreadsheets and meetings using `userId`, and optionally link chat messages to meetings.
 *   **Data Retrieval for Agent Responses:**  Enable the agent to retrieve information from past meetings and chat history to answer user queries and provide contextually relevant responses.
 
 This detailed example and explanation should hopefully clarify how the database schema and architecture support the core functionalities of SheetSync AI and how data flows through the system during a typical user interaction. Let me know if you have any further questions!

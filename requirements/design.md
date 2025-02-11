@@ -20,22 +20,25 @@ This document outlines the design for the core functionality of Kwill Minimum Vi
 
 TypeScript
 
+```typescript
 // backend/db/schema.ts (Drizzle ORM - MVP Schema)
 
 import { pgTable, serial, text, timestamp, jsonb, varchar, integer, foreignKey } from 'drizzle-orm/pg-core';
 
-export const spreadsheets = createTable('spreadsheets', {
+export const conversations = createTable('conversations', {
   id: serial('id').primaryKey(),
   userId: varchar('user_id', { length: 255 }).notNull(),
-  googleSheetId: varchar('google_sheet_id', { length: 255 }).notNull(),
+  googleSheetId: varchar('google_sheet_id', { length: 255 }),
   name: text('name'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
 export const meetings = createTable('meetings', {
   id: serial('id').primaryKey(),
+  conversationId: integer('conversation_id').references(() => conversations.id).notNull(),
   userId: varchar('user_id', { length: 255 }).notNull(),
-  spreadsheetId: integer('spreadsheet_id').references(() => spreadsheets.id),
+  zoomUrl: text('zoom_url').notNull(),
   botId: varchar('bot_id', { length: 255 }),
   llmExtractedData: jsonb('llm_extracted_data'),
   processingStatus: varchar('processing_status', { length: 50 }).default('pending'),
@@ -175,6 +178,7 @@ async function streamToString(stream: ReadableStream<Uint8Array>): Promise<strin
 
 export type AppRouter = typeof appRouter;
 4. AI Agent Orchestration Flow (Synchronous MVP - Detail)
+```
 
 (As described in detail in the code comments within the sendMessage function above.)
 

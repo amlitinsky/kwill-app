@@ -1,4 +1,4 @@
-import { base64Image } from "./base64Image";
+import { base64Image } from "./kwill-scribe-image";
 
 const RECALL_API_KEY = process.env.RECALL_API_KEY
 // const NGROK_URL = 'https://evolved-raccoon-key.ngrok-free.app/api/callback/zoom' 
