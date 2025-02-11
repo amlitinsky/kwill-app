@@ -1,6 +1,6 @@
 const RECALL_API_KEY = process.env.RECALL_API_KEY;
 const RECALL_API_URL = 'https://us-west-2.recall.ai/api/v1/bot';
-
+const RECALL_API_ZOOM_OAUTH_CREDENTIALS = 'https://us-west-2.recall.ai/api/v2/zoom-oauth-credentials'
 interface CreateBotOptions {
   join_at?: string;
   automatic_leave?: number;
@@ -153,5 +153,57 @@ export async function calculateMeetingDuration(botId: string): Promise<number> {
   } catch (error) {
     console.error('Error calculating meeting duration:', error);
     return 0;
+  }
+}
+
+export async function createZoomOAuthCredential(code: string) {
+  try {
+    // TODO when we go to production I have to change this to use the base url
+    // when I do locally it has to be the ngrok one
+    const response = await fetch(`${RECALL_API_ZOOM_OAUTH_CREDENTIALS}/`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Token ${RECALL_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        oauth_app: process.env.RECALL_ZOOM_OAUTH_APP_ID,
+        authorization_code: {
+          code: code,
+          redirect_uri: `${process.env.NEXT_PUBLIC_BASE_URL}/api/callback/zoom`,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json() as RecallErrorResponse;
+      throw new Error(`HTTP error! status: ${response.status}, message: ${JSON.stringify(errorData)}`);
+    }
+
+    const data = await response.json() as RecallErrorResponse;
+    return data;
+  } catch (error) {
+    console.error('Error creating Zoom OAuth credential:', error);
+    throw error;
+  }
+}
+
+export async function deleteZoomOAuthCredential(credentialId: string) {
+  try {
+    const response = await fetch(`${RECALL_API_ZOOM_OAUTH_CREDENTIALS}/${credentialId}/`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Token ${RECALL_API_KEY}`,
+      },
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json() as RecallErrorResponse;
+      throw new Error(`Failed to delete Zoom OAuth Credential. Status: ${response.status}, Error: ${JSON.stringify(errorData)}`)
+    }
+
+  } catch (error) {
+    console.error('Error deleting Zoom OAuth credential:', error)
+    throw error
   }
 }
