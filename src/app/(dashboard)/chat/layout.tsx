@@ -1,14 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { Menu, PanelLeftOpen } from "lucide-react";
+import { PanelLeftOpen, SquarePen } from "lucide-react";
+import { ConversationProvider, useConversation } from "@/app/_components/context/conversation-context";
+import { ChatSidebar } from "@/app/_components/chat/ChatSidebar";
+import { api } from "@/trpc/react";
 
-export default function ChatLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+// Create an inner component that uses the context
+function ChatLayoutInner({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const { setActiveConversationId } = useConversation();
+  const utils = api.useUtils();
+
+  const { mutate: createConversation } = api.conversation.create.useMutation({
+    onSuccess: (newConversation) => {
+      if (newConversation?.id) {
+        setActiveConversationId(newConversation.id);
+      }
+      void utils.conversation.getAll.invalidate();
+    },
+  });
+
+  const handleNewConversation = () => {
+    createConversation({ name: "New Chat" });
+  };
 
   return (
     <div className="flex h-screen bg-[#020817] text-white">
@@ -18,47 +33,23 @@ export default function ChatLayout({
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         } ${isSidebarOpen ? "lg:relative" : "lg:hidden"}`}
       >
-        <div className="flex h-full flex-col">
-          {/* Sidebar Header */}
-          <div className="flex h-14 items-center px-4">
-            <button
-              onClick={() => setIsSidebarOpen(false)}
-              className="hover:text-gray-300"
-            >
-              <PanelLeftOpen className="h-5 w-5" />
-            </button>
-          </div>
-          
-          {/* Sidebar Content - We can add message history here later */}
-          <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-gray-500/20 hover:scrollbar-thumb-gray-500/40 scrollbar-track-[#0c1425]">
-            {/* Message history will go here */}
-          </div>
-        </div>
+        <ChatSidebar 
+          isOpen={isSidebarOpen} 
+          onToggle={() => setIsSidebarOpen(false)}
+        />
       </div>
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col">
-        {/* Header */}
-        <header className="flex h-14 items-center px-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="rounded-md p-1 hover:bg-gray-800 lg:hidden"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
-            {isSidebarOpen ? (
-              <h1 className="text-xl font-semibold">Kwill</h1>
-            ) : null}
-          </div>
-        </header>
 
         {/* Main Content Area */}
         <main className="relative flex-1 overflow-hidden bg-[#020817]">
           <div className="absolute inset-0">
-            <div className={`h-full w-full transition-transform duration-200 ${
-              isSidebarOpen ? "lg:translate-x-32" : "lg:translate-x-0"
-            }`}>
+            <div
+              className={`h-full w-full transition-transform duration-200 ${
+                isSidebarOpen ? "lg:translate-x-32" : "lg:translate-x-0"
+              }`}
+            >
               {children}
             </div>
           </div>
@@ -74,9 +65,27 @@ export default function ChatLayout({
           >
             <PanelLeftOpen className="h-5 w-5" />
           </button>
-          <h1 className="text-xl font-semibold">Kwill</h1>
+          <button
+            onClick={handleNewConversation}
+            className="rounded-md p-1 hover:bg-gray-800"
+          >
+            <SquarePen className="h-5 w-5" />
+          </button>
         </div>
       )}
     </div>
+  );
+}
+
+// Main layout component that provides the context
+export default function ChatLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <ConversationProvider>
+      <ChatLayoutInner>{children}</ChatLayoutInner>
+    </ConversationProvider>
   );
 } 

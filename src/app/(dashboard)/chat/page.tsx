@@ -3,11 +3,12 @@
 import { ChatInput } from "@/app/_components/chat/ChatInput";
 import { ChatMessages } from "@/app/_components/chat/ChatMessages";
 import { api } from "@/trpc/react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { useConversation } from "@/app/_components/context/conversation-context";
 
 export default function ChatPage() {
-  const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
+  const { activeConversationId, setActiveConversationId } = useConversation();
   
   const { data: conversations, isLoading: isLoadingConversations } = api.conversation.getAll.useQuery(undefined, {
     // Prevent refetching on window focus
