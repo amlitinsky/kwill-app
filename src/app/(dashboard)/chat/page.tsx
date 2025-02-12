@@ -4,12 +4,18 @@ import { ChatInput } from "@/app/_components/chat/ChatInput";
 import { ChatMessages } from "@/app/_components/chat/ChatMessages";
 import { api } from "@/trpc/react";
 import { useEffect, useState } from "react";
-import { Loader2, PlusCircle } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export default function ChatPage() {
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
   
-  const { data: conversations, isLoading: isLoadingConversations } = api.conversation.getAll.useQuery();
+  const { data: conversations, isLoading: isLoadingConversations } = api.conversation.getAll.useQuery(undefined, {
+    // Prevent refetching on window focus
+    refetchOnWindowFocus: false,
+    // Keep data fresh for 1 minute
+    staleTime: 60 * 1000,
+  });
+
   const { mutate: createConversation, isPending: isCreatingConversation } = api.conversation.create.useMutation({
     onSuccess: (newConversation) => {
       if (newConversation?.id) {
@@ -18,21 +24,27 @@ export default function ChatPage() {
     },
   });
 
-  // Set first conversation as active when conversations load (but don't create one)
+  // Single effect to handle both cases
   useEffect(() => {
-    if (!isLoadingConversations && conversations && conversations.length > 0 && !activeConversationId) {
-      const firstConversation = conversations[0];
-      if (firstConversation?.id) {
-        setActiveConversationId(firstConversation.id);
-      }
+    // Only proceed if we're not already loading or creating
+    if (isLoadingConversations || isCreatingConversation) {
+      return;
     }
-  }, [conversations, isLoadingConversations, activeConversationId]);
 
-  const handleNewChat = () => {
-    createConversation({ name: "New Chat" });
-  };
+    // If we have conversations but no active one, set the first one
+    if (conversations?.length && !activeConversationId) {
+      setActiveConversationId(conversations[0]!.id);
+      return;
+    }
 
-  if (isLoadingConversations) {
+    // If we have no conversations and haven't started creating one, create one
+    if (!conversations?.length && !activeConversationId) {
+      createConversation({ name: "New Chat" });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversations, isLoadingConversations, activeConversationId, isCreatingConversation]);
+
+  if (isLoadingConversations || isCreatingConversation || !activeConversationId) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -40,59 +52,30 @@ export default function ChatPage() {
     );
   }
 
-  // Show new chat button if no conversations exist
-  if (!conversations || conversations.length === 0) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center space-y-4">
-        <p className="text-lg font-medium text-gray-200">Welcome to Kwill!</p>
-        <p className="text-gray-500">Start by creating a new chat.</p>
-        <button
-          onClick={handleNewChat}
-          disabled={isCreatingConversation}
-          className="flex items-center space-x-2 rounded-lg bg-[#0c1425] px-4 py-2 text-gray-200 hover:bg-[#0c1425]/80"
-        >
-          {isCreatingConversation ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <PlusCircle className="h-5 w-5" />
-          )}
-          <span>New Chat</span>
-        </button>
-      </div>
-    );
-  }
-
   return (
     <div className="flex h-full flex-col">
-      <div className="flex items-center justify-between border-b border-gray-700/50 bg-[#020817] p-4">
-        <h1 className="text-lg font-medium text-gray-200">Chats</h1>
-        <button
-          onClick={handleNewChat}
-          disabled={isCreatingConversation}
-          className="flex items-center space-x-2 rounded-lg bg-[#0c1425] px-3 py-1.5 text-sm text-gray-200 hover:bg-[#0c1425]/80"
-        >
-          {isCreatingConversation ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <PlusCircle className="h-4 w-4" />
-          )}
-          <span>New Chat</span>
-        </button>
+      <div className="relative flex-1 overflow-hidden">
+        <div className="absolute inset-0 overflow-y-auto bg-[#020817] scrollbar-thin scrollbar-thumb-gray-500/20 hover:scrollbar-thumb-gray-500/40 scrollbar-track-[#020817]">
+          <div className="mx-auto h-full w-full max-w-3xl">
+            <div className="flex min-h-full flex-col">
+              <div className="flex-1 pb-32">
+                <div className="px-4 py-4">
+                  <ChatMessages conversationId={activeConversationId} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      {activeConversationId ? (
-        <div className="flex flex-1 flex-col p-4">
-          <div className="flex-1 overflow-y-auto">
-            <ChatMessages conversationId={activeConversationId} />
-          </div>
-          <div className="h-[120px]">
-            <ChatInput conversationId={activeConversationId} />
+      <div className="absolute bottom-0 left-0 right-0">
+        <div className="bg-gradient-to-t from-[#020817] via-[#020817] to-transparent pt-6">
+          <div className="mx-auto w-full max-w-3xl">
+            <div className="px-2 pb-6">
+              <ChatInput conversationId={activeConversationId} />
+            </div>
           </div>
         </div>
-      ) : (
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-gray-500">Select or create a chat to get started</p>
-        </div>
-      )}
+      </div>
     </div>
   );
 } 

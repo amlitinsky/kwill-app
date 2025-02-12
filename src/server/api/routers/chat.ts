@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { chatMessages } from "@/server/db/schema";
-import { desc, eq, and } from "drizzle-orm";
+import { eq, and, asc } from "drizzle-orm";
 
 export const chatRouter = createTRPCRouter({
   sendMessage: protectedProcedure
@@ -68,7 +68,7 @@ export const chatRouter = createTRPCRouter({
             eq(chatMessages.userId, ctx.userId)
           )
         )
-        .orderBy(desc(chatMessages.createdAt))
+        .orderBy(asc(chatMessages.createdAt))
         .limit(input.limit);
 
       return messages;

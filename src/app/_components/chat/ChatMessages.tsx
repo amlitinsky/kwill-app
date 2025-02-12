@@ -1,18 +1,10 @@
 "use client";
 
-import { api } from "@/trpc/react";
-import { useEffect, useRef } from "react";
-import { Loader2 } from "lucide-react";
-
-// interface Message {
-//   id: number;
-//   userId: string;
-//   content: string;
-//   role: string;
-//   conversationId: number;
-//   metadata: Record<string, unknown>;
-//   createdAt: Date;
-// }
+import { useChat } from '@ai-sdk/react';
+import { useEffect, useRef } from 'react';
+import { Loader2 } from 'lucide-react';
+import { api } from '@/trpc/react';
+import ReactMarkdown from 'react-markdown';
 
 interface ChatMessagesProps {
   conversationId: number;
@@ -20,25 +12,33 @@ interface ChatMessagesProps {
 
 export function ChatMessages({ conversationId }: ChatMessagesProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { data: messages, isLoading } = api.chat.getMessages.useQuery(
-    { 
+  
+  const { data: initialMessages } = api.chat.getMessages.useQuery({
+    conversationId,
+    limit: 50,
+  });
+
+  const { messages, isLoading } = useChat({
+    body: {
       conversationId,
-      limit: 50 
     },
-    {
-      refetchInterval: 1000,
-    }
-  );
+    id: conversationId.toString(),
+    initialMessages: initialMessages?.map(msg => ({
+      id: msg.id.toString(),
+      content: msg.content,
+      role: msg.role as 'user' | 'assistant' | 'system',
+    })),
+  });
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  if (isLoading) {
+  if (isLoading && !messages?.length) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
@@ -46,7 +46,6 @@ export function ChatMessages({ conversationId }: ChatMessagesProps) {
     );
   }
 
-  // TODO: if its frist chat we want to center (or bring up) the chat window for first message
   if (!messages?.length) {
     return (
       <div className="flex h-full flex-col items-center justify-center space-y-2 text-center">
@@ -57,26 +56,39 @@ export function ChatMessages({ conversationId }: ChatMessagesProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col space-y-4">
       {messages.map((message) => (
         <div
           key={message.id}
           className={`flex ${
-            message.role === "user" ? "justify-end" : "justify-start"
+            message.role === 'user' ? 'justify-end' : 'justify-start'
           }`}
         >
           <div
             className={`max-w-[80%] rounded-lg px-4 py-2 ${
-              message.role === "user"
-                ? "bg-[#0c1425] text-gray-100"
-                : "bg-[#020817] text-gray-200"
+              message.role === 'user'
+                ? 'bg-[#0c1425] text-gray-100'
+                : 'bg-[#020817] text-gray-200'
             }`}
           >
-            <p className="whitespace-pre-wrap">{message.content}</p>
+            <ReactMarkdown
+              className="prose prose-invert prose-sm max-w-none"
+              components={{
+                // Override default element styling
+                p: ({ children }) => <p className="mb-0">{children}</p>,
+                a: ({ children, href, ...props }) => (
+                  <a {...props} href={href} className="text-blue-400 hover:text-blue-300" target="_blank" rel="noopener noreferrer">
+                    {children}
+                  </a>
+                ),
+              }}
+            >
+              {message.content}
+            </ReactMarkdown>
           </div>
         </div>
       ))}
       <div ref={messagesEndRef} />
     </div>
   );
-} 
+}

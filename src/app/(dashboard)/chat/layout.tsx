@@ -8,7 +8,7 @@ export default function ChatLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   return (
     <div className="flex h-screen bg-[#020817] text-white">
@@ -30,7 +30,7 @@ export default function ChatLayout({
           </div>
           
           {/* Sidebar Content - We can add message history here later */}
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-gray-500/20 hover:scrollbar-thumb-gray-500/40 scrollbar-track-[#0c1425]">
             {/* Message history will go here */}
           </div>
         </div>
@@ -55,13 +55,11 @@ export default function ChatLayout({
 
         {/* Main Content Area */}
         <main className="relative flex-1 overflow-hidden bg-[#020817]">
-          <div className="absolute inset-0 flex justify-center">
-            <div className={`h-full w-full max-w-3xl transition-transform duration-200 ${
+          <div className="absolute inset-0">
+            <div className={`h-full w-full transition-transform duration-200 ${
               isSidebarOpen ? "lg:translate-x-32" : "lg:translate-x-0"
             }`}>
-              <div className="h-full bg-[#020817]">
-                {children}
-              </div>
+              {children}
             </div>
           </div>
         </main>
