@@ -67,7 +67,7 @@ export const env = createEnv({
     CLERK_SECRET_KEY: z.string().min(1),
 
     // Pusher
-    PUSHER_API_KEY: z.string().min(1),
+    // PUSHER_API_KEY: z.string().min(1),
   },
 
   /**
@@ -166,7 +166,7 @@ export const env = createEnv({
     CLERK_SECRET_KEY: process.env.CLERK_SECRET_KEY,
 
     // Pusher
-    PUSHER_API_KEY: process.env.PUSHER_API_KEY,
+    // PUSHER_API_KEY: process.env.PUSHER_API_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
