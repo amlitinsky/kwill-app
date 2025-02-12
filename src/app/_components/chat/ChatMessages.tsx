@@ -41,46 +41,64 @@ export function ChatMessages({ conversationId }: ChatMessagesProps) {
   if (isLoading && !messages?.length) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
-      </div>
-    );
-  }
-
-  if (!messages?.length) {
-    return (
-      <div className="flex h-full flex-col items-center justify-center space-y-2 text-center">
-        <p className="text-lg font-medium text-gray-200">Welcome to Kwill!</p>
-        <p className="text-gray-500">Start by typing a message, pasting a Zoom link, or asking for help.</p>
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col space-y-4">
+    <div className="flex flex-col space-y-8">
       {messages.map((message) => (
         <div
           key={message.id}
           className={`flex ${
-            message.role === 'user' ? 'justify-end' : 'justify-start'
+            message.role === 'user' ? 'justify-end' : 'justify-start w-full'
           }`}
         >
           <div
-            className={`max-w-[80%] rounded-lg px-4 py-2 ${
+            className={`${
               message.role === 'user'
-                ? 'bg-[#0c1425] text-gray-100'
-                : 'bg-[#020817] text-gray-200'
+                ? 'bg-background text-foreground rounded-lg px-4 py-2 max-w-[80%]'
+                : 'text-foreground w-full'
             }`}
           >
             <ReactMarkdown
-              className="prose prose-invert prose-sm max-w-none"
+              className="max-w-none text-white [&_*]:text-white"
               components={{
-                // Override default element styling
-                p: ({ children }) => <p className="mb-0">{children}</p>,
+                p: ({ children }) => (
+                  <p className={`${message.role === 'assistant' ? 'text-base leading-7' : 'mb-0'} text-white`}>
+                    {children}
+                  </p>
+                ),
                 a: ({ children, href, ...props }) => (
-                  <a {...props} href={href} className="text-blue-400 hover:text-blue-300" target="_blank" rel="noopener noreferrer">
+                  <a {...props} href={href} className="text-white underline hover:text-white/80" target="_blank" rel="noopener noreferrer">
                     {children}
                   </a>
                 ),
+                ul: ({ children }) => (
+                  <ul className="my-4 list-disc pl-6 text-white">
+                    {children}
+                  </ul>
+                ),
+                ol: ({ children }) => (
+                  <ol className="my-4 list-decimal pl-6 text-white">
+                    {children}
+                  </ol>
+                ),
+                li: ({ children }) => (
+                  <li className="my-2 text-white">
+                    {children}
+                  </li>
+                ),
+                code: ({ children }) => (
+                  <code className="rounded bg-white/5 px-1 py-0.5 text-white">
+                    {children}
+                  </code>
+                ),
+                h1: ({ children }) => <h1 className="mb-4 text-2xl font-semibold text-white">{children}</h1>,
+                h2: ({ children }) => <h2 className="mb-3 text-xl font-semibold text-white">{children}</h2>,
+                h3: ({ children }) => <h3 className="mb-2 text-lg font-semibold text-white">{children}</h3>,
+                strong: ({ children }) => <strong className="font-semibold text-white">{children}</strong>,
               }}
             >
               {message.content}

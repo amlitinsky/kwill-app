@@ -48,32 +48,49 @@ export default function ChatPage() {
   if (isLoadingConversations || isCreatingConversation || !activeConversationId) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  // Query for messages in the active conversation
+  const { data: messages, isLoading: messagesLoading } = api.chat.getMessages.useQuery({
+    conversationId: activeConversationId,
+    limit: 50,
+  });
+
+  // Only when messages are not loading and there are zero messages, show the empty state.
+  const isChatEmpty = !messagesLoading && (!messages || messages.length === 0);
+
+  if (isChatEmpty) {
+    return (
+      <div className="flex min-h-[calc(100vh-160px)] items-center justify-center p-4">
+        <div className="mx-auto text-center space-y-8 w-full max-w-[750px]">
+          <h1 className="text-4xl font-semibold text-foreground">
+            What can I analyze for you?
+          </h1>
+          <ChatInput conversationId={activeConversationId} />
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex h-full flex-col">
-      <div className="relative flex-1 overflow-hidden">
-        <div className="absolute inset-0 overflow-y-auto bg-[#020817] scrollbar-thin scrollbar-thumb-gray-500/20 hover:scrollbar-thumb-gray-500/40 scrollbar-track-[#020817]">
-          <div className="mx-auto h-full w-full max-w-3xl">
-            <div className="flex min-h-full flex-col">
-              <div className="flex-1 pb-32">
-                <div className="px-4 py-4">
-                  <ChatMessages conversationId={activeConversationId} />
-                </div>
-              </div>
-            </div>
+      {/* Scrollable messages area */}
+      <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border hover:scrollbar-thumb-border/80">
+        <div className="mx-auto w-full max-w-[750px]">
+          <div className="px-4 py-8">
+            <ChatMessages conversationId={activeConversationId} />
           </div>
         </div>
       </div>
-      <div className="absolute bottom-0 left-0 right-0">
-        <div className="bg-gradient-to-t from-[#020817] via-[#020817] to-transparent pt-6">
-          <div className="mx-auto w-full max-w-3xl">
-            <div className="px-2 pb-6">
-              <ChatInput conversationId={activeConversationId} />
-            </div>
+
+      {/* Fixed input at bottom */}
+      <div className="shrink-0">
+        <div className="relative mx-auto w-full max-w-[800px]">
+          <div className="px-4">
+            <ChatInput conversationId={activeConversationId} />
           </div>
         </div>
       </div>

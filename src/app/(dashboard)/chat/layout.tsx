@@ -26,12 +26,12 @@ function ChatLayoutInner({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="flex h-screen bg-[#020817] text-white">
+    <div className="flex h-screen bg-card text-foreground">
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-50 w-64 transform bg-[#0c1425] transition-transform duration-200 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 w-64 transform border-r border-border bg-background transition-transform duration-200 ease-in-out ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } ${isSidebarOpen ? "lg:relative" : "lg:hidden"}`}
+        } ${isSidebarOpen ? "lg:relative lg:translate-x-0" : "lg:hidden"}`}
       >
         <ChatSidebar 
           isOpen={isSidebarOpen} 
@@ -41,33 +41,23 @@ function ChatLayoutInner({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <div className="flex flex-1 flex-col">
-
-        {/* Main Content Area */}
-        <main className="relative flex-1 overflow-hidden bg-[#020817]">
-          <div className="absolute inset-0">
-            <div
-              className={`h-full w-full transition-transform duration-200 ${
-                isSidebarOpen ? "lg:translate-x-32" : "lg:translate-x-0"
-              }`}
-            >
-              {children}
-            </div>
-          </div>
+        <main className="flex-1 overflow-hidden">
+          {children}
         </main>
       </div>
 
-      {/* Desktop Sidebar Toggle Button (when sidebar is closed) */}
+      {/* Desktop Sidebar Toggle Button */}
       {!isSidebarOpen && (
         <div className="fixed left-4 top-4 z-50 flex items-center gap-3">
           <button
             onClick={() => setIsSidebarOpen(true)}
-            className="rounded-md p-1 hover:bg-gray-800"
+            className="rounded-md p-1 hover:bg-background/50"
           >
             <PanelLeftOpen className="h-5 w-5" />
           </button>
           <button
             onClick={handleNewConversation}
-            className="rounded-md p-1 hover:bg-gray-800"
+            className="rounded-md p-1 hover:bg-background/50"
           >
             <SquarePen className="h-5 w-5" />
           </button>

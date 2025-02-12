@@ -33,13 +33,13 @@ export function ChatInput({ conversationId }: ChatInputProps) {
           onChange={handleInputChange}
           onKeyDown={handleKeyPress}
           placeholder="Type a message, paste a Zoom link, or ask for help..."
-          className="h-full w-full resize-none rounded-lg border border-gray-700/50 bg-[#0c1425] p-4 pr-12 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-gray-700"
+          className="h-full w-full resize-none rounded-lg border border-border bg-background p-4 pr-12 text-foreground placeholder-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           disabled={isLoading}
         />
         <button
           type="submit"
           disabled={!input || isLoading}
-          className="absolute bottom-4 right-4 rounded-lg bg-transparent p-1 text-gray-400 transition-colors hover:text-gray-200 disabled:hover:text-gray-400"
+          className="absolute bottom-4 right-4 rounded-lg bg-transparent p-1 text-foreground transition-colors hover:text-foreground disabled:hover:text-muted-foreground"
         >
           {isLoading ? (
             <Loader2 className="h-5 w-5 animate-spin" />

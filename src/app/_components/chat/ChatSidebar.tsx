@@ -41,12 +41,12 @@ export function ChatSidebar({ onToggle }: ChatSidebarProps) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-14 items-center justify-between p-4">
-        <button onClick={onToggle} className="hover:text-gray-300">
+        <button onClick={onToggle} className="hover:text-foreground/80">
           <PanelLeftOpen className="h-5 w-5" />
         </button>
         <button
           onClick={handleNewConversation}
-          className="flex items-center gap-2 rounded-lg  px-3 py-2 hover:bg-gray-700"
+          className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-muted"
         >
           <SquarePen className="h-5 w-5" />
         </button>
@@ -59,8 +59,8 @@ export function ChatSidebar({ onToggle }: ChatSidebarProps) {
             onClick={() => setActiveConversationId(conversation.id)}
             className={`group mb-2 flex cursor-pointer items-center justify-between rounded-lg p-3 ${
               activeConversationId === conversation.id 
-                ? "bg-gray-700/50" 
-                : "hover:bg-gray-700/30"
+                ? "bg-muted" 
+                : "hover:bg-muted/50"
             }`}
           >
             <span className="line-clamp-1 text-sm">
@@ -68,7 +68,7 @@ export function ChatSidebar({ onToggle }: ChatSidebarProps) {
             </span>
             <button
               onClick={(e) => handleDelete(conversation.id, e)}
-              className="invisible text-gray-400 hover:text-gray-200 group-hover:visible"
+              className="invisible text-muted-foreground hover:text-foreground group-hover:visible"
             >
               <Trash2 className="h-4 w-4" />
             </button>

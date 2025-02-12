@@ -50,14 +50,26 @@
     --radius: 0.5rem
   }
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
+    /* Main application background */
+    --background: 0, 0%, 7%; /* #121212 */
+    
+    /* Surface or card background */
+    --card: 0, 0%, 11%; /* #1E1E1E */
+    
+    /* Default text color */
+    --foreground: 0, 0%, 88%; /* #E0E0E0 */
+    
+    /* Accent color used for buttons/links */
+    --primary: 217, 100%, 58%; /* #2979FF */
+    
+    /* Text on accent elements */
+    --primary-foreground: 0, 0%, 88%; /* Matching the text color */
+    
+    /* Border or divider color */
+    --border: 0, 0%, 18%; /* #2D2D2D */
     --card-foreground: 210 40% 98%;
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
     --muted: 217.2 32.6% 17.5%;
@@ -66,7 +78,6 @@
     --accent-foreground: 210 40% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
     --chart-1: 220 70% 50%;
