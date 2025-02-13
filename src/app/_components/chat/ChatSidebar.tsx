@@ -1,3 +1,5 @@
+"use client";
+
 import { api } from "@/trpc/react";
 import { PanelLeftOpen, SquarePen, Trash2 } from "lucide-react";
 import { useConversation } from "@/app/_components/context/conversation-context";
@@ -8,24 +10,16 @@ interface ChatSidebarProps {
 }
 
 export function ChatSidebar({ onToggle }: ChatSidebarProps) {
-  const { activeConversationId, setActiveConversationId } = useConversation();
+  const { activeConversationId, setActiveConversationId, setIsNewConversation } = useConversation();
   const utils = api.useUtils();
   const { data: conversations } = api.conversation.getAll.useQuery();
   const { mutate: deleteConversation } = api.conversation.delete.useMutation({
     onSuccess: () => void utils.conversation.getAll.invalidate(),
   });
 
-  const { mutate: createConversation } = api.conversation.create.useMutation({
-    onSuccess: (newConversation) => {
-      if (newConversation?.id) {
-        setActiveConversationId(newConversation.id);
-      }
-      void utils.conversation.getAll.invalidate();
-    },
-  });
-
   const handleNewConversation = () => {
-    createConversation({ name: "New Chat" });
+    setActiveConversationId(null);
+    setIsNewConversation(true);
   };
 
   const handleDelete = (id: number, e: React.MouseEvent) => {
@@ -56,7 +50,10 @@ export function ChatSidebar({ onToggle }: ChatSidebarProps) {
         {conversations?.map((conversation) => (
           <div
             key={conversation.id}
-            onClick={() => setActiveConversationId(conversation.id)}
+            onClick={() => {
+              setActiveConversationId(conversation.id);
+              setIsNewConversation(false);
+            }}
             className={`group mb-2 flex cursor-pointer items-center justify-between rounded-lg p-3 ${
               activeConversationId === conversation.id 
                 ? "bg-muted" 

@@ -4,25 +4,15 @@ import { useState } from "react";
 import { PanelLeftOpen, SquarePen } from "lucide-react";
 import { ConversationProvider, useConversation } from "@/app/_components/context/conversation-context";
 import { ChatSidebar } from "@/app/_components/chat/ChatSidebar";
-import { api } from "@/trpc/react";
 
 // Create an inner component that uses the context
 function ChatLayoutInner({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { setActiveConversationId } = useConversation();
-  const utils = api.useUtils();
-
-  const { mutate: createConversation } = api.conversation.create.useMutation({
-    onSuccess: (newConversation) => {
-      if (newConversation?.id) {
-        setActiveConversationId(newConversation.id);
-      }
-      void utils.conversation.getAll.invalidate();
-    },
-  });
+  const { setActiveConversationId, setIsNewConversation } = useConversation();
 
   const handleNewConversation = () => {
-    createConversation({ name: "New Chat" });
+    setActiveConversationId(null);
+    setIsNewConversation(true);
   };
 
   return (

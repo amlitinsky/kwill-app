@@ -6,9 +6,11 @@ import { api } from "@/trpc/react";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { useConversation } from "@/app/_components/context/conversation-context";
-
+import { useChat } from "@ai-sdk/react";
+import NewChatInput from "@/app/_components/chat/NewChatInput";
+import ExistingChatInput from "@/app/_components/chat/ExistingChatInput";
 export default function ChatPage() {
-  const { activeConversationId, setActiveConversationId } = useConversation();
+  const { activeConversationId, setActiveConversationId, isNewConversation } = useConversation();
   
   const { data: conversations, isLoading: isLoadingConversations } = api.conversation.getAll.useQuery(undefined, {
     // Prevent refetching on window focus
@@ -17,35 +19,41 @@ export default function ChatPage() {
     staleTime: 60 * 1000,
   });
 
-  const { mutate: createConversation, isPending: isCreatingConversation } = api.conversation.create.useMutation({
-    onSuccess: (newConversation) => {
-      if (newConversation?.id) {
-        setActiveConversationId(newConversation.id);
-      }
-    },
+  // Query for messages in the active conversation (if one exists)
+  const { data: messages, isLoading: messagesLoading } = api.chat.getMessages.useQuery({
+    conversationId: activeConversationId ?? 0,
+    limit: 50,
+  }, {
+    enabled: !!activeConversationId,
   });
 
-  // Single effect to handle both cases
+  // Only auto-select an existing conversation if we're not in "new conversation" mode.
   useEffect(() => {
-    // Only proceed if we're not already loading or creating
-    if (isLoadingConversations || isCreatingConversation) {
+    if (isLoadingConversations) {
       return;
     }
-
-    // If we have conversations but no active one, set the first one
-    if (conversations?.length && !activeConversationId) {
+    if (conversations?.length && !activeConversationId && !isNewConversation) {
       setActiveConversationId(conversations[0]!.id);
       return;
     }
-
-    // If we have no conversations and haven't started creating one, create one
-    if (!conversations?.length && !activeConversationId) {
-      createConversation({ name: "New Chat" });
-    }
+    // (You might choose to not auto-create a conversation if none exist.)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversations, isLoadingConversations, activeConversationId, isCreatingConversation]);
+  }, [conversations, isLoadingConversations, activeConversationId, isNewConversation]);
 
-  if (isLoadingConversations || isCreatingConversation || !activeConversationId) {
+  const chatState = useChat({
+    body: {
+      conversationId: activeConversationId ?? 0,
+    },
+    id: activeConversationId?.toString() ?? "",
+    initialMessages: messages?.map(msg => ({
+      id: msg.id.toString(),
+      content: msg.content,
+      role: msg.role as 'user' | 'assistant' | 'system',
+      createdAt: msg.createdAt
+    })),
+  });
+
+  if (isLoadingConversations) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -53,23 +61,18 @@ export default function ChatPage() {
     );
   }
 
-  // Query for messages in the active conversation
-  const { data: messages, isLoading: messagesLoading } = api.chat.getMessages.useQuery({
-    conversationId: activeConversationId,
-    limit: 50,
-  });
 
-  // Only when messages are not loading and there are zero messages, show the empty state.
+  // When there's no messages or when we're in new conversation mode, show the empty state.
   const isChatEmpty = !messagesLoading && (!messages || messages.length === 0);
 
-  if (isChatEmpty) {
+  if (isNewConversation || isChatEmpty) {
     return (
       <div className="flex min-h-[calc(100vh-160px)] items-center justify-center p-4">
         <div className="mx-auto text-center space-y-8 w-full max-w-[750px]">
           <h1 className="text-4xl font-semibold text-foreground">
             What can I analyze for you?
           </h1>
-          <ChatInput conversationId={activeConversationId} />
+          <NewChatInput />
         </div>
       </div>
     );
@@ -81,7 +84,9 @@ export default function ChatPage() {
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-border hover:scrollbar-thumb-border/80">
         <div className="mx-auto w-full max-w-[750px]">
           <div className="px-4 py-8">
-            <ChatMessages conversationId={activeConversationId} />
+            {activeConversationId !== null && (
+              <ChatMessages chatState={chatState} />
+            )}
           </div>
         </div>
       </div>
@@ -90,7 +95,7 @@ export default function ChatPage() {
       <div className="shrink-0">
         <div className="relative mx-auto w-full max-w-[800px]">
           <div className="px-4">
-            <ChatInput conversationId={activeConversationId} />
+            <ExistingChatInput chatState={chatState} />
           </div>
         </div>
       </div>

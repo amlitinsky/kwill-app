@@ -5,15 +5,20 @@ import { createContext, useContext, useState } from "react";
 type ConversationContextType = {
   activeConversationId: number | null;
   setActiveConversationId: (id: number | null) => void;
+  isNewConversation: boolean;
+  setIsNewConversation: (value: boolean) => void;
 };
 
 const ConversationContext = createContext<ConversationContextType | undefined>(undefined);
 
 export function ConversationProvider({ children }: { children: React.ReactNode }) {
   const [activeConversationId, setActiveConversationId] = useState<number | null>(null);
+  const [isNewConversation, setIsNewConversation] = useState(false);
 
   return (
-    <ConversationContext.Provider value={{ activeConversationId, setActiveConversationId }}>
+    <ConversationContext.Provider
+      value={{ activeConversationId, setActiveConversationId, isNewConversation, setIsNewConversation }}
+    >
       {children}
     </ConversationContext.Provider>
   );
