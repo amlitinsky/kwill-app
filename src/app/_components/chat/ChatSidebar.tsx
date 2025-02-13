@@ -24,11 +24,10 @@ export function ChatSidebar({ onToggle }: ChatSidebarProps) {
 
   const handleDelete = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm("Delete this conversation?")) {
       deleteConversation({ id });
-      if (activeConversationId === id) {
-        setActiveConversationId(null);
-      }
+    if (activeConversationId === id) {
+      setActiveConversationId(null);
+      setIsNewConversation(true);
     }
   };
 

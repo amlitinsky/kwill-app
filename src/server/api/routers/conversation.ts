@@ -1,7 +1,9 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
 import { conversations, chatMessages } from "@/server/db/schema";
 import { desc, eq } from "drizzle-orm";
+import { google } from "@ai-sdk/google";
+import { generateText } from "ai";
 
 export const conversationRouter = createTRPCRouter({
   create: protectedProcedure
@@ -95,5 +97,28 @@ export const conversationRouter = createTRPCRouter({
       }
 
       return { success: true };
+    }),
+
+  name: publicProcedure
+    .input(z.object({ text: z.string() }))
+    .mutation(async ({ input }) => {
+      const { text } = input;
+      if (!text) {
+        throw new Error("Missing text");
+      }
+
+      // Craft the prompt for the LLM
+      const prompt = `Generate a succinct and descriptive conversation title based on the following message: "${text}". The title should be no longer than 10 words. Use plain text, no markdown.`;
+
+      // Use the LLM to generate the title
+      const result = await generateText({
+        model: google('gemini-2.0-flash-001'),
+        prompt,
+        maxTokens: 20,
+      });
+
+      const name = result.text.trim() || "New Chat";
+
+      return { name };
     }),
 });

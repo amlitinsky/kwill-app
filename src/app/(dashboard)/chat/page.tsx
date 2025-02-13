@@ -1,6 +1,5 @@
 "use client";
 
-import { ChatInput } from "@/app/_components/chat/ChatInput";
 import { ChatMessages } from "@/app/_components/chat/ChatMessages";
 import { api } from "@/trpc/react";
 import { useEffect } from "react";
@@ -9,7 +8,9 @@ import { useConversation } from "@/app/_components/context/conversation-context"
 import { useChat } from "@ai-sdk/react";
 import NewChatInput from "@/app/_components/chat/NewChatInput";
 import ExistingChatInput from "@/app/_components/chat/ExistingChatInput";
+
 export default function ChatPage() {
+  
   const { activeConversationId, setActiveConversationId, isNewConversation } = useConversation();
   
   const { data: conversations, isLoading: isLoadingConversations } = api.conversation.getAll.useQuery(undefined, {
@@ -72,7 +73,7 @@ export default function ChatPage() {
           <h1 className="text-4xl font-semibold text-foreground">
             What can I analyze for you?
           </h1>
-          <NewChatInput />
+          <NewChatInput chatState={chatState} />
         </div>
       </div>
     );

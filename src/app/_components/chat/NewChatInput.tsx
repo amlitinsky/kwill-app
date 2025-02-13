@@ -4,43 +4,56 @@ import { useState } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { api } from "@/trpc/react";
 import { useConversation } from "@/app/_components/context/conversation-context";
+import { type useChat } from "@ai-sdk/react";
 
-export default function NewChatInput() {
+interface NewChatInputProps {
+  chatState: ReturnType<typeof useChat>;
+}
+
+export default function NewChatInput({ chatState }: NewChatInputProps) {
+   // TODO first message isn't streamed
+  const utils = api.useUtils();
   const { setActiveConversationId, setIsNewConversation } = useConversation();
   const { mutateAsync: createConversation } = api.conversation.create.useMutation();
-  const [input, setInput] = useState("");
+  const { mutateAsync: nameConversation } = api.conversation.name.useMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => setInput(e.target.value);
+  const { input, handleInputChange, isLoading, setInput } = chatState;
 
   const handleSubmitNew = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!input.trim() || isSubmitting) return;
     setIsSubmitting(true);
     try {
-      // Create a new conversation with a name based on the first message.
-      const newConversation = await createConversation({
-        name: input.slice(0, 20) || "New Chat",
-      });
+      // Generate a conversation name based on the user's input
+      const nameResponse = await nameConversation({ text: input });
+      const newConversation = await createConversation({ name: nameResponse.name });
+
       if (!newConversation) {
         throw new Error("Failed to create conversation");
       }
-      // Update context
+
+
+      // Now that the conversation ID is set, use the existing handleSubmit from useChat
+      await chatState.append({
+        content: input,
+        role: 'user'
+      }, {
+        body: {
+          conversationId: newConversation.id
+        }
+      });
+
+      // Update the conversation context with the new ID
       setActiveConversationId(newConversation.id);
       setIsNewConversation(false);
-      // Send the initial message manually
-      await fetch("/api/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          messages: [{ role: "user", content: input }],
-          conversationId: newConversation.id,
-        }),
-      });
+      setInput("");
+
+      // Invalidate the messages query to refresh the UI
+      await utils.chat.getMessages.invalidate({ conversationId: newConversation.id });
+      await utils.conversation.getAll.invalidate();
     } catch (error) {
       console.error("Error creating conversation", error);
     }
-    setInput("");
     setIsSubmitting(false);
   };
 
@@ -60,14 +73,18 @@ export default function NewChatInput() {
           onKeyDown={handleKeyPress}
           placeholder="Type a message..."
           className="h-full w-full resize-none rounded-lg border bg-background p-4 pr-12 text-foreground"
-          disabled={isSubmitting}
+          disabled={isSubmitting || isLoading}
         />
         <button
           type="submit"
-          disabled={!input.trim() || isSubmitting}
+          disabled={!input.trim() || isSubmitting || isLoading}
           className="absolute bottom-4 right-4 rounded-lg p-1 text-foreground"
         >
-          {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+          {(isSubmitting || isLoading) ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <Send className="h-5 w-5" />
+          )}
         </button>
       </div>
     </form>
