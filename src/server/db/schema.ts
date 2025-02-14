@@ -44,6 +44,7 @@ export const meetings = createTable('meetings', {
   conversationId: integer('conversation_id').references(() => conversations.id).notNull(),
   userId: varchar('user_id', { length: 255 }).notNull(),
   botId: varchar('bot_id', { length: 255 }),  // Changed from recallAiTranscriptId to botId
+  extractedHeaders: jsonb('extracted_headers'),
   llmExtractedData: jsonb('llm_extracted_data'),
   processingStatus: varchar('processing_status', { length: 50 }).default('pending'),
   createdAt: timestamp('created_at').defaultNow().notNull(),

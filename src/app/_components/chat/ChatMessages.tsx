@@ -1,7 +1,7 @@
 "use client";
 
 import { type useChat } from '@ai-sdk/react';
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 
@@ -22,14 +22,8 @@ export function ChatMessages({ chatState }: ChatMessagesProps) {
     scrollToBottom();
   }, [messages]);
 
-  const sortedMessages = useMemo(() => {
-    return [...messages].sort((a, b) => {
-      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return aTime - bTime;
-    });
-  }, [messages]);
 
+  // TODO check if removing the sorted stuff didn't break anything
   if (isLoading && !messages?.length) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -37,11 +31,10 @@ export function ChatMessages({ chatState }: ChatMessagesProps) {
       </div>
     );
   }
-  // const preserverdMessages = [...messages]
 
   return (
     <div className="flex flex-col space-y-8">
-      {sortedMessages
+      {messages
         .map((message) => (
           <div
             key={message.id}
@@ -105,6 +98,12 @@ export function ChatMessages({ chatState }: ChatMessagesProps) {
               >
                 {message.content}
               </ReactMarkdown>
+              {message.parts?.map(part => (
+                <div className="tool-invocation" key={part.type}>
+                  <span>Used {part.type}</span>
+                  <pre>{JSON.stringify(part)}</pre>
+                </div>
+              ))}
             </div>
           </div>
         ))}

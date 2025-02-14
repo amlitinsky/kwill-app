@@ -9,7 +9,7 @@ import {
   setProcessRecord 
 } from '@/lib/redis'
 import { env } from '@/env'
-import { appRouter, createCaller } from '@/server/api/root'
+import { createCaller } from '@/server/api/root'
 import { createTRPCContext } from '@/server/api/trpc'
 
 interface RecallWebhookPayload {
@@ -105,7 +105,9 @@ export async function POST(req: Request) {
             eventTimestamp: data.data.updated_at
           })
           const transcript = await retrieveBotTranscript(botId)
-          // TODO send transcript to AI process
+
+          await caller.meeting.extractHeaders({ botId, transcript })
+          await caller.meeting.analyzeInsights({ botId, transcript })
 
           // Mark as completed
           await setProcessRecord(botId, {

@@ -1,6 +1,27 @@
+import { z } from 'zod';
+
 const RECALL_API_KEY = process.env.RECALL_API_KEY;
 const RECALL_API_URL = 'https://us-west-2.recall.ai/api/v1/bot';
 const RECALL_API_ZOOM_OAUTH_CREDENTIALS = 'https://us-west-2.recall.ai/api/v2/zoom-oauth-credentials'
+
+const participantSchema = z.object({
+  id: z.number(),
+  name: z.string()
+});
+
+const wordSchema = z.object({
+  text: z.string(),
+  start_timestamp: z.object({ relative: z.number() }),
+  end_timestamp: z.object({ relative: z.number() })
+});
+
+export const transcriptResponseSchema = z.object({
+  participant: participantSchema,
+  words: wordSchema
+});
+
+export type TranscriptResponse = z.infer<typeof transcriptResponseSchema>;
+
 interface CreateBotOptions {
   join_at?: string;
   automatic_leave?: number;
@@ -98,18 +119,6 @@ export async function getBotStatus(botId: string): Promise<BotStatusResponse> {
   }
 }
 
-export interface TranscriptResponse {
-  participant: {
-    id: number;
-    name: string;
-  };
-  words: {
-    text: string;
-    start_timestamp: { relative: number };
-    end_timestamp: { relative: number };
-  };
-}
-
 export async function retrieveBotTranscript(botId: string): Promise<TranscriptResponse[]> {
   try {
     const botData = await getBotStatus(botId);
@@ -130,10 +139,11 @@ export async function retrieveBotTranscript(botId: string): Promise<TranscriptRe
       throw new Error(`Failed to fetch transcript: ${transcriptResponse.status}`);
     }
 
-    return await transcriptResponse.json() as TranscriptResponse[];
+    const rawData = await transcriptResponse.json() as TranscriptResponse[];
+    return transcriptResponseSchema.array().parse(rawData);
   } catch (error) {
-    console.error('Error fetching transcript:', error)
-    throw error
+    console.error('Transcript validation failed:', error);
+    throw new Error('Invalid transcript format');
   }
 }
 

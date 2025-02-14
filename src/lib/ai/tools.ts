@@ -52,6 +52,7 @@ export const linkSpreadsheetTool = tool({
     if (!googleSheetId) {
       throw new Error('Invalid Google Sheets URL: Unable to extract spreadsheet ID.');
     }
+
     const tokenResponse = await (await clerkClient()).users.getUserOauthAccessToken(userId, 'oauth_google');
 
     const accessToken = tokenResponse.data[0]?.token;

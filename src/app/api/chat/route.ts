@@ -1,6 +1,6 @@
 import { google } from '@ai-sdk/google';
 import { auth } from '@clerk/nextjs/server';
-import { streamText } from 'ai';
+import { NoSuchToolError, InvalidToolArgumentsError, streamText, ToolExecutionError } from 'ai';
 import { db } from '@/server/db';
 import { chatMessages, conversations } from '@/server/db/schema';
 import { eq } from 'drizzle-orm';
@@ -78,12 +78,24 @@ export async function POST(req: Request) {
           userId,
           role: 'assistant',
           conversationId,
-          metadata: {}, // Empty metadata for now
+          metadata: {toolCalls: text.toolCalls, toolResults: text.toolResults}, // Empty metadata for now
         });
       },
     });
 
-    return result.toDataStreamResponse();
+    return result.toDataStreamResponse({
+    getErrorMessage: error => {
+        if (NoSuchToolError.isInstance(error)) {
+        return 'The model tried to call a unknown tool.';
+        } else if (InvalidToolArgumentsError.isInstance(error)) {
+        return 'The model called a tool with invalid arguments.';
+        } else if (ToolExecutionError.isInstance(error)) {
+        return 'An error occurred during tool execution.';
+        } else {
+        return 'An unknown error occurred.';
+        }
+    },
+    });
   } catch (error) {
     console.error('Error processing chat request:', error);
     return new Response('Internal server error', { status: 500 });
