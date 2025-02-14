@@ -3,7 +3,7 @@ import { type TranscriptResponse } from "../recall";
 export async function extractTranscriptHeaderValues(
   transcript: TranscriptResponse[], 
   columnHeaders: string[], 
-  analysisPrompt: string
+  analysisPrompt?: string | null
 ): Promise<string> {
   return `
   You are an expert data analyst specializing in extracting structured information from meeting transcripts. Your task is to analyze the provided transcript and generate a valid JSON object mapping specific data points to predefined column headers.

@@ -1,10 +1,13 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
-import { meetings } from "@/server/db/schema";
+import { conversations, meetings } from "@/server/db/schema";
 import { desc, eq, and } from "drizzle-orm";
 import { type SQL } from "drizzle-orm";
 import { db } from "@/server/db";
 import { transcriptResponseSchema } from "@/lib/recall";
+import { clerkClient } from "@clerk/nextjs/server";
+import { getColumnHeaders } from "@/lib/google";
+import { extractTranscriptHeaderValues } from "@/lib/ai/prompts";
 
 export const meetingRouter = createTRPCRouter({
   create: protectedProcedure
@@ -112,18 +115,29 @@ export const meetingRouter = createTRPCRouter({
       if (!meeting[0]) {
         throw new Error("Meeting not found");
       }
+      // Get the conversation to fetch the Google Sheet ID
+      const convo = await db
+        .select()
+        .from(conversations)
+        .where(eq(conversations.id, meeting[0].conversationId))
+        .limit(1);
 
-      // Update the meeting with extracted headers
-      const updatedMeeting = await db
-        .update(meetings)
-        .set({
-          extractedHeaders: input.transcript, // Store transcript in extractedHeaders for now
-          updatedAt: new Date(),
-        })
-        .where(eq(meetings.id, meeting[0].id))
-        .returning();
+      if (!convo[0]?.googleSheetId) {
+        throw new Error("No Google Sheet linked to this conversation");
+      }
 
-      return updatedMeeting[0];
+      // Get user's Google OAuth token
+      const tokenResponse = await (await clerkClient()).users.getUserOauthAccessToken(meeting[0].userId, 'oauth_google');
+      const accessToken = tokenResponse.data[0]?.token;
+      if (!accessToken) {
+        throw new Error('No valid Google OAuth token found');
+      }
+
+      // Get column headers from the sheet
+      const headers = await getColumnHeaders(accessToken, convo[0].googleSheetId);
+      const prompt = await extractTranscriptHeaderValues(input.transcript, headers, convo[0].analysisPrompt);
+
+
     }),
 
   analyzeInsights: publicProcedure
