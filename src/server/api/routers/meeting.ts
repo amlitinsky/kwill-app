@@ -6,8 +6,10 @@ import { type SQL } from "drizzle-orm";
 import { db } from "@/server/db";
 import { transcriptResponseSchema } from "@/lib/recall";
 import { clerkClient } from "@clerk/nextjs/server";
-import { getColumnHeaders } from "@/lib/google";
+import { appendRowToSheet, getColumnHeaders } from "@/lib/google";
 import { extractTranscriptHeaderValues } from "@/lib/ai/prompts";
+import { google } from "@ai-sdk/google";
+import { generateText } from "ai";
 
 export const meetingRouter = createTRPCRouter({
   create: protectedProcedure
@@ -136,6 +138,31 @@ export const meetingRouter = createTRPCRouter({
       // Get column headers from the sheet
       const headers = await getColumnHeaders(accessToken, convo[0].googleSheetId);
       const prompt = await extractTranscriptHeaderValues(input.transcript, headers, convo[0].analysisPrompt);
+      const model = google('gemini-2.0-flash-001');
+
+      const result = await generateText({
+        model,
+        prompt
+      })
+      // Parse the result into JSON
+      const extractedValues = JSON.parse(result);
+
+      // Append data to Google Sheet
+      await appendRowToSheet(accessToken, convo[0].googleSheetId, extractedValues);
+
+      // Update the meeting with extracted headers
+      const updatedMeeting = await db
+        .update(meetings)
+        .set({
+          extractedHeaders: extractedValues,
+          processingStatus: 'completed',
+          updatedAt: new Date(),
+        })
+        .where(eq(meetings.id, meeting[0].id))
+        .returning();
+
+      return updatedMeeting[0];
+
 
 
     }),
