@@ -70,23 +70,5 @@ export async function generateFullMeetingInsights(
 
   Use the following custom analysis prompt if it has been provided:
   ${analysisPrompt}
-
-  Return the analysis as a JSON object with the following structure:
-  {
-    "meetingAnalysis": {
-      "summary": "string",
-      "actionItems": ["string"],
-      "keyPoints": ["string"],
-      "topicDistribution": { "topic": percentage }
-    },
-    "speakerInsights": {
-       "speaker_name": {
-         "participationRate": number,
-         "averageSpeakingPace": number,
-         "totalSpeakingTime": number,
-         "keyContributions": ["string"]
-       }
-    }
-  }
   `;
 }

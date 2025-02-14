@@ -36,7 +36,7 @@ export async function appendRowToSheet(
   accessToken: string,
   spreadsheetId: string,
   data: Record<string, string | number | boolean>,
-  headers?: string[]
+  headers?: string[],
 ): Promise<number> {
   const auth = new google.auth.OAuth2();
   auth.setCredentials({ access_token: accessToken });
