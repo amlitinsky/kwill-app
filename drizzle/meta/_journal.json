@@ -15,6 +15,13 @@
       "when": 1738994244929,
       "tag": "0001_luxuriant_flatman",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1739498072079,
+      "tag": "0002_deep_beyonder",
+      "breakpoints": true
     }
   ]
 }

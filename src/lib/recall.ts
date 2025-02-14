@@ -98,7 +98,7 @@ export async function getBotStatus(botId: string): Promise<BotStatusResponse> {
   }
 }
 
-interface TranscriptResponse {
+export interface TranscriptResponse {
   participant: {
     id: number;
     name: string;

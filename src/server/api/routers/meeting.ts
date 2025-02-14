@@ -9,7 +9,7 @@ export const meetingRouter = createTRPCRouter({
     .input(
       z.object({
         conversationId: z.number(),
-        zoomUrl: z.string().url(),
+        botId: z.string(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -18,8 +18,8 @@ export const meetingRouter = createTRPCRouter({
         .values({
           userId: ctx.userId,
           conversationId: input.conversationId,
-          zoomUrl: input.zoomUrl,
           processingStatus: "pending",
+          botId: input.botId,
         })
         .returning();
 
@@ -106,4 +106,25 @@ export const meetingRouter = createTRPCRouter({
 
       return { success: true };
     }),
+  getByBotId: protectedProcedure
+    .input(z.object({ botId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const meeting = await ctx.db
+        .select()
+        .from(meetings)
+        .where(
+          and(
+            eq(meetings.botId, input.botId),
+            eq(meetings.userId, ctx.userId)
+          )
+        )
+        .limit(1);
+
+      if (!meeting[0]) {
+        throw new Error("Meeting not found or unauthorized");
+      }
+
+      return meeting[0];
+    }),
+
 });

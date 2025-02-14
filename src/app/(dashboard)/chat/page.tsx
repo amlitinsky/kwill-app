@@ -26,6 +26,7 @@ export default function ChatPage() {
     limit: 50,
   }, {
     enabled: !!activeConversationId,
+    refetchInterval: 3000
   });
 
   // Only auto-select an existing conversation if we're not in "new conversation" mode.

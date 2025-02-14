@@ -8,7 +8,9 @@ export const chatRouter = createTRPCRouter({
     .input(
       z.object({
         content: z.string(),
+        role: z.enum(["user", "assistant"]),
         conversationId: z.number(),
+        metadata: z.record(z.string(), z.string()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -32,20 +34,11 @@ export const chatRouter = createTRPCRouter({
       await ctx.db.insert(chatMessages).values({
         content: input.content,
         userId: ctx.userId,
-        role: "user",
+        role: input.role,
         conversationId: input.conversationId,
-        metadata: {}, // Empty metadata for now
+        metadata: input.metadata,
       });
 
-      // TODO: Process message with AI
-      // For now, just echo back
-      await ctx.db.insert(chatMessages).values({
-        content: `You said: ${input.content}`,
-        userId: ctx.userId,
-        role: "assistant",
-        conversationId: input.conversationId,
-        metadata: {}, // Empty metadata for now
-      });
 
       return { success: true };
     }),

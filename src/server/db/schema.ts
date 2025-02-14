@@ -24,6 +24,7 @@ export const conversations = createTable('conversations', {
   userId: varchar('user_id', { length: 255 }).notNull(),
   googleSheetId: varchar('google_sheet_id', { length: 255 }),  // Optional, can be linked later
   name: text('name'),
+  analysisPrompt: text('analysis_prompt'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -42,7 +43,6 @@ export const meetings = createTable('meetings', {
   id: serial('id').primaryKey(),
   conversationId: integer('conversation_id').references(() => conversations.id).notNull(),
   userId: varchar('user_id', { length: 255 }).notNull(),
-  zoomUrl: text('zoom_url').notNull(),
   botId: varchar('bot_id', { length: 255 }),  // Changed from recallAiTranscriptId to botId
   llmExtractedData: jsonb('llm_extracted_data'),
   processingStatus: varchar('processing_status', { length: 50 }).default('pending'),

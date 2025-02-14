@@ -5,6 +5,7 @@ import { db } from '@/server/db';
 import { chatMessages, conversations } from '@/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
+import { tools } from '@/lib/ai/tools';
 
 const model = google('gemini-2.0-flash-001');
 
@@ -22,6 +23,7 @@ const chatRequestSchema = z.object({
 });
 
 export async function POST(req: Request) {
+
   const { userId } = await auth();
   if (!userId) {
     return new Response('Unauthorized', { status: 401 });
@@ -67,6 +69,8 @@ export async function POST(req: Request) {
     const result = streamText({
       model,
       messages,
+      tools: tools, 
+      toolCallStreaming: true, // maybe remove this
       onFinish: async (text) => {
         // Save the assistant message to the database
         await db.insert(chatMessages).values({

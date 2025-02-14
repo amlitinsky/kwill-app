@@ -9,6 +9,8 @@ import {
   setProcessRecord 
 } from '@/lib/redis'
 import { env } from '@/env'
+import { appRouter, createCaller } from '@/server/api/root'
+import { createTRPCContext } from '@/server/api/trpc'
 
 interface RecallWebhookPayload {
   event: BotStatusEvent;
@@ -73,6 +75,10 @@ export async function POST(req: Request) {
 
   const { event, data } = evt
   const botId = data.bot.id
+
+  // Create your tRPC context from the request
+  const trpcContext = await createTRPCContext({ headers: req.headers });
+  const caller = createCaller(trpcContext);
 
   // Handle each bot status event
   switch (event) {
