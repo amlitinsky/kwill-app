@@ -50,7 +50,7 @@ export function ChatMessages({ chatState }: ChatMessagesProps) {
               }`}
             >
               <ReactMarkdown
-                className="max-w-none text-white [&_*]:text-white"
+                className="max-w-none text-white [&_*]:text-white break-words"
                 components={{
                   p: ({ children }) => (
                     <p
@@ -98,12 +98,13 @@ export function ChatMessages({ chatState }: ChatMessagesProps) {
               >
                 {message.content}
               </ReactMarkdown>
-              {message.parts?.map(part => (
-                <div className="tool-invocation" key={part.type}>
-                  <span>Used {part.type}</span>
-                  <pre>{JSON.stringify(part)}</pre>
-                </div>
-              ))}
+              {/* {message.parts?.map(part => (
+                part.type !== 'text' && (
+                  <div className="tool-invocation mt-2 p-2 border border-white/10 rounded" key={part.type}>
+                    <span className="text-sm text-white/60">Tool used: {part.type}</span>
+                  </div>
+                )
+              ))} */}
             </div>
           </div>
         ))}

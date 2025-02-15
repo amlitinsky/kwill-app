@@ -1,13 +1,14 @@
 import { google } from '@ai-sdk/google';
 import { auth } from '@clerk/nextjs/server';
-import { NoSuchToolError, InvalidToolArgumentsError, streamText, ToolExecutionError } from 'ai';
+import { NoSuchToolError, InvalidToolArgumentsError, streamText, ToolExecutionError, smoothStream, tool } from 'ai';
 import { db } from '@/server/db';
 import { chatMessages, conversations } from '@/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { tools } from '@/lib/ai/tools';
+import { joinMeeting, linkSpreadsheet} from '@/lib/ai/tools';
 
 const model = google('gemini-2.0-flash-001');
+
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
@@ -39,6 +40,8 @@ export async function POST(req: Request) {
   }
 
   const { messages, conversationId } = result.data;
+
+
   const lastMessage = messages[messages.length - 1];
   if (!lastMessage) {
     return new Response('No message provided', { status: 400 });
@@ -69,12 +72,31 @@ export async function POST(req: Request) {
     const result = streamText({
       model,
       messages,
-      tools: tools, 
-      toolCallStreaming: true, // maybe remove this
+      experimental_transform: smoothStream({
+        delayInMs: 20, // optional: defaults to 10ms
+        chunking: 'word', // optional: defaults to 'word'
+      }),
+      tools: {
+        getSpreadsheetURL : tool({
+          description: 'Get the URL of the Google Spreadsheet associated with this conversation',
+          parameters: z.object({
+            spreadsheetUrl: z.string().describe('The full Google Sheets URL'),
+          }),
+          execute: async ({ spreadsheetUrl}) => linkSpreadsheet(userId, conversationId, spreadsheetUrl),
+        }),
+        getMeetingURL: tool({
+          description: 'Get the URL of the Zoom meeting associated with this conversation',
+          parameters: z.object({
+            meetingUrl: z.string().describe('The full meeting URL'),
+          }),
+          execute: async ({ meetingUrl}) => joinMeeting(userId, conversationId, meetingUrl),
+        }),
+
+      }, 
       onFinish: async (text) => {
         // Save the assistant message to the database
         await db.insert(chatMessages).values({
-          content: text.text,
+          content: text.text || "I've completed the action. What would you like me to do next?",
           userId,
           role: 'assistant',
           conversationId,

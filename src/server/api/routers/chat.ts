@@ -1,8 +1,7 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { chatMessages } from "@/server/db/schema";
 import { eq, and, asc } from "drizzle-orm";
-import { db } from "@/server/db";
 
 export const chatRouter = createTRPCRouter({
   sendMessage: protectedProcedure
@@ -66,30 +65,5 @@ export const chatRouter = createTRPCRouter({
         .limit(input.limit);
 
       return messages;
-    }),
-
-  sendAnalysisMessage: publicProcedure 
-    .input(
-      z.object({
-        content: z.string(),
-        role: z.enum(["user", "assistant"]),
-        conversationId: z.number(),
-        userId: z.string(),
-        metadata: z.record(z.string(), z.string()).optional(),
-      })
-    )
-    .mutation(async ({ input }) => {
-
-      // Insert user message
-      await db.insert(chatMessages).values({
-        content: input.content,
-        userId: input.userId,
-        role: input.role,
-        conversationId: input.conversationId,
-        metadata: input.metadata,
-      });
-
-
-      return { success: true };
     }),
 }); 

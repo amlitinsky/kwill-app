@@ -1,0 +1,1 @@
+ALTER TABLE "kwill-app_meetings" ADD COLUMN "extracted_headers" jsonb;
