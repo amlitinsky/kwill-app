@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Send, Loader2 } from "lucide-react";
 import { api } from "@/trpc/react";
-import { useConversation } from "@/app/_components/context/conversation-context";
+import { useChatContext } from "@/app/_components/context/chat-context";
 import { type useChat } from "@ai-sdk/react";
 
 interface NewChatInputProps {
@@ -13,9 +13,9 @@ interface NewChatInputProps {
 export default function NewChatInput({ chatState }: NewChatInputProps) {
    // TODO first message isn't streamed
   const utils = api.useUtils();
-  const { setActiveConversationId, setIsNewConversation } = useConversation();
-  const { mutateAsync: createConversation } = api.conversation.create.useMutation();
-  const { mutateAsync: nameConversation } = api.conversation.name.useMutation();
+  const { setActiveChatId, setIsNewChat } = useChatContext();
+  const { mutateAsync: createChat } = api.chat.create.useMutation();
+  const { mutateAsync: nameChat } = api.chat.name.useMutation();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { input, handleInputChange, isLoading, setInput } = chatState;
 
@@ -25,34 +25,29 @@ export default function NewChatInput({ chatState }: NewChatInputProps) {
     setIsSubmitting(true);
     try {
       // Generate a conversation name based on the user's input
-      const nameResponse = await nameConversation({ text: input });
-      const newConversation = await createConversation({ name: nameResponse.name });
+      const nameResponse = await nameChat({ text: input });
+      const newChat = await createChat({ name: nameResponse.name });
 
-      if (!newConversation) {
-        throw new Error("Failed to create conversation");
+      if (!newChat) {
+        throw new Error("Failed to create chat");
       }
 
-
-      // Now that the conversation ID is set, use the existing handleSubmit from useChat
-      await chatState.append({
-        content: input,
-        role: 'user'
-      }, {
-        body: {
-          conversationId: newConversation.id
-        }
-      });
-
+      // CHECK CHANGED ORDER (PUT STUFF ABOVE SUBMIT)
       // Update the conversation context with the new ID
-      setActiveConversationId(newConversation.id);
-      setIsNewConversation(false);
-      setInput("");
+      setActiveChatId(newChat.id);
+      setIsNewChat(false);
 
       // Invalidate the messages query to refresh the UI
-      await utils.chat.getMessages.invalidate({ conversationId: newConversation.id });
-      await utils.conversation.getAll.invalidate();
+      await utils.message.load.invalidate({ chatId: newChat.id });
+      await utils.chat.list.invalidate();
+
+      // Now that the conversation ID is set, use the existing handleSubmit from useChat
+      // TODO: see if this works, or else change it back we probably only need the content for appending anyways
+      await chatState.append({ content: input, role: "user" }, { body: { chatId: newChat.id } });
+      setInput("");
+
     } catch (error) {
-      console.error("Error creating conversation", error);
+      console.error("Error creating chat", error);
     }
     setIsSubmitting(false);
   };

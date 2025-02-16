@@ -2,7 +2,7 @@
 
 import { api } from "@/trpc/react";
 import { PanelLeftOpen, SquarePen, Trash2 } from "lucide-react";
-import { useConversation } from "@/app/_components/context/conversation-context";
+import { useChatContext } from "@/app/_components/context/chat-context";
 
 interface ChatSidebarProps {
   isOpen: boolean;
@@ -10,24 +10,24 @@ interface ChatSidebarProps {
 }
 
 export function ChatSidebar({ onToggle }: ChatSidebarProps) {
-  const { activeConversationId, setActiveConversationId, setIsNewConversation } = useConversation();
+  const { activeChatId, setActiveChatId, setIsNewChat } = useChatContext();
   const utils = api.useUtils();
-  const { data: conversations } = api.conversation.getAll.useQuery();
-  const { mutate: deleteConversation } = api.conversation.delete.useMutation({
-    onSuccess: () => void utils.conversation.getAll.invalidate(),
+  const { data: chats } = api.chat.list.useQuery();
+  const { mutate: deleteChat } = api.chat.delete.useMutation({
+    onSuccess: () => void utils.chat.list.invalidate(),
   });
 
-  const handleNewConversation = () => {
-    setActiveConversationId(null);
-    setIsNewConversation(true);
+  const handleNewChat = () => {
+    setActiveChatId(null);
+    setIsNewChat(true);
   };
 
   const handleDelete = (id: number, e: React.MouseEvent) => {
     e.stopPropagation();
-      deleteConversation({ id });
-    if (activeConversationId === id) {
-      setActiveConversationId(null);
-      setIsNewConversation(true);
+    deleteChat({ id });
+    if (activeChatId === id) {
+      setActiveChatId(null);
+      setIsNewChat(true);
     }
   };
 
@@ -38,7 +38,7 @@ export function ChatSidebar({ onToggle }: ChatSidebarProps) {
           <PanelLeftOpen className="h-5 w-5" />
         </button>
         <button
-          onClick={handleNewConversation}
+          onClick={handleNewChat}
           className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-muted"
         >
           <SquarePen className="h-5 w-5" />
@@ -46,24 +46,24 @@ export function ChatSidebar({ onToggle }: ChatSidebarProps) {
       </div>
       
       <div className="flex-1 overflow-y-auto p-4">
-        {conversations?.map((conversation) => (
+        {chats?.map((chat) => (
           <div
-            key={conversation.id}
+            key={chat.id}
             onClick={() => {
-              setActiveConversationId(conversation.id);
-              setIsNewConversation(false);
+              setActiveChatId(chat.id);
+              setIsNewChat(false);
             }}
             className={`group mb-2 flex cursor-pointer items-center justify-between rounded-lg p-3 ${
-              activeConversationId === conversation.id 
+              activeChatId === chat.id 
                 ? "bg-muted" 
                 : "hover:bg-muted/50"
             }`}
           >
             <span className="line-clamp-1 text-sm">
-              {conversation.name ?? "New Chat"}
+              {chat.name ?? "New Chat"}
             </span>
             <button
-              onClick={(e) => handleDelete(conversation.id, e)}
+              onClick={(e) => handleDelete(chat.id, e)}
               className="invisible text-muted-foreground hover:text-foreground group-hover:visible"
             >
               <Trash2 className="h-4 w-4" />

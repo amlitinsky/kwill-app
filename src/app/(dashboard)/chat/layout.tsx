@@ -2,17 +2,17 @@
 
 import { useState } from "react";
 import { PanelLeftOpen, SquarePen } from "lucide-react";
-import { ConversationProvider, useConversation } from "@/app/_components/context/conversation-context";
+import { ChatProvider, useChatContext } from "@/app/_components/context/chat-context";
 import { ChatSidebar } from "@/app/_components/chat/ChatSidebar";
 
 // Create an inner component that uses the context
 function ChatLayoutInner({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const { setActiveConversationId, setIsNewConversation } = useConversation();
+  const { setActiveChatId, setIsNewChat } = useChatContext();
 
-  const handleNewConversation = () => {
-    setActiveConversationId(null);
-    setIsNewConversation(true);
+  const handleNewChat= () => {
+    setActiveChatId(null);
+    setIsNewChat(true);
   };
 
   return (
@@ -46,7 +46,7 @@ function ChatLayoutInner({ children }: { children: React.ReactNode }) {
             <PanelLeftOpen className="h-5 w-5" />
           </button>
           <button
-            onClick={handleNewConversation}
+            onClick={handleNewChat}
             className="rounded-md p-1 hover:bg-background/50"
           >
             <SquarePen className="h-5 w-5" />
@@ -64,8 +64,8 @@ export default function ChatLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ConversationProvider>
+    <ChatProvider>
       <ChatLayoutInner>{children}</ChatLayoutInner>
-    </ConversationProvider>
+    </ChatProvider>
   );
 } 

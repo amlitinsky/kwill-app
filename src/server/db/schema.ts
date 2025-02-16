@@ -9,6 +9,7 @@ import {
   serial,
   text,
   jsonb,
+  json,
 } from "drizzle-orm/pg-core";
 
 /**
@@ -19,7 +20,7 @@ import {
  */
 export const createTable = pgTableCreator((name) => `kwill-app_${name}`);
 
-export const conversations = createTable('conversations', {
+export const chats = createTable('chats', {
   id: serial('id').primaryKey(),
   userId: varchar('user_id', { length: 255 }).notNull(),
   googleSheetId: varchar('google_sheet_id', { length: 255 }),  // Optional, can be linked later
@@ -29,19 +30,27 @@ export const conversations = createTable('conversations', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
-export const chatMessages = createTable('chat_messages', {
-  id: serial('id').primaryKey(),
-  conversationId: integer('conversation_id').references(() => conversations.id).notNull(),
-  userId: varchar('user_id', { length: 255 }).notNull(),
-  role: varchar('role', { length: 50 }).notNull(), // 'user' | 'assistant'
+export const messages = createTable('messages', {
+  // AI SDK required
+  id: varchar('id', { length: 255 }).primaryKey().notNull(),
+  role: varchar('role', { 
+    enum: ['user', 'assistant', 'system', 'data'],
+    length: 20
+  }).notNull(),
   content: text('content').notNull(),
-  metadata: jsonb('metadata'), // For storing any additional message-specific data
+  parts: json('parts').default([]),
+  metadata: json('metadata').default({}),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+
+  // My Fields
+  userId: varchar('user_id', { length: 255 }).notNull(),
+  chatId: integer('chat_id').references(() => chats.id).notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
 
 export const meetings = createTable('meetings', {
   id: serial('id').primaryKey(),
-  conversationId: integer('conversation_id').references(() => conversations.id).notNull(),
+  chatId: integer('chat_id').references(() => chats.id).notNull(),
   userId: varchar('user_id', { length: 255 }).notNull(),
   botId: varchar('bot_id', { length: 255 }),  // Changed from recallAiTranscriptId to botId
   extractedHeaders: jsonb('extracted_headers'),

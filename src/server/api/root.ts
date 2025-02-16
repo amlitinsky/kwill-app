@@ -1,8 +1,8 @@
 import { createCallerFactory, createTRPCRouter } from "@/server/api/trpc";
+import { messageRouter } from "./routers/message";
 import { chatRouter } from "./routers/chat";
-import { conversationRouter } from "./routers/conversation";
 import { meetingRouter } from "./routers/meeting";
-
+import { toolRouter } from "./routers/tool";
 /**
  * This is the primary router for your server.
  *
@@ -10,7 +10,8 @@ import { meetingRouter } from "./routers/meeting";
  */
 export const appRouter = createTRPCRouter({
   chat: chatRouter,
-  conversation: conversationRouter,
+  message: messageRouter,
+  tool: toolRouter,
   meeting: meetingRouter,
 });
 

@@ -1,69 +1,124 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { chatMessages } from "@/server/db/schema";
-import { eq, and, asc } from "drizzle-orm";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
+import { chats, messages } from "@/server/db/schema";
+import { desc, eq } from "drizzle-orm";
+import { google } from "@ai-sdk/google";
+import { generateText } from "ai";
 
 export const chatRouter = createTRPCRouter({
-  sendMessage: protectedProcedure
+  create: protectedProcedure
     .input(
       z.object({
-        content: z.string(),
-        role: z.enum(["user", "assistant"]),
-        conversationId: z.number(),
-        metadata: z.record(z.string(), z.string()).optional(),
+        name: z.string().optional(),
+        googleSheetId: z.string().optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Verify conversation exists and belongs to user
-      const messages = await ctx.db
+      const chat = await ctx.db
+        .insert(chats)
+        .values({
+          userId: ctx.userId,
+          name: input.name,
+          googleSheetId: input.googleSheetId,
+        })
+        .returning();
+
+      return chat[0];
+    }),
+
+  list: protectedProcedure.query(async ({ ctx }) => {
+    const userChats = await ctx.db
+      .select()
+      .from(chats)
+      .where(eq(chats.userId, ctx.userId))
+      .orderBy(desc(chats.updatedAt));
+
+    return userChats;
+  }),
+
+  getById: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const chat = await ctx.db
         .select()
-        .from(chatMessages)
-        .where(
-          and(
-            eq(chatMessages.conversationId, input.conversationId),
-            eq(chatMessages.userId, ctx.userId)
-          )
-        )
+        .from(chats)
+        .where(eq(chats.id, input.id))
         .limit(1);
 
-      if (!messages[0]) {
-        throw new Error("Conversation not found or unauthorized");
+      if (!chat[0] || chat[0].userId !== ctx.userId) {
+        throw new Error("Chat not found or unauthorized");
       }
 
-      // Insert user message
-      await ctx.db.insert(chatMessages).values({
-        content: input.content,
-        userId: ctx.userId,
-        role: input.role,
-        conversationId: input.conversationId,
-        metadata: input.metadata,
-      });
+      return chat[0];
+    }),
 
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.number(),
+        name: z.string().optional(),
+        googleSheetId: z.string().optional(),
+      })
+    )
+    .mutation(async ({ ctx, input }) => {
+      const chat = await ctx.db
+        .update(chats)
+        .set({
+          name: input.name,
+          googleSheetId: input.googleSheetId,
+          updatedAt: new Date(),
+        })
+        .where(eq(chats.id, input.id))
+        .returning();
+
+      if (!chat[0] || chat[0].userId !== ctx.userId) {
+        throw new Error("Chat not found or unauthorized");
+      }
+
+      return chat[0];
+    }),
+
+  delete: protectedProcedure
+    .input(z.object({ id: z.number() }))
+    .mutation(async ({ ctx, input }) => {
+      // First delete all messages in the conversation
+      await ctx.db
+        .delete(messages)
+        .where(eq(messages.chatId, input.id));
+
+      // Then delete the conversation
+      const chat = await ctx.db
+        .delete(chats)
+        .where(eq(chats.id, input.id))
+        .returning();
+
+      if (!chat[0] || chat[0].userId !== ctx.userId) {
+        throw new Error("Chat not found or unauthorized");
+      }
 
       return { success: true };
     }),
 
-  getMessages: protectedProcedure
-    .input(
-      z.object({
-        conversationId: z.number(),
-        limit: z.number().default(50),
-        cursor: z.number().optional(),
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      const messages = await ctx.db
-        .select()
-        .from(chatMessages)
-        .where(
-          and(
-            eq(chatMessages.conversationId, input.conversationId),
-            eq(chatMessages.userId, ctx.userId)
-          )
-        )
-        .orderBy(asc(chatMessages.createdAt))
-        .limit(input.limit);
+  name: publicProcedure
+    .input(z.object({ text: z.string() }))
+    .mutation(async ({ input }) => {
+      const { text } = input;
+      if (!text) {
+        throw new Error("Missing text");
+      }
 
-      return messages;
+      // Craft the prompt for the LLM
+      const prompt = `Generate a succinct and descriptive conversation title based on the following message: "${text}". The title should be no longer than 10 words. Use plain text, no markdown.`;
+
+      // Use the LLM to generate the title
+      const result = await generateText({
+        model: google('gemini-2.0-flash-001'),
+        prompt,
+        maxTokens: 20,
+      });
+
+      const name = result.text.trim() || "New Chat";
+
+      return { name };
     }),
-}); 
+});

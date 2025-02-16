@@ -47,6 +47,7 @@ export const linkSpreadsheet = async (userId: string, conversationId: number, sp
     // Fetch the column headers from the spreadsheet.
     const headers = await getColumnHeaders(accessToken, googleSheetId);
     if (headers.length === 0) {
+        // TODO: maybe just return text here
         throw new Error('The spreadsheet does not contain any column headers.');
     }
 
@@ -70,5 +71,5 @@ export const linkSpreadsheet = async (userId: string, conversationId: number, sp
         .set({ googleSheetId: googleSheetId })
         .where(eq(conversations.id, conversationId));
 
-    return "Spreadsheet sucessfully linked! I found the following headers: \n" + headers.join(", ") + "."
+    return "Spreadsheet sucessfully linked!"
 }

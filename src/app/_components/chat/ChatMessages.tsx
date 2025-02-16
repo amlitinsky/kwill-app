@@ -3,8 +3,7 @@
 import { type useChat } from '@ai-sdk/react';
 import { useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 interface ChatMessagesProps {
   chatState: ReturnType<typeof useChat>;
 }
@@ -23,7 +22,6 @@ export function ChatMessages({ chatState }: ChatMessagesProps) {
   }, [messages]);
 
 
-  // TODO check if removing the sorted stuff didn't break anything
   if (isLoading && !messages?.length) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -43,68 +41,41 @@ export function ChatMessages({ chatState }: ChatMessagesProps) {
             }`}
           >
             <div
+              key={message.id}
               className={`${
                 message.role === 'user'
                   ? 'bg-background text-foreground rounded-lg px-4 py-2 max-w-[80%]'
                   : 'text-foreground w-full'
               }`}
             >
-              <ReactMarkdown
-                className="max-w-none text-white [&_*]:text-white break-words"
-                components={{
-                  p: ({ children }) => (
-                    <p
-                      className={`${
-                        message.role === 'assistant' ? 'text-base leading-7' : 'mb-0'
-                      } text-white`}
-                    >
-                      {children}
-                    </p>
-                  ),
-                  a: ({ children, href, ...props }) => (
-                    <a
-                      {...props}
-                      href={href}
-                      className="text-white underline hover:text-white/80"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {children}
-                    </a>
-                  ),
-                  ul: ({ children }) => (
-                    <ul className="my-4 list-disc pl-6 text-white">{children}</ul>
-                  ),
-                  ol: ({ children }) => (
-                    <ol className="my-4 list-decimal pl-6 text-white">{children}</ol>
-                  ),
-                  li: ({ children }) => <li className="my-2 text-white">{children}</li>,
-                  code: ({ children }) => (
-                    <code className="rounded bg-white/5 px-1 py-0.5 text-white">{children}</code>
-                  ),
-                  h1: ({ children }) => (
-                    <h1 className="mb-4 text-2xl font-semibold text-white">{children}</h1>
-                  ),
-                  h2: ({ children }) => (
-                    <h2 className="mb-3 text-xl font-semibold text-white">{children}</h2>
-                  ),
-                  h3: ({ children }) => (
-                    <h3 className="mb-2 text-lg font-semibold text-white">{children}</h3>
-                  ),
-                  strong: ({ children }) => (
-                    <strong className="font-semibold text-white">{children}</strong>
-                  ),
-                }}
-              >
-                {message.content}
-              </ReactMarkdown>
-              {/* {message.parts?.map(part => (
-                part.type !== 'text' && (
-                  <div className="tool-invocation mt-2 p-2 border border-white/10 rounded" key={part.type}>
-                    <span className="text-sm text-white/60">Tool used: {part.type}</span>
-                  </div>
-                )
-              ))} */}
+              {message.parts.map(part => {
+                switch (part.type) {
+                  case 'text':
+                    return <MarkdownRenderer>{part.text}</MarkdownRenderer>
+                  case 'tool-invocation': {
+                    const callId = part.toolInvocation.toolCallId;
+
+                    switch (part.toolInvocation.toolName) {
+                      case 'getSpreadsheetURL': {
+                        switch (part.toolInvocation.state) {
+                          case 'call':
+                            return <div key={`${callId}`} className="text-white animate-pulse">Getting spreadsheet URL...</div>
+                          case 'result':
+                            return <div key={`${callId}`} className="text-white">{part.toolInvocation.result}</div>
+                        }
+                      }
+                      case 'getMeetingURL':
+                        switch (part.toolInvocation.state) {
+                          case 'call':
+                            return <div key={`${callId}`} className="text-white animate-pulse">Getting meeting URL...</div>
+                          case 'result':
+                            return <div key={`${callId}`} className="text-white">{part.toolInvocation.result}</div>
+                        }
+                    }
+                  }
+                  break;
+                }
+              })}
             </div>
           </div>
         ))}
