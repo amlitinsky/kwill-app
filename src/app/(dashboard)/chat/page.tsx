@@ -5,7 +5,7 @@ import { api } from "@/trpc/react";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { type Message, useChat } from "@ai-sdk/react";
-import ExistingChatInput from "@/app/_components/chat/ExistingChatInput";
+import ChatInput from "@/app/_components/chat/ChatInput";
 import { useChatContext } from "@/app/_components/context/chat-context";
 
 export default function ChatPage() {
@@ -21,11 +21,12 @@ export default function ChatPage() {
   });
 
   // Query for messages in the active conversation (if one exists)
-  const { data: messages, isLoading: messagesLoading } = api.message.load.useQuery({
+  const { data: messages, isLoading: isLoadingMessages } = api.message.load.useQuery({
     chatId: activeChatId ?? 0,
     limit: 50,
   }, {
     enabled: !!activeChatId,
+    refetchInterval: 3000,
   });
 
   // Only auto-select an existing conversation if we're not in "new conversation" mode.
@@ -53,7 +54,7 @@ export default function ChatPage() {
     },
   });
 
-  if (isLoadingChats) {
+  if (isLoadingChats || isLoadingMessages) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -78,7 +79,7 @@ export default function ChatPage() {
       <div className="shrink-0">
         <div className="relative mx-auto w-full max-w-[800px]">
           <div className="px-4">
-            <ExistingChatInput chatState={chatState} />
+            <ChatInput chatState={chatState} />
           </div>
         </div>
       </div>

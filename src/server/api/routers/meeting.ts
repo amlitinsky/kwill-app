@@ -242,5 +242,7 @@ export const meetingRouter = createTRPCRouter({
         })
         .where(eq(meetings.id, meeting[0].id))
 
+      return { success: true };
+
     })
 });

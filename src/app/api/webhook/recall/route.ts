@@ -73,6 +73,7 @@ export async function POST(req: Request) {
     }, { status: 200 }) // Still return 200 to acknowledge receipt
   }
 
+  console.log('recall webhook received')
   const { event, data } = evt
   const botId = data.bot.id
 
@@ -83,6 +84,7 @@ export async function POST(req: Request) {
   // Handle each bot status event
   switch (event) {
     case 'bot.done':
+      console.log('bot.done')
       // TODO if we ever want to include async transcription, we start async job here
       try {
         // Check if already processed
@@ -132,6 +134,7 @@ export async function POST(req: Request) {
       break
 
     case 'bot.fatal':
+      console.log('bot.fatal')
       // TODO update meeting status to failed
       break
   }

@@ -3,11 +3,11 @@
 import { type useChat } from "@ai-sdk/react";
 import { Send, Loader2 } from "lucide-react";
 
-interface ExistingChatInputProps {
+interface ChatInputProps {
   chatState: ReturnType<typeof useChat>;
 }
 
-export default function ExistingChatInput({ chatState }: ExistingChatInputProps) {
+export default function ChatInput({ chatState }: ChatInputProps) {
   const { input, messages, handleInputChange, handleSubmit, isLoading } = chatState;
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -50,6 +50,15 @@ export default function ExistingChatInput({ chatState }: ExistingChatInputProps)
       </div>
     </form>
   );
+
+  // loading state
+  if (isLoading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   // If there are no messages, wrap the form in the centered empty-state container.
   if (isEmpty) {

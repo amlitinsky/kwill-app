@@ -18,7 +18,7 @@ const wordSchema = z.object({
 
 export const transcriptResponseSchema = z.object({
   participant: participantSchema,
-  words: wordSchema
+  words: z.array(wordSchema)
 });
 
 export type TranscriptResponse = z.infer<typeof transcriptResponseSchema>;
@@ -152,7 +152,6 @@ export async function retrieveBotTranscript(botId: string): Promise<TranscriptRe
       throw new Error(`Failed to fetch transcript: ${transcriptResponse.status}`);
     }
 
-    // TODO: prob can simplify
     const rawData = await transcriptResponse.json() as TranscriptResponse[];
     return transcriptResponseSchema.array().parse(rawData);
   } catch (error) {
