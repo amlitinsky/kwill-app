@@ -21,13 +21,19 @@ export function ChatMessages({ chatState }: ChatMessagesProps) {
     scrollToBottom();
   }, [messages]);
 
-
+  // loading state
   if (isLoading && !messages?.length) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
+  }
+
+  // Empty state now handled here
+  // This state isn't really needed
+  if (!messages?.length) {
+    return <> </>
   }
 
   return (
@@ -41,7 +47,6 @@ export function ChatMessages({ chatState }: ChatMessagesProps) {
             }`}
           >
             <div
-              key={message.id}
               className={`${
                 message.role === 'user'
                   ? 'bg-background text-foreground rounded-lg px-4 py-2 max-w-[80%]'
@@ -51,7 +56,7 @@ export function ChatMessages({ chatState }: ChatMessagesProps) {
               {message.parts.map(part => {
                 switch (part.type) {
                   case 'text':
-                    return <MarkdownRenderer>{part.text}</MarkdownRenderer>
+                    return <MarkdownRenderer key={message.id}>{part.text}</MarkdownRenderer>
                   case 'tool-invocation': {
                     const callId = part.toolInvocation.toolCallId;
 

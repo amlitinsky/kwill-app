@@ -11,6 +11,7 @@ import { useChatContext } from "@/app/_components/context/chat-context";
 export default function ChatPage() {
   
   const { activeChatId, setActiveChatId, isNewChat } = useChatContext();
+  const utils = api.useUtils();
   
   const { data: chats, isLoading: isLoadingChats } = api.chat.list.useQuery(undefined, {
     // Prevent refetching on window focus
@@ -25,7 +26,6 @@ export default function ChatPage() {
     limit: 50,
   }, {
     enabled: !!activeChatId,
-    refetchInterval: 3000
   });
 
   // Only auto-select an existing conversation if we're not in "new conversation" mode.
@@ -47,29 +47,16 @@ export default function ChatPage() {
     experimental_prepareRequestBody({ messages, id }) {
       return { message: messages[messages.length - 1], chatId: Number(id)};
     },
+    onFinish() {
+      void utils.chat.list.invalidate();
+      void utils.message.load.invalidate();
+    },
   });
 
   if (isLoadingChats) {
     return (
       <div className="flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-
-  // When there's no messages or when we're in new conversation mode, show the empty state.
-  const isChatEmpty = !messagesLoading && (!messages || messages.length === 0);
-
-  if (isNewChat || isChatEmpty) {
-    return (
-      <div className="flex min-h-[calc(100vh-160px)] items-center justify-center p-4">
-        <div className="mx-auto text-center space-y-8 w-full max-w-[750px]">
-          <h1 className="text-4xl font-semibold text-foreground">
-            What can I analyze for you?
-          </h1>
-          <ExistingChatInput chatState={chatState} />
-        </div>
       </div>
     );
   }

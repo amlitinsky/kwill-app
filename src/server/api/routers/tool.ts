@@ -30,7 +30,8 @@ export const toolRouter = createTRPCRouter({
     .input(
       z.object({
         chatId: z.number(),
-        spreadsheetUrl: z.string().url()
+        spreadsheetUrl: z.string().url(),
+        analysisPrompt: z.string().optional()
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -66,6 +67,7 @@ export const toolRouter = createTRPCRouter({
       await ctx.db.update(chats)
         .set({ 
           googleSheetId: spreadsheetId,
+          analysisPrompt: input.analysisPrompt,
           updatedAt: new Date()
         })
         .where(eq(chats.id, input.chatId));

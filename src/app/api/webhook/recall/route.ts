@@ -106,6 +106,7 @@ export async function POST(req: Request) {
           })
           const transcript = await retrieveBotTranscript(botId)
 
+          // TODO: subtracting hours
           await caller.meeting.extractHeaders({ botId, transcript })
           await caller.meeting.analyzeInsights({ botId, transcript })
 

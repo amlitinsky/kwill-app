@@ -1,9 +1,9 @@
 "use client";
 
-import { api } from "@/trpc/react";
-import { PanelLeftOpen, SquarePen, Trash2 } from "lucide-react";
-import { useChatContext } from "@/app/_components/context/chat-context";
 import { useState } from "react";
+import { PanelLeftOpen, SquarePen, Trash2, MoreHorizontal } from "lucide-react";
+import { api } from "@/trpc/react";
+import { useChatContext } from "@/app/_components/context/chat-context";
 
 interface ChatSidebarProps {
   isOpen: boolean;
@@ -28,32 +28,26 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
   const [editingChatId, setEditingChatId] = useState<number | null>(null);
   const [editedChatName, setEditedChatName] = useState<string>("");
 
-  // New chat handler:
-  // Check for an existing empty chat (with name "New Chat") and reuse it if available;
-  // otherwise, create a new fallback chat.
   const handleNewChat = async () => {
     if (chats && chats.length > 0) {
-      const emptyChat = chats.find(chat => chat.name === "New Chat");
-      
+      const emptyChat = chats.find((chat) => chat.name === "New Chat");
       if (emptyChat) {
         setActiveChatId(emptyChat.id);
         setIsNewChat(true);
         return;
       }
     }
-
     const newChat = await createChat({ name: "New Chat" });
-    
     if (newChat) {
       setActiveChatId(newChat.id);
       setIsNewChat(true);
     }
   };
 
-  const handleDelete = async (id: number, e: React.MouseEvent) => {
+  const handleDelete = async (chatId: number, e: React.MouseEvent) => {
     e.stopPropagation();
-    deleteChat({ id });
-    if (activeChatId === id) {
+    deleteChat({ id: chatId });
+    if (activeChatId === chatId) {
       await handleNewChat();
     }
   };
@@ -93,7 +87,7 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
       setEditedChatName("");
     }
   };
-  // If sidebar is closed, render just the icons
+
   if (!isOpen) {
     return (
       <div className="flex items-center gap-3 p-4">
@@ -103,17 +97,13 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
         >
           <PanelLeftOpen className="h-5 w-5" />
         </button>
-        <button
-          onClick={handleNewChat}
-          className="rounded-md p-1 hover:bg-muted"
-        >
+        <button onClick={handleNewChat} className="rounded-md p-1 hover:bg-muted">
           <SquarePen className="h-5 w-5" />
         </button>
       </div>
     );
   }
 
-  // If sidebar is open, render full sidebar with background
   return (
     <div className="flex h-full flex-col bg-background">
       {/* Sidebar Header */}
@@ -121,15 +111,12 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
         <button onClick={onToggle} className="hover:text-foreground/80 transform transition-transform duration-200 ease-in-out">
           <PanelLeftOpen className="h-5 w-5" />
         </button>
-        <button
-          onClick={handleNewChat}
-          className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-muted"
-        >
+        <button onClick={handleNewChat} className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-muted">
           <SquarePen className="h-5 w-5" />
         </button>
       </div>
-      
-      {/* Chat list */}
+
+      {/* Chat List */}
       <div className="flex-1 overflow-y-auto p-4">
         {chats
           ?.filter((chat) => chat.name !== "New Chat")
@@ -144,15 +131,48 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
                 activeChatId === chat.id ? "bg-muted" : "hover:bg-muted/50"
               }`}
             >
-              <span className="line-clamp-1 text-sm">
-                {chat.name ?? "New Chat"}
-              </span>
-              <button
-                onClick={(e) => handleDelete(chat.id, e)}
-                className="invisible text-muted-foreground hover:text-foreground group-hover:visible"
-              >
-                <Trash2 className="h-4 w-4" />
-              </button>
+              {editingChatId === chat.id ? (
+                <input
+                  type="text"
+                  value={editedChatName}
+                  onChange={(e) => setEditedChatName(e.target.value)}
+                  onBlur={() => finishEditing(chat.id, chat.name ?? "")}
+                  onKeyDown={(e) => handleEditKeyDown(chat.id, chat.name ?? "", e)}
+                  className="w-full rounded border px-2 py-1 text-sm text-foreground"
+                  autoFocus
+                />
+              ) : (
+                <span className="line-clamp-1 text-sm">{chat.name ?? "New Chat"}</span>
+              )}
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setOpenChatMenu(openChatMenu === chat.id ? null : chat.id);
+                  }}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
+                {openChatMenu === chat.id && editingChatId !== chat.id && (
+                  <div className="absolute right-0 top-full mt-1 w-32 rounded bg-background border border-gray-300 p-2 shadow-md z-50">
+                    <button
+                      onClick={(e) => startEditing(chat.id, chat.name ?? "", e)}
+                      className="flex w-full items-center gap-2 px-2 py-1 hover:bg-muted"
+                    >
+                      <SquarePen className="h-4 w-4" />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      onClick={(e) => handleDelete(chat.id, e)}
+                      className="flex w-full items-center gap-2 px-2 py-1 hover:bg-muted rounded text-red-500 hover:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
       </div>

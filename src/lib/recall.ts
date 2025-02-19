@@ -1,3 +1,4 @@
+import { base64KwillScribeImage} from '@/utils/kwill-scribe-image';
 import { z } from 'zod';
 
 const RECALL_API_KEY = process.env.RECALL_API_KEY;
@@ -62,7 +63,7 @@ export async function createBot(meetingUrl: string, options: CreateBotOptions = 
       },
       body: JSON.stringify({
         meeting_url: meetingUrl,
-        bot_name: "AI Assistant",
+        bot_name: "Kwill Scribe",
         ...(options.join_at && { join_at: options.join_at }),
         ...(options.automatic_leave && { 
           automatic_leave: { 
@@ -75,6 +76,18 @@ export async function createBot(meetingUrl: string, options: CreateBotOptions = 
               meeting_captions: {}
             }
           },
+        },
+        automatic_video_output: {
+          in_call_recording: {
+            kind: 'jpeg',
+            b64_data: base64KwillScribeImage
+          }
+        },
+        chat: {
+          on_bot_join : {
+            send_to: "everyone",
+            message: "Hello, I'm Kwill Scribe. Please turn on meeting recording and closed captions so I can transcribe this meeting."
+          }
         },
         metadata: {
           environment: process.env.NODE_ENV,
@@ -139,6 +152,7 @@ export async function retrieveBotTranscript(botId: string): Promise<TranscriptRe
       throw new Error(`Failed to fetch transcript: ${transcriptResponse.status}`);
     }
 
+    // TODO: prob can simplify
     const rawData = await transcriptResponse.json() as TranscriptResponse[];
     return transcriptResponseSchema.array().parse(rawData);
   } catch (error) {

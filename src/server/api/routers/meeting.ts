@@ -173,6 +173,10 @@ export const meetingRouter = createTRPCRouter({
         content: formattedMessage,
         userId: meeting[0].userId,
         role: 'assistant',
+        parts: [{
+          type: 'text',
+          text: formattedMessage
+        }],
         chatId: meeting[0].chatId,
         metadata: {
           type: 'meeting_analysis',

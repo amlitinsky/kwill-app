@@ -8,17 +8,25 @@ interface ExistingChatInputProps {
 }
 
 export default function ExistingChatInput({ chatState }: ExistingChatInputProps) {
-  const { input, handleInputChange, handleSubmit, isLoading } = chatState;
+  const { input, messages, handleInputChange, handleSubmit, isLoading } = chatState;
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      if (input.trim() && !isLoading) handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
+      if (input.trim() && !isLoading) {
+        handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>);
+      }
     }
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="flex h-full flex-col space-y-2">
+  const isEmpty = !messages || messages.length === 0;
+
+  // Define the input form as a reusable JSX block.
+  const inputForm = (
+    <form
+      onSubmit={handleSubmit}
+      className={`flex flex-col space-y-2 h-full`}
+    >
       <div className="relative flex-1">
         <textarea
           value={input}
@@ -33,9 +41,30 @@ export default function ExistingChatInput({ chatState }: ExistingChatInputProps)
           disabled={!input || isLoading}
           className="absolute bottom-4 right-4 rounded-lg p-1 text-foreground"
         >
-          {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className="h-5 w-5" />}
+          {isLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <Send className="h-5 w-5" />
+          )}
         </button>
       </div>
     </form>
   );
+
+  // If there are no messages, wrap the form in the centered empty-state container.
+  if (isEmpty) {
+    return (
+      <div className="flex h-screen items-center justify-center p-4">
+        <div className="mx-auto text-center space-y-8 w-full max-w-[750px]">
+          <h1 className="text-4xl font-semibold text-foreground">
+            What can I analyze for you?
+          </h1>
+          {inputForm}
+        </div>
+      </div>
+    );
+  }
+
+  // Otherwise, just render the form normally.
+  return <>{inputForm}</>;
 } 

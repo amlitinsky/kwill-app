@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { chats, messages } from "@/server/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { google } from "@ai-sdk/google";

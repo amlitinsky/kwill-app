@@ -35,8 +35,9 @@ export async function POST(req: Request) {
         description: 'Get the URL of the Google Spreadsheet associated with this conversation',
         parameters: z.object({
           spreadsheetUrl: z.string().describe('The full Google Sheets URL'),
+          analysisPrompt: z.string().describe('Spreadsheet specific prompt for analysis').optional(),
         }),
-        execute: async ({ spreadsheetUrl}) => await caller.tool.linkSpreadsheet({ chatId, spreadsheetUrl }),
+        execute: async ({ spreadsheetUrl, analysisPrompt}) => await caller.tool.linkSpreadsheet({ chatId, spreadsheetUrl, analysisPrompt }),
       }),
       getMeetingURL: tool({
         description: 'Get the URL of the Zoom meeting associated with this conversation',
