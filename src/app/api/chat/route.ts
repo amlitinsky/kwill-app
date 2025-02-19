@@ -3,6 +3,7 @@ import { NoSuchToolError, InvalidToolArgumentsError, streamText, ToolExecutionEr
 import { z } from 'zod';
 import { createTRPCContext } from '@/server/api/trpc';
 import { createCaller } from '@/server/api/root';
+import { systemPrompt } from '@/lib/ai/prompts';
 
 const model = google('gemini-2.0-flash-001');
 
@@ -24,6 +25,7 @@ export async function POST(req: Request) {
 
   const result = streamText({
     model,
+    system: systemPrompt,
     messages,
     toolCallStreaming: true,
     experimental_transform: smoothStream({

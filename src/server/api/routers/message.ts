@@ -62,16 +62,34 @@ export const messageRouter = createTRPCRouter({
         //   );
         
         // Prepare messages for upserting.
-        const messagesToUpsert = input.messages.map((msg) => ({
-          id: msg.id ?? crypto.randomUUID(),
-          role: msg.role,
-          content: msg.content,
-          parts: msg.parts,
-          metadata: msg.metadata,
-          userId: ctx.userId,
-          chatId: input.chatId,
-          updatedAt: new Date(),
-        }));
+        const messagesToUpsert = input.messages.map((msg) => {
+
+          // Check if there are any tool invocations
+          const hasTool = msg.parts?.some((part: unknown) => {
+            return (part as { type: string }).type === 'tool-invocation';
+          });
+
+          const content = hasTool
+            ? msg.parts
+                .filter((part: unknown) => (part as { type: string }).type === 'tool-invocation')
+                .map((part: unknown) => {
+                  const result = (part as { toolInvocation: { result: string } }).toolInvocation.result;
+                  return result;
+                })
+                .join(' ')
+            : msg.content;
+
+          return {
+            id: msg.id ?? crypto.randomUUID(),
+            role: msg.role,
+            content: content,
+            parts: msg.parts,
+            metadata: msg.metadata,
+            userId: ctx.userId,
+            chatId: input.chatId,
+            updatedAt: new Date(),
+          };
+        });
         
         // Upsert each record: if a message with the same id exists, update it.
         const result = await tx.insert(messages)

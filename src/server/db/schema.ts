@@ -37,7 +37,7 @@ export const messages = createTable('messages', {
     enum: ['user', 'assistant', 'system', 'data'],
     length: 20
   }).notNull(),
-  content: text('content').notNull(),
+  content: text('content').default(''),
   parts: json('parts').default([]),
   metadata: json('metadata').default({}),
   createdAt: timestamp('created_at').defaultNow().notNull(),

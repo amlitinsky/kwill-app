@@ -15,6 +15,7 @@ export const toolRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      // TODO: add a try catch to see if it actually created the bot
       const bot = await createBot(input.meetingUrl);
       
       await ctx.db.insert(meetings).values({
