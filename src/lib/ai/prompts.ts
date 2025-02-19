@@ -1,11 +1,10 @@
 import { type TranscriptResponse } from "../recall";
 
-export async function extractTranscriptHeaderValues(
+export const extractTranscriptHeaderValues = (
   transcript: TranscriptResponse[], 
   columnHeaders: string[], 
   analysisPrompt?: string | null
-): Promise<string> {
-  return `
+): string => `
   You are an expert data analyst specializing in extracting structured information from meeting transcripts. Your task is to analyze the provided transcript and generate a valid JSON object mapping specific data points to predefined column headers.
 
   Output Format:
@@ -43,13 +42,11 @@ export async function extractTranscriptHeaderValues(
   - Exclude pleasantries, small talk, and off-topic discussions
   - Consider the entire context when extracting information
   `;
-}
 
-export async function generateFullMeetingInsights(
+export const generateFullMeetingInsights = (
   transcript: TranscriptResponse[],
   analysisPrompt?: string
-): Promise<string> {
-  return `
+): string => `
   You are an expert meeting analyst and conversation dynamics expert.
   
   Based on the provided transcript, perform the following analyses:
@@ -71,4 +68,6 @@ export async function generateFullMeetingInsights(
   Use the following custom analysis prompt if it has been provided:
   ${analysisPrompt}
   `;
-}
+
+
+  export const nameChat = (text: string) => `Generate a succinct and descriptive conversation title based on the following message: "${text}". The title should be no longer than 10 words. Use plain text, no markdown.`;

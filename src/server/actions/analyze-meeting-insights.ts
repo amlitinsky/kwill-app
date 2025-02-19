@@ -1,7 +1,7 @@
 'use server'
 
 import { db } from "@/server/db";
-import { meetings, conversations, chatMessages } from "@/server/db/schema";
+import { meetings, chats, messages } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 import { google } from "@ai-sdk/google";
 import { generateObject } from "ai";
@@ -40,15 +40,15 @@ export async function analyzeMeetingInsights(
 
   const convo = await db
     .select()
-    .from(conversations)
-    .where(eq(conversations.id, meeting[0].conversationId))
+    .from(chats)
+    .where(eq(chats.id, meeting[0].chatId))
     .limit(1);
 
   if (!convo[0]) {
     throw new Error("Conversation not found");
   }
 
-  const prompt = await generateFullMeetingInsights(
+  const prompt = generateFullMeetingInsights(
     transcript,
     convo[0].analysisPrompt ?? undefined
   );
@@ -100,11 +100,12 @@ export async function analyzeMeetingInsights(
   `).join('\n')}
   `;
 
-  await db.insert(chatMessages).values({
+  await db.insert(messages).values({
+    id: crypto.randomUUID(),
     content: formattedMessage,
     userId: meeting[0].userId,
     role: "assistant",
-    conversationId: meeting[0].conversationId,
+    chatId: meeting[0].chatId,
     metadata: {
       type: "meeting_analysis",
       meetingId: meeting[0].id

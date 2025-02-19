@@ -9,8 +9,8 @@ import {
   setProcessRecord 
 } from '@/lib/redis'
 import { env } from '@/env'
-import { analyzeMeetingInsights } from '@/server/actions/analyze-meeting-insights'
-import { extractMeetingHeaders } from '@/server/actions/extract-meeting-headers'
+import { createTRPCContext } from '@/server/api/trpc'
+import { createCaller } from '@/server/api/root'
 
 interface RecallWebhookPayload {
   event: BotStatusEvent;
@@ -76,6 +76,9 @@ export async function POST(req: Request) {
   const { event, data } = evt
   const botId = data.bot.id
 
+  const ctx = await createTRPCContext({ headers: req.headers });
+  const caller = createCaller(ctx);
+
 
   // Handle each bot status event
   switch (event) {
@@ -102,8 +105,9 @@ export async function POST(req: Request) {
             eventTimestamp: data.data.updated_at
           })
           const transcript = await retrieveBotTranscript(botId)
-          await extractMeetingHeaders(botId, transcript)
-          await analyzeMeetingInsights(botId, transcript)
+
+          await caller.meeting.extractHeaders({ botId, transcript })
+          await caller.meeting.analyzeInsights({ botId, transcript })
 
 
           // Mark as completed

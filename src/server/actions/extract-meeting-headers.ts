@@ -1,5 +1,5 @@
 import { db } from "@/server/db";
-import { meetings, conversations } from "@/server/db/schema";
+import { meetings, chats } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 import { clerkClient } from "@clerk/nextjs/server";
 import { google } from "@ai-sdk/google";
@@ -24,8 +24,8 @@ export async function extractMeetingHeaders(
 
   const convo = await db
     .select()
-    .from(conversations)
-    .where(eq(conversations.id, meeting[0].conversationId))
+    .from(chats)
+    .where(eq(chats.id, meeting[0].chatId))
     .limit(1);
 
   if (!convo[0]?.googleSheetId) {
@@ -39,7 +39,7 @@ export async function extractMeetingHeaders(
   }
 
   const headers = await getColumnHeaders(accessToken, convo[0].googleSheetId);
-  const prompt = await extractTranscriptHeaderValues(transcript, headers, convo[0].analysisPrompt);
+  const prompt = extractTranscriptHeaderValues(transcript, headers, convo[0].analysisPrompt);
   const model = google('gemini-2.0-flash-001');
 
   const {text: result} = await generateText({

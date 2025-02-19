@@ -1,5 +1,5 @@
 # TODOS
-1. Tool creation for reading spreadsheets, deploying zoom bots, appending extracted data to spreadsheets
-    - Also when using tool initializing right parameters
-2. Payment processing (and restricting users if they run out of meeting hours)
+1. Implement new chat handling (create a new chat called empty chat and use it as the default chat and fallback, also have to do that for handle Delete (make sure to rename chat in the backend))
+2. Create tRPC routes for webhook analysis handling
+2. Pricing page
 3. Support Page

@@ -23,7 +23,7 @@ export const toolRouter = createTRPCRouter({
         userId: ctx.userId,
       });
 
-      return { success: true, message: "Meeting bot deployed successfully!" };
+      return "Meeting bot deployed successfully!";
     }),
 
   linkSpreadsheet: protectedProcedure
@@ -48,10 +48,7 @@ export const toolRouter = createTRPCRouter({
 
       const headers = await getColumnHeaders(accessToken!, spreadsheetId);
       if (headers.length === 0) {
-        return { 
-          success: false,
-          message: "Spreadsheet has no column headers" 
-        };
+        return "Spreadsheet has no column headers"
       }
 
       const existingChat = await ctx.db.query.chats.findFirst({
@@ -63,10 +60,7 @@ export const toolRouter = createTRPCRouter({
       }
 
       if (existingChat.googleSheetId) {
-        return { 
-          success: false, 
-          message: "Spreadsheet already linked to this chat" 
-        };
+        return "Spreadsheet already linked to this chat"
       }
 
       await ctx.db.update(chats)
@@ -76,9 +70,6 @@ export const toolRouter = createTRPCRouter({
         })
         .where(eq(chats.id, input.chatId));
 
-      return { 
-        success: true, 
-        message: "Spreadsheet linked successfully!" 
-      };
+      return "Spreadsheet linked successfully!";
     })
 });

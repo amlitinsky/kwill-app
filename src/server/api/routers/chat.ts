@@ -4,6 +4,7 @@ import { chats, messages } from "@/server/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
+import { nameChat } from "@/lib/ai/prompts";
 
 export const chatRouter = createTRPCRouter({
   create: protectedProcedure
@@ -30,7 +31,9 @@ export const chatRouter = createTRPCRouter({
     const userChats = await ctx.db
       .select()
       .from(chats)
-      .where(eq(chats.userId, ctx.userId))
+      .where(
+        eq(chats.userId, ctx.userId)
+      )
       .orderBy(desc(chats.updatedAt));
 
     return userChats;
@@ -99,26 +102,49 @@ export const chatRouter = createTRPCRouter({
       return { success: true };
     }),
 
-  name: publicProcedure
-    .input(z.object({ text: z.string() }))
-    .mutation(async ({ input }) => {
-      const { text } = input;
+  generateName: protectedProcedure
+    .input(z.object({ 
+      text: z.string(),
+      id: z.number()
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { text, id } = input;
       if (!text) {
         throw new Error("Missing text");
       }
 
-      // Craft the prompt for the LLM
-      const prompt = `Generate a succinct and descriptive conversation title based on the following message: "${text}". The title should be no longer than 10 words. Use plain text, no markdown.`;
+      // Get current chat
+      const chat = await ctx.db.query.chats.findFirst({
+        where: eq(chats.id, id)
+      });
 
-      // Use the LLM to generate the title
+      if (!chat) {
+        throw new Error("Chat not found");
+      }
+
+      if (chat.name !== "New Chat") {
+        return { name: chat.name };
+
+      }
+
       const result = await generateText({
         model: google('gemini-2.0-flash-001'),
-        prompt,
+        prompt: nameChat(text),
         maxTokens: 20,
       });
 
       const name = result.text.trim() || "New Chat";
 
-      return { name };
+      // Update chat with new name
+      const updatedChat = await ctx.db
+        .update(chats)
+        .set({
+          name: name,
+          updatedAt: new Date()
+        })
+        .where(eq(chats.id, id))
+        .returning();
+
+      return { name: updatedChat[0]?.name };
     }),
 });

@@ -19,6 +19,7 @@ export async function POST(req: Request) {
   const {message, chatId} = await req.json() as {message: Message, chatId: number};
 
   const previousMessages = await caller.message.load({chatId}) as Message[]
+  await caller.chat.generateName({text: message.content, id: chatId})
   const messages = appendClientMessage({messages: previousMessages, message})
 
   const result = streamText({

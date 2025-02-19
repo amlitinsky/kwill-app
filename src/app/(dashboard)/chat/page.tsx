@@ -5,7 +5,6 @@ import { api } from "@/trpc/react";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { type Message, useChat } from "@ai-sdk/react";
-import NewChatInput from "@/app/_components/chat/NewChatInput";
 import ExistingChatInput from "@/app/_components/chat/ExistingChatInput";
 import { useChatContext } from "@/app/_components/context/chat-context";
 
@@ -69,7 +68,7 @@ export default function ChatPage() {
           <h1 className="text-4xl font-semibold text-foreground">
             What can I analyze for you?
           </h1>
-          <NewChatInput chatState={chatState} />
+          <ExistingChatInput chatState={chatState} />
         </div>
       </div>
     );
