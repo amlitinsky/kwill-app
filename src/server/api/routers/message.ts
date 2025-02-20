@@ -64,10 +64,11 @@ export const messageRouter = createTRPCRouter({
         // Prepare messages for upserting.
         const messagesToUpsert = input.messages.map((msg) => {
 
+          // TODO verify that I don't need this specifically
           // Check if there are any tool invocations
-          const hasTool = msg.parts?.some((part: unknown) => {
-            return (part as { type: string }).type === 'tool-invocation';
-          });
+          // const hasTool = msg.parts?.some((part: unknown) => {
+          //   return (part as { type: string }).type === 'tool-invocation';
+          // });
 
           // Get content based on message type
           // const content = hasTool
