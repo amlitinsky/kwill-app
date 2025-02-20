@@ -69,20 +69,15 @@ export const messageRouter = createTRPCRouter({
             return (part as { type: string }).type === 'tool-invocation';
           });
 
-          const content = hasTool
-            ? msg.parts
-                .filter((part: unknown) => (part as { type: string }).type === 'tool-invocation')
-                .map((part: unknown) => {
-                  const result = (part as { toolInvocation: { result: string } }).toolInvocation.result;
-                  return result;
-                })
-                .join(' ')
-            : msg.content;
+          // Get content based on message type
+          // const content = hasTool
+          //   ? `Tool action completed: ${(msg.parts[0] as { toolInvocation: { toolName: string } }).toolInvocation.toolName}`
+          //   : msg.content;
 
           return {
             id: msg.id ?? crypto.randomUUID(),
             role: msg.role,
-            content: content,
+            content: msg.content || 'Action has been completed',
             parts: msg.parts,
             metadata: msg.metadata,
             userId: ctx.userId,

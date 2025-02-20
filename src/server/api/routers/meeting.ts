@@ -6,11 +6,11 @@ import { type SQL } from "drizzle-orm";
 import { transcriptResponseSchema } from "@/lib/recall";
 import { extractTranscriptHeaderValues, generateFullMeetingInsights } from "@/lib/ai/prompts";
 import { generateObject, generateText } from "ai";
-import { google } from "@ai-sdk/google";
 import { formattedMeetingInsights } from "@/lib/ai/formats";
 import { getColumnHeaders } from "@/lib/google";
 import { appendRowToSheet } from "@/lib/google";
 import { clerkClient } from "@clerk/nextjs/server";
+import { deepseekChat } from "@/lib/ai/models";
 
 export const meetingInsightsSchema = z.object({
   meetingAnalysis: z.object({
@@ -18,13 +18,13 @@ export const meetingInsightsSchema = z.object({
     actionItems: z.array(z.string()),
     keyPoints: z.array(z.string()),
     topicDistribution: z.record(z.number())
-  }),
+  }).required(),
   speakerInsights: z.record(z.object({
     participationRate: z.number(),
     averageSpeakingPace: z.number(),
     totalSpeakingTime: z.number(),
     keyContributions: z.array(z.string())
-  }))
+  }).required())
 });
 
 export const meetingRouter = createTRPCRouter({
@@ -144,9 +144,9 @@ export const meetingRouter = createTRPCRouter({
       }
       
       const prompt = generateFullMeetingInsights(input.transcript, chat[0].analysisPrompt ?? undefined);
-      const model = google('gemini-2.0-flash-001');
+      // const model = google('gemini-2.0-flash-001');
       const analyzedData = await generateObject({
-        model,
+        model: deepseekChat,
         prompt,
         schema: meetingInsightsSchema
       });
@@ -222,10 +222,10 @@ export const meetingRouter = createTRPCRouter({
 
       const headers = await getColumnHeaders(accessToken, chat[0].googleSheetId);
       const prompt = extractTranscriptHeaderValues(input.transcript, headers, chat[0].analysisPrompt);
-      const model = google('gemini-2.0-flash-001');
+      // const model = google('gemini-2.0-flash-001');
 
       const {text: result} = await generateText({
-        model,
+        model: deepseekChat,
         prompt
       });
 

@@ -1,11 +1,9 @@
-import { google } from '@ai-sdk/google';
 import { NoSuchToolError, InvalidToolArgumentsError, streamText, ToolExecutionError, smoothStream, tool, type Message, appendClientMessage, appendResponseMessages } from 'ai';
 import { z } from 'zod';
 import { createTRPCContext } from '@/server/api/trpc';
 import { createCaller } from '@/server/api/root';
 import { systemPrompt } from '@/lib/ai/prompts';
-
-const model = google('gemini-2.0-flash-001');
+import { deepseekChat } from '@/lib/ai/models';
 
 
 // Allow streaming responses up to 30 seconds
@@ -24,7 +22,7 @@ export async function POST(req: Request) {
   const messages = appendClientMessage({messages: previousMessages, message})
 
   const result = streamText({
-    model,
+    model: deepseekChat,
     system: systemPrompt,
     messages,
     toolCallStreaming: true,

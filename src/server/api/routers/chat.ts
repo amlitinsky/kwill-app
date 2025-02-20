@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { chats, messages } from "@/server/db/schema";
+import { chats, meetings, messages } from "@/server/db/schema";
 import { desc, eq } from "drizzle-orm";
 import { google } from "@ai-sdk/google";
 import { generateText } from "ai";
@@ -84,6 +84,11 @@ export const chatRouter = createTRPCRouter({
   delete: protectedProcedure
     .input(z.object({ id: z.number() }))
     .mutation(async ({ ctx, input }) => {
+      // First delete all meetings in the conversation
+      await ctx.db
+        .delete(meetings)
+        .where(eq(meetings.chatId, input.id));
+
       // First delete all messages in the conversation
       await ctx.db
         .delete(messages)
