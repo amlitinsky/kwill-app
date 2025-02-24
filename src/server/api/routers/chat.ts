@@ -40,7 +40,7 @@ export const chatRouter = createTRPCRouter({
   }),
 
   getById: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const chat = await ctx.db
         .select()
@@ -58,7 +58,7 @@ export const chatRouter = createTRPCRouter({
   update: protectedProcedure
     .input(
       z.object({
-        id: z.number(),
+        id: z.string(),
         name: z.string().optional(),
         googleSheetId: z.string().optional(),
       })
@@ -82,7 +82,7 @@ export const chatRouter = createTRPCRouter({
     }),
 
   delete: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       // First delete all meetings in the conversation
       await ctx.db
@@ -110,7 +110,7 @@ export const chatRouter = createTRPCRouter({
   generateName: protectedProcedure
     .input(z.object({ 
       text: z.string(),
-      id: z.number()
+      id: z.string()
     }))
     .mutation(async ({ ctx, input }) => {
       const { text, id } = input;

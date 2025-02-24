@@ -1,12 +1,11 @@
 // Example model schema from the Drizzle docs
 // https://orm.drizzle.team/docs/sql-schema-declaration
 
+import { sql } from "drizzle-orm";
 import {
-  integer,
   pgTableCreator,
   timestamp,
   varchar,
-  serial,
   text,
   jsonb,
   json,
@@ -21,9 +20,9 @@ import {
 export const createTable = pgTableCreator((name) => `kwill-app_${name}`);
 
 export const chats = createTable('chats', {
-  id: serial('id').primaryKey(),
+  id: varchar('id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar('user_id', { length: 255 }).notNull(),
-  googleSheetId: varchar('google_sheet_id', { length: 255 }),  // Optional, can be linked later
+  googleSheetId: varchar('google_sheet_id', { length: 50}),  // Optional, can be linked later
   name: text('name'),
   analysisPrompt: text('analysis_prompt'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -44,13 +43,13 @@ export const messages = createTable('messages', {
 
   // My Fields
   userId: varchar('user_id', { length: 255 }).notNull(),
-  chatId: integer('chat_id').references(() => chats.id).notNull(),
+  chatId: varchar('chat_id', { length: 36 }).references(() => chats.id).notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull()
 });
 
 export const meetings = createTable('meetings', {
-  id: serial('id').primaryKey(),
-  chatId: integer('chat_id').references(() => chats.id).notNull(),
+  id: varchar('id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),  // Changed to UUID
+  chatId: varchar('chat_id', { length: 36 }).references(() => chats.id).notNull(),
   userId: varchar('user_id', { length: 255 }).notNull(),
   botId: varchar('bot_id', { length: 255 }),  // Changed from recallAiTranscriptId to botId
   extractedHeaders: jsonb('extracted_headers'),

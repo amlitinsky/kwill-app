@@ -31,7 +31,7 @@ export const meetingRouter = createTRPCRouter({
   create: protectedProcedure
     .input(
       z.object({
-        chatId: z.number(),
+        chatId: z.string(),
         botId: z.string(),
       })
     )
@@ -52,7 +52,7 @@ export const meetingRouter = createTRPCRouter({
   getAll: protectedProcedure
     .input(
       z.object({
-        chatId: z.number().optional(),
+        chatId: z.string().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
@@ -72,7 +72,7 @@ export const meetingRouter = createTRPCRouter({
     }),
 
   getById: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
       const meeting = await ctx.db
         .select()
@@ -88,7 +88,7 @@ export const meetingRouter = createTRPCRouter({
     }),
 
   delete: protectedProcedure
-    .input(z.object({ id: z.number() }))
+    .input(z.object({ id: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const meeting = await ctx.db
         .delete(meetings)
@@ -144,7 +144,6 @@ export const meetingRouter = createTRPCRouter({
       }
       
       const prompt = generateFullMeetingInsights(input.transcript, chat[0].analysisPrompt ?? undefined);
-      // const model = google('gemini-2.0-flash-001');
       const analyzedData = await generateObject({
         model: deepseekChat,
         prompt,
@@ -154,7 +153,7 @@ export const meetingRouter = createTRPCRouter({
       await ctx.db
         .update(meetings)
         .set({
-          llmExtractedData: analyzedData,
+          llmExtractedData: analyzedData.object,
           processingStatus: 'completed',
           updatedAt: new Date(),
         })
@@ -222,7 +221,6 @@ export const meetingRouter = createTRPCRouter({
 
       const headers = await getColumnHeaders(accessToken, chat[0].googleSheetId);
       const prompt = extractTranscriptHeaderValues(input.transcript, headers, chat[0].analysisPrompt);
-      // const model = google('gemini-2.0-flash-001');
 
       const {text: result} = await generateText({
         model: deepseekChat,

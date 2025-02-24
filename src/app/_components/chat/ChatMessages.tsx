@@ -3,7 +3,7 @@
 import { type useChat } from '@ai-sdk/react';
 import { useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
-import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import { MarkdownRenderer } from '@/app/_components/MarkdownRenderer';
 interface ChatMessagesProps {
   chatState: ReturnType<typeof useChat>;
 }
@@ -21,6 +21,7 @@ export function ChatMessages({ chatState }: ChatMessagesProps) {
     scrollToBottom();
   }, [messages]);
 
+  // prob can remove this
   // loading state
   if (isLoading && !messages?.length) {
     return (
@@ -28,12 +29,6 @@ export function ChatMessages({ chatState }: ChatMessagesProps) {
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
-  }
-
-  // Empty state now handled here
-  // This state isn't really needed
-  if (!messages?.length) {
-    return <> </>
   }
 
   return (

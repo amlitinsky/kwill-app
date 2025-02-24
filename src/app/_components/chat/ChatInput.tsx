@@ -8,7 +8,7 @@ interface ChatInputProps {
 }
 
 export default function ChatInput({ chatState }: ChatInputProps) {
-  const { input, messages, handleInputChange, handleSubmit, isLoading } = chatState;
+  const { input, handleInputChange, handleSubmit, isLoading } = chatState;
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -19,10 +19,9 @@ export default function ChatInput({ chatState }: ChatInputProps) {
     }
   };
 
-  const isEmpty = !messages || messages.length === 0;
 
   // Define the input form as a reusable JSX block.
-  const inputForm = (
+  return (
     <form
       onSubmit={handleSubmit}
       className={`flex flex-col space-y-2 h-full`}
@@ -51,29 +50,4 @@ export default function ChatInput({ chatState }: ChatInputProps) {
     </form>
   );
 
-  // loading state
-  // if (isLoading) {
-  //   return (
-  //     <div className="flex h-full items-center justify-center">
-  //       <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-  //     </div>
-  //   );
-  // }
-
-  // If there are no messages, wrap the form in the centered empty-state container.
-  if (isEmpty) {
-    return (
-      <div className="flex h-screen items-center justify-center p-4">
-        <div className="mx-auto text-center space-y-8 w-full max-w-[750px]">
-          <h1 className="text-4xl font-semibold text-foreground">
-            What can I analyze for you?
-          </h1>
-          {inputForm}
-        </div>
-      </div>
-    );
-  }
-
-  // Otherwise, just render the form normally.
-  return <>{inputForm}</>;
 } 

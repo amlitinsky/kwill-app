@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { PanelLeftOpen, SquarePen, Trash2, MoreHorizontal } from "lucide-react";
 import { api } from "@/trpc/react";
-import { useChatContext } from "@/app/_components/context/chat-context";
+import { useRouter } from "next/navigation";
 
 interface ChatSidebarProps {
   isOpen: boolean;
@@ -11,56 +11,54 @@ interface ChatSidebarProps {
 }
 
 export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
-  const { activeChatId, setActiveChatId, setIsNewChat } = useChatContext();
   const utils = api.useUtils();
   const { data: chats } = api.chat.list.useQuery();
   const { mutate: deleteChat } = api.chat.delete.useMutation({
     onSuccess: () => void utils.chat.list.invalidate(),
   });
-  const { mutateAsync: createChat } = api.chat.create.useMutation();
   const { mutate: updateChat } = api.chat.update.useMutation({
     onSuccess: () => void utils.chat.list.invalidate(),
   });
+  const router = useRouter();
 
   // State for managing dropdown open status
-  const [openChatMenu, setOpenChatMenu] = useState<number | null>(null);
+  const [openChatMenu, setOpenChatMenu] = useState<string | null>(null);
   // State for inline editing: which chat is being edited and its current value.
-  const [editingChatId, setEditingChatId] = useState<number | null>(null);
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editedChatName, setEditedChatName] = useState<string>("");
 
-  const handleNewChat = async () => {
-    if (chats && chats.length > 0) {
-      const emptyChat = chats.find((chat) => chat.name === "New Chat");
-      if (emptyChat) {
-        setActiveChatId(emptyChat.id);
-        setIsNewChat(true);
-        return;
-      }
-    }
-    const newChat = await createChat({ name: "New Chat" });
-    if (newChat) {
-      setActiveChatId(newChat.id);
-      setIsNewChat(true);
+  // Update handleNewChat to use the new flow
+  const handleNewChat = () => {
+    // Simply navigate to the new chat page
+    router.push('/chat');
+  };
+
+  // Update handleDelete to handle route-based navigation
+  const handleDelete = async (chatId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    deleteChat({ id: chatId });
+    
+    // If we're deleting the active chat, redirect to new chat page
+    const currentPath = window.location.pathname;
+    if (currentPath.includes(chatId)) {
+      router.push('/chat');
     }
   };
 
-  const handleDelete = async (chatId: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    deleteChat({ id: chatId });
-    if (activeChatId === chatId) {
-      await handleNewChat();
-    }
+  // Update chat item click handler
+  const handleChatClick = (chatId: string) => {
+    router.push(`/chat/${chatId}`);
   };
 
   // Start inline editing by setting state
-  const startEditing = (chatId: number, currentName: string, e: React.MouseEvent) => {
+  const startEditing = (chatId: string, currentName: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setEditingChatId(chatId);
     setEditedChatName(currentName);
     setOpenChatMenu(null);
   };
 
-  const finishEditing = async (chatId: number, originalName: string) => {
+  const finishEditing = async (chatId: string, originalName: string) => {
     const trimmed = editedChatName.trim();
     if (trimmed === "") {
       alert("Chat name cannot be empty.");
@@ -78,7 +76,7 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
     setEditedChatName("");
   };
 
-  const handleEditKeyDown = (chatId: number, originalName: string, e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleEditKeyDown = (chatId: string, originalName: string, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       void finishEditing(chatId, originalName);
     }
@@ -123,12 +121,9 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
           .map((chat) => (
             <div
               key={chat.id}
-              onClick={() => {
-                setActiveChatId(chat.id);
-                setIsNewChat(false);
-              }}
+              onClick={() => handleChatClick(chat.id)}
               className={`group mb-2 flex cursor-pointer items-center justify-between rounded-lg p-3 ${
-                activeChatId === chat.id ? "bg-muted" : "hover:bg-muted/50"
+                window.location.pathname.includes(chat.id) ? "bg-muted" : "hover:bg-muted/50"
               }`}
             >
               {editingChatId === chat.id ? (

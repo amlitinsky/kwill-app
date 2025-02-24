@@ -3,8 +3,8 @@
 import { createContext, useContext, useState } from "react";
 
 type ChatContextType = {
-  activeChatId: number | null;
-  setActiveChatId: (id: number | null) => void;
+  activeChatId: string| null;
+  setActiveChatId: (id: string| null) => void;
   isNewChat: boolean;
   setIsNewChat: (value: boolean) => void;
 };
@@ -12,7 +12,7 @@ type ChatContextType = {
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: React.ReactNode }) {
-  const [activeChatId, setActiveChatId] = useState<number | null>(null);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [isNewChat, setIsNewChat] = useState(false);
 
   return (

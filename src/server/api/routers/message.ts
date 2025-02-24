@@ -7,7 +7,7 @@ export const messageRouter = createTRPCRouter({
   load: protectedProcedure
     .input(
       z.object({
-        chatId: z.number(),
+        chatId: z.string(),
         limit: z.number().default(50),
         cursor: z.number().optional(),
       })
@@ -29,7 +29,7 @@ export const messageRouter = createTRPCRouter({
   save: protectedProcedure
     .input(
       z.object({
-        chatId: z.number(),
+        chatId: z.string(),
         messages: z.array(
           z.object({
             id: z.string().optional(),

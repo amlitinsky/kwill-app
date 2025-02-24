@@ -10,7 +10,7 @@ export const toolRouter = createTRPCRouter({
   joinMeeting: protectedProcedure
     .input(
       z.object({
-        chatId: z.number(),
+        chatId: z.string(),
         meetingUrl: z.string().url()
       })
     )
@@ -30,7 +30,7 @@ export const toolRouter = createTRPCRouter({
   linkSpreadsheet: protectedProcedure
     .input(
       z.object({
-        chatId: z.number(),
+        chatId: z.string(),
         spreadsheetUrl: z.string().url(),
         analysisPrompt: z.string().optional()
       })
