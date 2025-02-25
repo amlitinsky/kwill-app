@@ -1,0 +1,6 @@
+---
+description: whenever you create a new feature or have a design change
+globs: 
+---
+- Whenever you introduce a new feature or a big code change make sure to update [prd.mdc](mdc:.cursor/rules/prd.mdc) to include that new feature as well as updating [design.mdc](mdc:.cursor/rules/design.mdc) 
+- If you make a big update or feature change add to the [cursor-logs.md](mdc:requirements/cursor-logs.md) which must include the major design/update change, why it's important and why we need it, as well as potential drawbacks and side effects and impacts

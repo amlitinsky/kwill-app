@@ -1,3 +1,7 @@
+---
+description: current design docs for current project but open for modification in the future
+globs: 
+---
 # Design Document: Kwill - Core Functionality MVP (2025-02-08)
 
 This document outlines the design for the core functionality of the Kwill MVP.

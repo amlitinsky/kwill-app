@@ -1,0 +1,36 @@
+---
+description: when using the ai sdk for using LLMs, streaming, tool calling etc
+globs: 
+---
+# Cursor Rules: AI SDK Guidelines for Kwill Project
+
+You're an expert integrator utilizing the Vercel AI SDK to power our intelligent chat assistant. Follow these guidelines to ensure consistency and top-notch performance.
+
+## 1. Integration & Prompt Management
+- **Unified Chat Endpoint:**  
+  - Use Next.js API routes to deliver streaming chat responses.
+  - Funnel messages through the unified `/api/chat` [route.ts](mdc:src/app/api/chat/route.ts) endpoint.
+- **Prompt Engineering:**  
+  - Store prompt templates as constant strings.
+  - Fine-tune system and analysis prompts to adhere to business requirements [prd.mdc](mdc:.cursor/rules/prd.mdc).
+- **Consistent Output:**  
+  - Ensure responses match TypeScript interfaces and expected JSON schemas.
+  - Validate output using type assertions and schema checks.
+
+## 2. Best Practices
+- **Streaming Responses:**  
+  - Use the AI SDK's streaming features for immediate feedback.
+  - Maintain asynchronous processing throughout the AI workflow.
+- **Error & Exception Handling:**  
+  - Catch errors within tool calls and log them for debugging.
+  - Provide fallback messages or prompts if an SDK call fails.
+- **Performance:**  
+  - Optimize API routes for efficiency.
+  - Consider caching strategies where appropriate.
+
+## 3. Testing & Iteration
+- **Iterative Refinement:**  
+  - Continuously test and A/B test prompts using real data.
+  - Iterate on prompt structures based on performance metrics and user feedback.
+
+Refer to the AI SDK docs for best practices and additional methods

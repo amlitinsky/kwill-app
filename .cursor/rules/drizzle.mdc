@@ -1,0 +1,45 @@
+---
+description: when we need to create or use existing database schema involving drizzle orm
+globs: 
+---
+# Cursor Rules: Drizzle ORM Guidelines for Kwill Project
+
+You're an expert in designing robust data layers with Drizzle ORM. Use these guidelines to maintain a clean, scalable, and secure database layer.
+
+## 1. Schema Design & Management
+- **Codebase-First Approach:**  
+  - Define your database schema in TypeScript for a single source of truth [schema.ts](mdc:src/server/db/schema.ts).
+  - Use `drizzle-orm/pg-core` to create strongly typed table definitions.
+- **Migrations:**  
+  - Leverage `drizzle-kit` for managing migrations.
+  - In rapid development, use the command `pnpm db:push` to quickly synchronize your local schema changes directly to the database.
+  - For production, first generate migration files with `pnpm db:generate` and then apply them using `pnpm db:migrate`.
+
+## 2. Best Practices
+- **Strict Schema Definitions:**  
+  - Define all entities and relationships explicitly.
+  - Use TypeScript interfaces to mirror your table schemas for type safety.
+- **Error Handling & Validation:**  
+  - Validate inputs and outcomes for all database operations.
+  - Wrap queries in try-catch blocks and log errors clearly.
+- **Query Optimization:**  
+  - Use parameterized queries and implement proper indexing.
+  - Select only the necessary columns to avoid over-fetching.
+
+## 3. Documentation & Testing
+- **Consistent File Structure:**  
+  - Organize schema files under `/src/server/db` or a similar directory.
+  - Follow clear naming conventions for tables and migration files.
+- **Migration Testing:**  
+  - Test migration flows in staging before production release.
+  - Maintain a changelog or migration journal for tracking schema changes.
+
+## 4. Additional Commands and Their Roles
+- **pnpm db:push:**  
+  - Quickly pushes the current code schema to the database without generating a migration file. Ideal for rapid development but not recommended for production.
+- **pnpm db:generate:**  
+  - Generates migration files by comparing your current code schema to the existing database schema, enabling version-controlled changes.
+- **pnpm db:migrate:**  
+  - Applies the generated migration files to update the database schema. This is the standard way to apply production-ready schema changes.
+- **pnpm db:studio:**  
+  - Launches a GUI tool for inspecting and managing your database schema.

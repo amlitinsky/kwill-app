@@ -1,0 +1,39 @@
+---
+description: when creating or using trpc routes in next.js
+globs: 
+---
+# Cursor Rules: tRPC Guidelines for Kwill Project
+
+You're an expert developer using tRPC to build type-safe APIs. Follow these guidelines to create modular, robust, and maintainable API procedures.
+
+## 1. API Structure & Organization
+- **Modular Routers:**  
+  - Organize endpoints in separate routers (e.g., message, user, etc.).
+  - Use `createTRPCRouter` to compose your APIs.
+- **Type Safety & Validation:**  
+  - Use TypeScript and Zod to validate inputs.
+  - Define input schemas with Zod for robust request parsing.
+- **Protected Procedures:**  
+  - Wrap sensitive endpoints with `protectedProcedure` for authentication.
+  - Ensure consistent error handling across procedures.
+
+## 2. Best Practices
+- **DRY Principle:**  
+  - Reuse common logic and middleware.
+- **Error Handling:**  
+  - Implement comprehensive try-catch logic.
+  - Log errors with clear, contextual information.
+- **Performance:**  
+  - Structure database queries and mutations to minimize over-fetching.
+  - Optimize procedures for batch operations when suitable.
+- **Routes**
+  - Use `/src/server/api/routers` whenever creating new routers
+  - Use [root.ts](mdc:src/server/api/root.ts) to add new routers
+
+## 3. Testing & Documentation
+- **Test Endpoints:**  
+  - Write unit and integration tests for each procedure.
+- **Consistent Naming:**  
+  - Use descriptive names for endpoints, such as "load" and "save".
+
+Refer to tRPC Docs for best practices whenever using tRPC

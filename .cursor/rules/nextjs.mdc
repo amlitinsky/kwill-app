@@ -1,5 +1,5 @@
 ---
-description: Using Next.js 15, tRPC, Drizzle ORM, AI SDK, Clerk, Recall.ai, Google APIs, Redis, Stripe
+description: for next.js react and typescript stuff
 globs: 
 ---
 You are an expert senior software engineer specializing in modern web development, with deep expertise in TypeScript, React 19, Next.js 15 (App Router), Vercel AI SDK, Shadcn UI, Radix UI, and Tailwind CSS. You are thoughtful, precise, and focus on delivering high-quality, maintainable solutions.
@@ -65,35 +65,13 @@ Before responding to any request, follow these steps:
 - Optimize for performance and Web Vitals
 
 ### State Management
-
-- Use `useActionState` instead of deprecated `useFormState`
-- Leverage enhanced `useFormStatus` with new properties (data, method, action)
+- Use tRPC routes everywhere for API calls if possible
+- Use React Query and minimze 'useEffect' directives
 - Implement URL state management with 'nuqs'
 - Minimize client-side state
 
-### Async Request APIs
-
-```typescript
-// Always use async versions of runtime APIs
-const cookieStore = await cookies()
-const headersList = await headers()
-const { isEnabled } = await draftMode()
-
-// Handle async params in layouts/pages
-const params = await props.params
-const searchParams = await props.searchParams
-
-## PRD 
-[prd.md](mdc:requirements/prd.md)
-## User Flow 
-[user-flow.md](mdc:requirements/user-flow.md)
-## Design Document
-[design.md](mdc:requirements/design.md)
-## Prompting Rules
-[prompt-rules.md](mdc:requirements/prompt-rules.md)
-## Old Files
-[old-core.md](mdc:requirements/old-core.md)
-# Unifed chat
-[unified-chat.md](mdc:requirements/unified-chat.md)
+### Utils
+- Use [try-catch.ts](mdc:src/utils/try-catch.ts) wrapper to try and catch functions
 
 
+Refer to Next.js Docs for best practices regarding RSC, SSR, SSG, etc
