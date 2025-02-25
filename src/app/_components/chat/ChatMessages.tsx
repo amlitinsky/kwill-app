@@ -2,7 +2,6 @@
 
 import { type useChat } from '@ai-sdk/react';
 import { useEffect, useRef } from 'react';
-import { Loader2 } from 'lucide-react';
 import { MarkdownRenderer } from '@/app/_components/MarkdownRenderer';
 import { TypingIndicator } from '../TypingIndicator';
 interface ChatMessagesProps {

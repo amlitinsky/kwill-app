@@ -72,7 +72,7 @@
 **Key Components:**
 
 - **Unified Chat Endpoint:**  
-  Uses a single `/api/chat` endpoint for both regular messages and meeting transcripts (flagged by `isTranscript`).  
+  Uses a single `/api/chat` endpoint for both regular messages and meeting transcripts.  
   - **For Regular Messages:** It supports tool calls (e.g., linking spreadsheets or joining Zoom meetings).  
   - **For Meeting Transcripts:** It processes the transcript into meeting insights with a system prompt designed for analysis. Only the LLM’s assistant output (meeting insights) is stored and streamed—keeping the raw transcript hidden from the user.
 
