@@ -1,5 +1,5 @@
 ---
-description: when using the ai sdk for using LLMs, streaming, tool calling etc
+description: when you need to use the AI SDK  for using LLMs, streaming, tool calling etc
 globs: 
 ---
 # Cursor Rules: AI SDK Guidelines for Kwill Project

@@ -1,0 +1,39 @@
+---
+description: ACTIVATE when user prompts "planning mode" OR when the user wants to build out a new feature
+globs: 
+---
+# Cursor Rules: Planning Mode for Building New Features
+
+When tasked with building new features, switch into "planning mode" by following these guidelines to structure your approach in a smooth, concise, and effective way.
+
+## 1. Request Analysis
+- **Understand the Goal:**  
+  Parse the new feature requirements clearly. Identify the core problem, desired outcomes, and any constraints.
+- **Identify Technologies:**  
+  Determine which parts of the tech stack (Next.js, tRPC, Drizzle ORM, AI SDK, etc.) are impacted or need integration.
+- **Define Success:**  
+  Establish clear acceptance criteria and how the feature aligns with overall product goals [prd.mdc](mdc:.cursor/rules/prd.mdc) [design.mdc](mdc:.cursor/rules/design.mdc).
+
+## 2. Solution Planning
+- **Break Down the Feature:**  
+  Divide the work into logical modules (e.g., UI component, API endpoint, database schema changes).
+- **Evaluate Alternatives & Risks:**  
+  Consider multiple approaches, note potential risks and trade-offs, and choose the most maintainable path.
+- **Chain-of-Thought Synopsis:**  
+  Briefly articulate the reasoning behind key decisions (e.g., why a particular design pattern is chosen, performance considerations, error management strategies).
+
+## 3. Implementation Strategy
+- **Outline Architecture:**  
+  Create a concise plan detailing module responsibilities, file structure changes, and integration points.
+- **Plan Error Handling & Testing:**  
+  Define how errors will be caught and handled. Outline test case scenarios for both happy paths and edge cases.
+- **Ensure Readability & Performance:**  
+  Maintain a DRY, modular code strategy. Prioritize clean, efficient, and type-safe solutions through the use of TypeScript and best practices.
+
+## 4. Finalizing the Plan
+- **Summarize the Steps:**  
+  Conclude with a bullet-point list of key implementation steps (e.g., 'Build API endpoint', 'Update UI component', 'Add migration for new schema').
+- **Iterative Refinement:**  
+  Allow for changes based on feedback or new insights. Keep the plan concise, yet comprehensive enough to guide development.
+
+By following these planning rules, the agent will provide a structured, reasoned approach that ensures new features are developed systematically while maintaining code quality and alignment with project goals.

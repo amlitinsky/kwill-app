@@ -1,5 +1,5 @@
 ---
-description: when we need to create or use existing database schema involving drizzle orm
+description: when you need to create or use existing database schema involving drizzle orm
 globs: 
 ---
 # Cursor Rules: Drizzle ORM Guidelines for Kwill Project
