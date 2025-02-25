@@ -4,6 +4,7 @@ import { createTRPCContext } from '@/server/api/trpc';
 import { createCaller } from '@/server/api/root';
 import { systemPrompt } from '@/lib/ai/prompts';
 import { deepseekChat } from '@/lib/ai/models';
+import { tryCatch } from '@/utils/try-catch';
 
 
 // Allow streaming responses up to 30 seconds
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
   const {message, chatId} = await req.json() as {message: Message, chatId: string};
 
   const previousMessages = await caller.message.load({chatId}) as Message[]
-  await caller.chat.generateName({text: message.content, id: chatId})
+  // await caller.chat.generateName({text: message.content, id: chatId})
   const messages = appendClientMessage({messages: previousMessages, message})
 
   const result = streamText({
@@ -37,14 +38,28 @@ export async function POST(req: Request) {
           spreadsheetUrl: z.string().describe('The full Google Sheets URL'),
           analysisPrompt: z.string().describe('Spreadsheet specific prompt for analysis').optional(),
         }),
-        execute: async ({ spreadsheetUrl, analysisPrompt}) => await caller.tool.linkSpreadsheet({ chatId, spreadsheetUrl, analysisPrompt }),
+        execute: async ({ spreadsheetUrl, analysisPrompt}) => {
+          const {data, error }= await tryCatch(caller.tool.linkSpreadsheet({ chatId, spreadsheetUrl, analysisPrompt }));
+          if (error) { 
+            console.error(error);
+            throw new ToolExecutionError({ message: error.message, toolArgs: { spreadsheetUrl, analysisPrompt: analysisPrompt ?? null }, toolName: 'getSpreadsheetURL', toolCallId: 'getSpreadsheetURL', cause: error });
+          }
+          return data;
+        },
       }),
       getMeetingURL: tool({
         description: 'Get the URL of the Zoom meeting associated with this conversation',
         parameters: z.object({
           meetingUrl: z.string().describe('The full meeting URL'),
         }),
-        execute: async ({ meetingUrl}) => await caller.tool.joinMeeting({ chatId, meetingUrl }),
+        execute: async ({ meetingUrl}) => {
+          const {data, error }= await tryCatch(caller.tool.joinMeeting({ chatId, meetingUrl }));
+          if (error) { 
+            console.error(error);
+            throw new ToolExecutionError({ message: error.message, toolArgs: { meetingUrl }, toolName: 'getMeetingURL', toolCallId: 'getMeetingURL', cause: error }); 
+          }
+          return data;
+        },
       }),
 
     }, 
@@ -57,6 +72,7 @@ export async function POST(req: Request) {
 
     },
   });
+
 
   void result.consumeStream();
 

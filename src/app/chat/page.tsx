@@ -23,7 +23,7 @@ export default function NewChatPage() {
         router.push(`/chat/${newChat.id}?message=${encodeURIComponent(input)}`);
       }
     } catch (error) {
-      console.error("Failed to create chat:", error);
+      console.error('Failed to create chat:', error);
     } finally {
       setIsLoading(false);
     }
@@ -36,6 +36,7 @@ export default function NewChatPage() {
     }
   };
 
+  // TODO: use icon for loading stat and change default placeholder and maybe text box size
   return (
     <div className="flex h-screen flex-col items-center justify-center p-4">
       <h1 className="text-4xl font-semibold mb-4">What can I analyze for you?</h1>

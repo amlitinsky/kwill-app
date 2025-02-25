@@ -19,7 +19,7 @@
 
 ### Domain-Specific Chat Interface
 
-- **AI Agent:** LLM-powered assistant (Google Gemini Pro) fine-tuned on investor jargon and financial regulations.
+- **AI Agent:** LLM-powered assistant fine-tuned on investor jargon and financial regulations.
   - *(MVP: Focus on general investor terms; future fine-tuning as enhancement.)*
 - **Contextual Awareness:** Retains chat history for basic conversational continuity within a session.
   - *(MVP: Basic session memory only.)*
@@ -67,7 +67,7 @@
 
 - **Frontend:** Next.js 15 (App Router), shadcn/ui, Next.js AI SDK (streaming chat with unified `/api/chat`).
 - **Backend:** tRPC for type-safe APIs, Next.js API Routes, Drizzle ORM (Neon Postgres).
-- **Integrations:** Google Sheets API, Recall.ai API (direct API calls for MVP), Google Gemini Pro (LLM).
+- **Integrations:** Google Sheets API, Recall.ai API (direct API calls for MVP), LLM APIs (Deepseek, Anthropic, OpenAI, etc).
 
 **Key Components:**
 

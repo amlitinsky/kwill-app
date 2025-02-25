@@ -36,6 +36,11 @@ export const toolRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
+
+      if (!input.spreadsheetUrl.includes('docs.google.com/spreadsheets')) {
+        throw new Error('Invalid spreadsheet URL.');
+      }
+
       const spreadsheetId = extractSpreadsheetId(input.spreadsheetUrl);
       if (!spreadsheetId) {
         throw new Error("Invalid Google Sheets URL");

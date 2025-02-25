@@ -4,6 +4,7 @@ import { type useChat } from '@ai-sdk/react';
 import { useEffect, useRef } from 'react';
 import { Loader2 } from 'lucide-react';
 import { MarkdownRenderer } from '@/app/_components/MarkdownRenderer';
+import { TypingIndicator } from '../TypingIndicator';
 interface ChatMessagesProps {
   chatState: ReturnType<typeof useChat>;
 }
@@ -21,15 +22,6 @@ export function ChatMessages({ chatState }: ChatMessagesProps) {
     scrollToBottom();
   }, [messages]);
 
-  // prob can remove this
-  // loading state
-  if (isLoading && !messages?.length) {
-    return (
-      <div className="flex h-full items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col space-y-8">
@@ -79,6 +71,11 @@ export function ChatMessages({ chatState }: ChatMessagesProps) {
             </div>
           </div>
         ))}
+      {isLoading && (
+        <div className="flex items-center justify-start pl-4">
+          <TypingIndicator />
+        </div>
+      )}
       <div ref={messagesEndRef} />
     </div>
   );

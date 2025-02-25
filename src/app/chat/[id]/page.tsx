@@ -44,8 +44,6 @@ export default function ChatPage() {
   // Auto-submit the initial message if present
   useEffect(() => {
     if (initialMessage && !initialSubmitted) {
-      // Clear input and set initial message
-      chatState.setInput('');
       chatState.setInput(initialMessage);
       
       // Submit after short delay to ensure state updates
@@ -53,12 +51,21 @@ export default function ChatPage() {
         chatState.handleSubmit();
         setInitialSubmitted(true);
         router.replace(`/chat/${id}`, { scroll: false });
-      }, 100);
+      }, 200);
 
-      return () => clearTimeout(timer);
+      return () => {
+        console.log('Clearing initial message timer');
+        clearTimeout(timer);
+      };
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialMessage, initialSubmitted, id, router]); // Only these deps needed
+  }, [initialMessage, initialSubmitted, id, router, chatState]);
+
+  // should update chat state when messages are updated from the server
+  useEffect(() => {
+    if (messages) {
+      chatState.setMessages(messages as Message[]);
+    }
+  }, [messages, chatState]);
 
   if (isLoadingMessages) {
     return (
