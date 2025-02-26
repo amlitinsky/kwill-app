@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { PanelLeftOpen, SquarePen, Trash2, MoreHorizontal } from "lucide-react";
 import { api } from "@/trpc/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 interface ChatSidebarProps {
   isOpen: boolean;
@@ -20,6 +20,7 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
     onSuccess: () => void utils.chat.list.invalidate(),
   });
   const router = useRouter();
+  const pathname = usePathname();
 
   // State for managing dropdown open status
   const [openChatMenu, setOpenChatMenu] = useState<string | null>(null);
@@ -123,7 +124,7 @@ export function ChatSidebar({ isOpen, onToggle }: ChatSidebarProps) {
               key={chat.id}
               onClick={() => handleChatClick(chat.id)}
               className={`group mb-2 flex cursor-pointer items-center justify-between rounded-lg p-3 ${
-                window.location.pathname.includes(chat.id) ? "bg-muted" : "hover:bg-muted/50"
+                pathname.includes(chat.id) ? "bg-muted" : "hover:bg-muted/50"
               }`}
             >
               {editingChatId === chat.id ? (
