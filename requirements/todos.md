@@ -1,7 +1,13 @@
 # TODOS
-1. Continue testing tool functionality and experimenting with different models
-2. Pricing page
-3. Support Page
+- Continue testing tool functionality and experimenting with different models
+- Pricing stuff 
+- Support Page
+-  Terms of Service Page
+- Privacy Policy Page
+- get started button should go to sign in page
+- generative ui for meeting stuff? 
+- user approval for each action or tool call? 
+
 
 
 
