@@ -1,12 +1,8 @@
 # TODOS
+- change starting entry, maybe we should say something like link a spreadsheet paste a meeting link for relatively easy onboarding
+- make the input dialog exactly the same size as for existing chats
+- for naming chat, we should probably generate a name for it and then somehow client refteches it
 - Continue testing tool functionality and experimenting with different models
-- Pricing stuff 
-- Support Page
--  Terms of Service Page
-- Privacy Policy Page
-- get started button should go to sign in page
-- generative ui for meeting stuff? 
-- user approval for each action or tool call? 
 
 
 

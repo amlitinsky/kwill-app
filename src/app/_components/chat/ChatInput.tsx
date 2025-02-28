@@ -31,7 +31,7 @@ export default function ChatInput({ chatState }: ChatInputProps) {
           value={input}
           onChange={handleInputChange}
           onKeyDown={handleKeyPress}
-          placeholder="Type a message..."
+          placeholder="Link a spreadsheet or paste a meeting link..."
           className="h-full w-full resize-none rounded-lg border bg-background p-4 pr-12 text-foreground"
           disabled={isLoading}
         />

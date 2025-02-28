@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ChatProvider } from "@/app/_components/context/chat-context";
 import { ChatSidebar } from "@/app/_components/chat/ChatSidebar";
 
 // Create an inner component that uses the context
@@ -50,8 +49,6 @@ export default function ChatLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ChatProvider>
-      <ChatLayoutInner>{children}</ChatLayoutInner>
-    </ChatProvider>
+    <ChatLayoutInner>{children}</ChatLayoutInner>
   );
 } 

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Loader2, Send } from "lucide-react";
 import { api } from "@/trpc/react";
 
 export default function NewChatPage() {
@@ -42,13 +42,12 @@ export default function NewChatPage() {
       <h1 className="text-4xl font-semibold mb-4">What can I analyze for you?</h1>
       <form onSubmit={handleNewChatSubmit} className="w-full max-w-[750px]">
         <div className="relative flex">
-          <input
-            type="text"
-            placeholder="Type your message to start the conversation..."
+          <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
             disabled={isLoading}
-            className="w-full rounded-lg border bg-background p-4 text-foreground"
+            placeholder="Link a spreadsheet or paste a meeting link..."
+            className="w-full h-24 rounded-lg border bg-background p-4 text-foreground resize-none"
             onKeyDown={handleKeyDown}
           />
           <button
@@ -59,7 +58,7 @@ export default function NewChatPage() {
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
-              "Send"
+              <Send className="h-5 w-5" />
             )}
           </button>
         </div>
