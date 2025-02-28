@@ -3,7 +3,7 @@ import "@/styles/globals.css";
 import { ClerkProvider, SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
-
+import { Toaster } from "sonner";
 import { TRPCReactProvider } from "@/trpc/react";
 
 export const metadata: Metadata = {
@@ -22,6 +22,7 @@ export default function RootLayout({
           <meta name="darkreader-lock" />
         </head>
         <body className="bg-background">
+          <Toaster />
           <TRPCReactProvider>
             <div className="min-h-screen flex flex-col">
               <div className="absolute top-4 right-4 z-50">

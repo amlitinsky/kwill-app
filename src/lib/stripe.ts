@@ -17,6 +17,12 @@ export async function createCheckoutSession(
   returnUrl: string,
 ) {
   try {
+    // Handle development plans
+    if (process.env.NODE_ENV === 'development' && priceId.startsWith('price_dev_')) {
+      console.log('Using mock checkout session for development plan:', priceId);
+      return { sessionId: 'cs_dev_' + Math.random().toString(36).substring(2, 15) };
+    }
+    
     // Get the price details to access metadata
     const price = await stripe.prices.retrieve(priceId);
     const product = await stripe.products.retrieve(price.product as string);
@@ -54,14 +60,14 @@ export async function getPlans() {
       active: true,
     });
 
-    return prices.data
+    // Filter and map prices to plans
+    const stripePlans = prices.data
       .filter(price => {
         const product = price.product as Stripe.Product;
         return price.active === true && 
                product.active === true &&
-               product.metadata.web === 'true' &&
                price.unit_amount! > 0 &&
-               (product.metadata.default_price === price.id || !product.metadata.default_price);
+               price.id === product.default_price;
       })
       .map(price => {
         const product = price.product as Stripe.Product;
@@ -80,6 +86,8 @@ export async function getPlans() {
         };
       })
       .sort((a, b) => a.order - b.order);
+
+    return stripePlans;
   } catch (error) {
     console.error('Error fetching plans:', error);
     throw error;

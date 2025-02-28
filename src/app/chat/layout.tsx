@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { ChatSidebar } from "@/app/_components/chat/ChatSidebar";
+import { PricingButton } from "@/app/_components/pricing/PricingButton";
+import { PricingModalWrapper } from "@/app/_components/pricing/PricingModalWrapper";
 
 // Create an inner component that uses the context
 function ChatLayoutInner({ children }: { children: React.ReactNode }) {
@@ -38,6 +40,10 @@ function ChatLayoutInner({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
+
+      {/* Pricing Components */}
+      <PricingButton />
+      <PricingModalWrapper />
     </div>
   );
 }
