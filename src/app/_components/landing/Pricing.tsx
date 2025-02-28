@@ -11,19 +11,19 @@ const plans = [
     name: "Free",
     hours: 2,
     price: 0,
-    features: ["First 2 hours of meeting processing", "Basic analytics", "Email support"],
+    features: ["First 2 hours of meeting processing", "Email support"],
   },
   {
     name: "Pro",
     hours: 10,
     price: 15,
-    features: ["10 hours of meeting processing", "Basic analytics", "Email support"],
+    features: ["10 hours of meeting processing", "Email support"],
   },
   {
     name: "Premium",
     hours: 15,
     price: 20,
-    features: ["15 hours of meeting processing", "Advanced analytics", "Priority email support"],
+    features: ["15 hours of meeting processing", "Priority Email support"],
   },
 ]
 

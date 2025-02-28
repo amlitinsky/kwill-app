@@ -5,7 +5,14 @@
 - Continue testing tool functionality and experimenting with different models
 
 
+# STRIPE INTEGRATION PART 3
+- We need a full-screen modal or dialog that overlays current screen when clicking icon on bottom left hand of the screen
+- this should open an #pricing which is basically just a pop up where you can purchase plans and view customer portal 
 
+# Bottom RIght
+- a pop up with likns to docs, support, contact us, terms, prviacy etc
+
+- thinking about changing 
 
 # ETC
 1. Implement dark mode effectively (we are using text white for the text and standard color for now (which ig is fine for now?))

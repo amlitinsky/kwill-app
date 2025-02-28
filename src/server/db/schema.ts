@@ -9,6 +9,8 @@ import {
   text,
   jsonb,
   json,
+  boolean,
+  integer,
 } from "drizzle-orm/pg-core";
 
 /**
@@ -55,6 +57,22 @@ export const meetings = createTable('meetings', {
   extractedHeaders: jsonb('extracted_headers'),
   llmExtractedData: jsonb('llm_extracted_data'),
   processingStatus: varchar('processing_status', { length: 50 }).default('pending'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const subscriptions = createTable('subscriptions', {
+  id: varchar('id', { length: 36 }).primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar('user_id', { length: 255 }).notNull().unique(),
+  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }).unique(),
+  stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }).unique(),
+  status: varchar('status', { length: 50 }).default('none').notNull(),
+  priceId: varchar('price_id', { length: 255 }),
+  hours: integer('hours').default(2).notNull(), // Default 2 hours for new users
+  currentPeriodStart: timestamp('current_period_start'),
+  currentPeriodEnd: timestamp('current_period_end'),
+  cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false),
+  paymentMethod: jsonb('payment_method'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

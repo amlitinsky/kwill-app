@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { meetings, chats } from "@/server/db/schema";
+import { meetings, chats, subscriptions } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 import { clerkClient } from "@clerk/nextjs/server";
 import { extractSpreadsheetId, getColumnHeaders } from "@/lib/google";
@@ -15,8 +15,22 @@ export const toolRouter = createTRPCRouter({
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // TODO: add a try catch to see if it actually created the bot
-      const bot = await createBot(input.meetingUrl);
+      // Check if user has available hours
+      const [subscription] = await ctx.db
+        .select()
+        .from(subscriptions)
+        .where(eq(subscriptions.userId, ctx.userId));
+
+      if (!subscription || subscription.hours <= 0) {
+        return "No available hours in subscription. Please upgrade your plan.";
+      }
+
+      // Convert hours to seconds for the bot's automatic leave timeout
+      const hoursInSeconds = subscription.hours * 3600;
+      
+      const bot = await createBot(input.meetingUrl, {
+        automatic_leave: hoursInSeconds
+      });
       
       await ctx.db.insert(meetings).values({
         chatId: input.chatId,
