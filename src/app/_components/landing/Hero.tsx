@@ -4,7 +4,7 @@ import { motion, useAnimation } from "framer-motion"
 import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import React from "react"
-import Link from "next/link"
+import { SignInButton } from "@clerk/nextjs"
 
 // Pre-calculate random positions to avoid hydration mismatch
 const bubbles = Array.from({ length: 20 }, (_, i) => ({
@@ -58,14 +58,14 @@ export default function Hero() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
         >
-          <Link href="/signin">
+          <SignInButton mode="modal">
             <Button
               size="lg"
               className="bg-blue-500 hover:bg-blue-600 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-full shadow-lg"
             >
               Get Started
             </Button>
-          </Link>
+          </SignInButton>
         </motion.div>
       </div>
       <motion.div
