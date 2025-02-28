@@ -10,9 +10,6 @@ export default function Footer() {
             <div>
               <h3 className="font-semibold mb-3">Product</h3>
               <div className="space-y-2">
-                <Link href="/pricing" className="block text-sm text-muted-foreground hover:text-foreground">
-                  Pricing
-                </Link>
                 <Link href="/docs" className="block text-sm text-muted-foreground hover:text-foreground">
                   Docs
                 </Link>

@@ -14,22 +14,16 @@ const plans = [
     features: ["First 2 hours of meeting processing", "Basic analytics", "Email support"],
   },
   {
-    name: "Starter",
-    hours: 5,
-    price: 20,
-    features: ["5 hours of meeting processing", "Basic analytics", "Email support"],
-  },
-  {
     name: "Pro",
     hours: 10,
-    price: 30,
-    features: ["10 hours of meeting processing", "Advanced analytics", "Priority email support"],
+    price: 15,
+    features: ["10 hours of meeting processing", "Basic analytics", "Email support"],
   },
   {
     name: "Premium",
-    hours: 20,
-    price: 40,
-    features: ["20 hours of meeting processing", "Advanced analytics", "Priority email support"],
+    hours: 15,
+    price: 20,
+    features: ["15 hours of meeting processing", "Advanced analytics", "Priority email support"],
   },
 ]
 
@@ -51,7 +45,7 @@ export default function Pricing() {
       >
         Simple, Transparent Pricing
       </motion.h2>
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {plans.map((plan, index) => (
           <motion.div
             key={index}
