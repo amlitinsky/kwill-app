@@ -68,7 +68,7 @@ export const subscriptions = createTable('subscriptions', {
   stripeSubscriptionId: varchar('stripe_subscription_id', { length: 255 }).unique(),
   status: varchar('status', { length: 50 }).default('none').notNull(),
   priceId: varchar('price_id', { length: 255 }),
-  hours: integer('hours').default(2).notNull(), // Default 2 hours for new users
+  minutes: integer('minutes').default(120).notNull(), // Default 120 minutes (2 hours) for new users
   currentPeriodStart: timestamp('current_period_start'),
   currentPeriodEnd: timestamp('current_period_end'),
   cancelAtPeriodEnd: boolean('cancel_at_period_end').default(false),

@@ -160,7 +160,7 @@ export async function retrieveBotTranscript(botId: string): Promise<TranscriptRe
   }
 }
 
-export async function calculateMeetingDuration(botId: string): Promise<number> {
+export async function calculateMeetingDurationInMinutes(botId: string): Promise<number> {
   try {
     const botStatus = await getBotStatus(botId);
     const recording = botStatus.recordings?.[0];
@@ -172,7 +172,7 @@ export async function calculateMeetingDuration(botId: string): Promise<number> {
     const startTime = new Date(recording.started_at);
     const endTime = new Date(recording.completed_at);
     
-    return (endTime.getTime() - startTime.getTime()) / (1000 * 60);
+    return Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60));
   } catch (error) {
     console.error('Error calculating meeting duration:', error);
     return 0;

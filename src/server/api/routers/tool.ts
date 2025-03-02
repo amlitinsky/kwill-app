@@ -21,15 +21,16 @@ export const toolRouter = createTRPCRouter({
         .from(subscriptions)
         .where(eq(subscriptions.userId, ctx.userId));
 
-      if (!subscription || subscription.hours <= 0) {
-        return "No available hours in subscription. Please upgrade your plan.";
+      // Check if user has available minutes
+      if (!subscription || subscription.minutes <= 0) {
+        return "No available meeting time in subscription. Please upgrade your plan.";
       }
 
-      // Convert hours to seconds for the bot's automatic leave timeout
-      const hoursInSeconds = subscription.hours * 3600;
+      // Convert minutes to seconds for the bot's automatic leave timeout
+      const secondsAvailable = subscription.minutes * 60;
       
       const bot = await createBot(input.meetingUrl, {
-        automatic_leave: hoursInSeconds
+        automatic_leave: secondsAvailable
       });
       
       await ctx.db.insert(meetings).values({

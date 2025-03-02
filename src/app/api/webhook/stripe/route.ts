@@ -56,6 +56,19 @@ export async function POST(req: Request) {
         case 'invoice.payment_failed':
         case 'customer.subscription.deleted':
         case 'customer.subscription.updated':
+        case 'customer.subscription.created':
+        case 'customer.subscription.paused':
+        case 'customer.subscription.resumed':
+        case 'customer.subscription.pending_update_applied':
+        case 'customer.subscription.pending_update_expired':
+        case 'customer.subscription.trial_will_end':
+        case 'invoice.payment_action_required':
+        case 'invoice.upcoming':
+        case 'invoice.marked_uncollectible':
+        case 'invoice.payment_succeeded':
+        case 'payment_intent.succeeded':
+        case 'payment_intent.payment_failed':
+        case 'payment_intent.canceled':
           const customerId = event.data.object.customer as string;
           
           // Create TRPC context and caller

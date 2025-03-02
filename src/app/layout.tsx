@@ -5,6 +5,7 @@ import { GeistSans } from "geist/font/sans";
 import { type Metadata } from "next";
 import { Toaster } from "sonner";
 import { TRPCReactProvider } from "@/trpc/react";
+import { SubscriptionInitializer } from "@/app/_components/subscription/SubscriptionInitializer";
 
 export const metadata: Metadata = {
   title: "Kwill",
@@ -37,6 +38,9 @@ export default function RootLayout({
                   <UserButton afterSignOutUrl="/" />
                 </SignedIn>
               </div>
+              <SignedIn>
+                <SubscriptionInitializer />
+              </SignedIn>
               {children}
             </div>
           </TRPCReactProvider>

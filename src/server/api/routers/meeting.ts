@@ -1,9 +1,9 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
-import { meetings, chats, messages } from "@/server/db/schema";
+import { meetings, chats, messages, subscriptions } from "@/server/db/schema";
 import { desc, eq, and } from "drizzle-orm";
 import { type SQL } from "drizzle-orm";
-import { transcriptResponseSchema } from "@/lib/recall";
+import { calculateMeetingDurationInMinutes, transcriptResponseSchema } from "@/lib/recall";
 import { extractTranscriptHeaderValues, generateFullMeetingInsights } from "@/lib/ai/prompts";
 import { generateObject, generateText } from "ai";
 import { formattedMeetingInsights } from "@/lib/ai/formats";
@@ -182,6 +182,33 @@ export const meetingRouter = createTRPCRouter({
           meetingId: meeting[0].id
         },
       });
+
+      const meetingDuration = await calculateMeetingDurationInMinutes(input.botId);
+      
+      // Deduct meeting minutes from user's subscription
+      if (meetingDuration > 0) {
+        // Get user's current subscription
+        const userSubscription = await ctx.db
+          .select()
+          .from(subscriptions)
+          .where(eq(subscriptions.userId, meeting[0].userId))
+          .limit(1);
+        
+        if (userSubscription[0]) {
+          // Calculate new minutes balance
+          const currentMinutes = userSubscription[0].minutes;
+          const newMinutes = Math.max(0, currentMinutes - meetingDuration);
+          
+          // Update subscription with new minutes
+          await ctx.db
+            .update(subscriptions)
+            .set({
+              minutes: newMinutes,
+              updatedAt: new Date(),
+            })
+            .where(eq(subscriptions.id, userSubscription[0].id));
+        }
+      }
 
       return { success: true };
     }),

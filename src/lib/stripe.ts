@@ -1,12 +1,6 @@
 import Stripe from 'stripe';
 import { env } from "@/env";
 
-function getBaseUrl() {
-  if (typeof window !== "undefined") return window.location.origin;
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-  return `http://localhost:${process.env.PORT ?? 3000}`;
-}
-
 export const stripe = new Stripe(env.STRIPE_API_SECRET_KEY, {
   apiVersion: '2025-01-27.acacia',
 });
@@ -17,11 +11,6 @@ export async function createCheckoutSession(
   returnUrl: string,
 ) {
   try {
-    // Handle development plans
-    if (process.env.NODE_ENV === 'development' && priceId.startsWith('price_dev_')) {
-      console.log('Using mock checkout session for development plan:', priceId);
-      return { sessionId: 'cs_dev_' + Math.random().toString(36).substring(2, 15) };
-    }
     
     // Get the price details to access metadata
     const price = await stripe.prices.retrieve(priceId);
@@ -37,10 +26,10 @@ export async function createCheckoutSession(
         },
       ],
       mode: 'subscription',
-      success_url: `${getBaseUrl()}${returnUrl}?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${getBaseUrl()}${returnUrl}?canceled=true`,
+      success_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${returnUrl}?canceled=true`,
       metadata: {
-        hours: product.metadata.hours,
+        minutes: product.metadata.minutes,
         order: product.metadata.order
       },
       allow_promotion_codes: true,
@@ -80,7 +69,7 @@ export async function getPlans() {
           name: product.name,
           price: price.unit_amount ? price.unit_amount / 100 : 0,
           description: product.description,
-          hours: parseInt(product.metadata.hours ?? '0'),
+          minutes: parseInt(product.metadata.minutes ?? '0'),
           order: parseInt(product.metadata.order ?? '0'),
           features
         };
@@ -94,7 +83,18 @@ export async function getPlans() {
   }
 }
 
-export async function createStripeCustomer(email: string) {
+export async function createStripeCustomer(email: string): Promise<Stripe.Customer> {
+
+  // Try to find an existing customer with the given email
+  const existingCustomers = await stripe.customers.list({
+    email,
+    limit: 1,
+  });
+  
+  if (existingCustomers.data.length > 0) {
+    return existingCustomers.data[0]!;
+  }
+
   const customer = await stripe.customers.create({
     email,
   });
@@ -104,7 +104,7 @@ export async function createStripeCustomer(email: string) {
 export async function createCustomerPortalSession(stripeCustomerId: string, returnUrl: string) {
   const session = await stripe.billingPortal.sessions.create({
     customer: stripeCustomerId,
-    return_url: `${getBaseUrl()}${returnUrl}`,
+    return_url: `${returnUrl}`,
   });
 
   return session;
@@ -139,19 +139,19 @@ export async function getCustomerSubscription(customerId: string) {
     throw new Error("No subscription item found");
   }
 
-  let hours: number | undefined;
+  let minutes: number | undefined;
 
   if (firstItem.price) {
     const product = await stripe.products.retrieve(
       typeof firstItem.price.product === 'string' ? firstItem.price.product : firstItem.price.product.id
     );
-    hours = product.metadata.hours ? parseInt(product.metadata.hours) : 0;
+    minutes = product.metadata.minutes ? parseInt(product.metadata.minutes) : 0;
   }
 
   return {
     subscription,
     defaultPaymentMethod,
     firstItem,
-    hours
+    minutes
   };
 } 
