@@ -29,7 +29,8 @@ export function MeetingHoursDisplay() {
     <div className="flex items-center rounded-full bg-blue-500 px-3 py-2 text-sm text-white shadow-md">
       <Clock className="mr-2 h-4 w-4" />
       <span>
-        <strong>{formattedHours}</strong> meeting hours remaining
+        <strong>{formattedHours}</strong> hours left
+         
       </span>
     </div>
   );

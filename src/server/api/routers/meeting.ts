@@ -1,12 +1,12 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "@/server/api/trpc";
-import { meetings, chats, messages, subscriptions } from "@/server/db/schema";
+import { meetings, chats, subscriptions } from "@/server/db/schema";
 import { desc, eq, and } from "drizzle-orm";
 import { type SQL } from "drizzle-orm";
 import { calculateMeetingDurationInMinutes, transcriptResponseSchema } from "@/lib/recall";
 import { extractTranscriptHeaderValues, generateFullMeetingInsights } from "@/lib/ai/prompts";
 import { generateObject, generateText } from "ai";
-import { formattedMeetingInsights } from "@/lib/ai/formats";
+// import { formattedMeetingInsights } from "@/lib/ai/formats";
 import { getColumnHeaders } from "@/lib/google";
 import { appendRowToSheet } from "@/lib/google";
 import { clerkClient } from "@clerk/nextjs/server";
@@ -160,28 +160,29 @@ export const meetingRouter = createTRPCRouter({
         .where(eq(meetings.id, meeting[0].id))
         .returning();
 
-      const data = analyzedData.object;
+      // TODO: this is causing a bug where the chat state is not updated when messages are updated from the server
+      // const data = analyzedData.object;
 
-      // I should also include column mappings if they exist
-      const formattedMessage = formattedMeetingInsights(data);
+      // // I should also include column mappings if they exist
+      // const formattedMessage = formattedMeetingInsights(data);
 
-      await ctx.db
-      .insert(messages)
-      .values({
-        id: crypto.randomUUID(),
-        content: formattedMessage,
-        userId: meeting[0].userId,
-        role: 'assistant',
-        parts: [{
-          type: 'text',
-          text: formattedMessage
-        }],
-        chatId: meeting[0].chatId,
-        metadata: {
-          type: 'meeting_analysis',
-          meetingId: meeting[0].id
-        },
-      });
+      // await ctx.db
+      // .insert(messages)
+      // .values({
+      //   id: crypto.randomUUID(),
+      //   content: formattedMessage,
+      //   userId: meeting[0].userId,
+      //   role: 'assistant',
+      //   parts: [{
+      //     type: 'text',
+      //     text: formattedMessage
+      //   }],
+      //   chatId: meeting[0].chatId,
+      //   metadata: {
+      //     type: 'meeting_analysis',
+      //     meetingId: meeting[0].id
+      //   },
+      // });
 
       const meetingDuration = await calculateMeetingDurationInMinutes(input.botId);
       

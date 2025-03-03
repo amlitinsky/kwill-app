@@ -16,13 +16,13 @@ export default function ChatPage() {
   const utils = api.useUtils();
   const router = useRouter();
 
+
   // Query for messages in the active conversation (if one exists)
   const { data: messages, isLoading: isLoadingMessages } = api.message.load.useQuery({
     chatId: id,
     limit: 50,
   }, {
     enabled: !!id,
-    refetchInterval: 2000,
   });
 
 
@@ -57,28 +57,23 @@ export default function ChatPage() {
       }, 200);
 
       return () => {
-        console.log('Clearing initial message timer');
         clearTimeout(timer);
       };
     }
   }, [initialMessage, initialSubmitted, id, router, chatState]);
 
-  // should update chat state when messages are updated from the server
-  useEffect(() => {
-    if (messages) {
-      chatState.setMessages(prevMessages => {
-        const existingIds = new Set(prevMessages.map(m => m.id));
-        const newMessages = messages
-          .filter(m => !existingIds.has(m.id))
-          .map(m => ({ ...m, content: m.content ?? '' }));
-        return [...prevMessages, ...newMessages] as Message[];
-      });
-    }
-  }, [messages, chatState]);
-
-  useEffect(() => {
-    console.log('isAtBottom changed:', isAtBottom);
-  }, [isAtBottom]);
+  // TODO: this is causing a bug where the chat state is not updated when messages are updated from the server
+  // useEffect(() => {
+  //   if (messages) {
+  //     chatState.setMessages(prevMessages => {
+  //       const existingIds = new Set(prevMessages.map(m => m.id));
+  //       const newMessages = messages
+  //         .filter(m => !existingIds.has(m.id))
+  //         .map(m => ({ ...m, content: m.content ?? '' }));
+  //       return [...prevMessages, ...newMessages] as Message[];
+  //     });
+  //   }
+  // }, [messages, chatState]);
 
   // Handle scroll events on the page's scroll container
   const handleScroll = useCallback(() => {
@@ -87,7 +82,6 @@ export default function ChatPage() {
     
     const { scrollTop, scrollHeight, clientHeight } = container;
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
-    console.log("Scroll detected:", { scrollTop, scrollHeight, clientHeight, isAtBottom });
     
     setIsAtBottom(isAtBottom);
   }, []);
@@ -96,8 +90,6 @@ export default function ChatPage() {
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-    
-    console.log("Setting up scroll listener on page container");
     
     // Initial check
     handleScroll();
