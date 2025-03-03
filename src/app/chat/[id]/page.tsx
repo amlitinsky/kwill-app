@@ -62,19 +62,6 @@ export default function ChatPage() {
     }
   }, [initialMessage, initialSubmitted, id, router, chatState]);
 
-  // TODO: this is causing a bug where the chat state is not updated when messages are updated from the server
-  // useEffect(() => {
-  //   if (messages) {
-  //     chatState.setMessages(prevMessages => {
-  //       const existingIds = new Set(prevMessages.map(m => m.id));
-  //       const newMessages = messages
-  //         .filter(m => !existingIds.has(m.id))
-  //         .map(m => ({ ...m, content: m.content ?? '' }));
-  //       return [...prevMessages, ...newMessages] as Message[];
-  //     });
-  //   }
-  // }, [messages, chatState]);
-
   // Handle scroll events on the page's scroll container
   const handleScroll = useCallback(() => {
     const container = scrollContainerRef.current;

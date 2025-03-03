@@ -160,30 +160,6 @@ export const meetingRouter = createTRPCRouter({
         .where(eq(meetings.id, meeting[0].id))
         .returning();
 
-      // TODO: this is causing a bug where the chat state is not updated when messages are updated from the server
-      // const data = analyzedData.object;
-
-      // // I should also include column mappings if they exist
-      // const formattedMessage = formattedMeetingInsights(data);
-
-      // await ctx.db
-      // .insert(messages)
-      // .values({
-      //   id: crypto.randomUUID(),
-      //   content: formattedMessage,
-      //   userId: meeting[0].userId,
-      //   role: 'assistant',
-      //   parts: [{
-      //     type: 'text',
-      //     text: formattedMessage
-      //   }],
-      //   chatId: meeting[0].chatId,
-      //   metadata: {
-      //     type: 'meeting_analysis',
-      //     meetingId: meeting[0].id
-      //   },
-      // });
-
       const meetingDuration = await calculateMeetingDurationInMinutes(input.botId);
       
       // Deduct meeting minutes from user's subscription
