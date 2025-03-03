@@ -2,7 +2,6 @@
 "use client"
 
 import { useState } from "react"
-import type { Metadata } from "next"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,10 +10,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { CheckCircle2, Clock, Mail, MessageSquare, Phone } from "lucide-react"
 
-export const metadata: Metadata = {
-  title: "Support | Kwill",
-  description: "Get help and support for Kwill, the AI-powered meeting assistant.",
-}
 
 export default function Support() {
   const [name, setName] = useState("")
